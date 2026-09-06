@@ -21,7 +21,7 @@ passed; roadmap wording was not treated as evidence of a missing implementation.
 
 ## Regression and failure recovery
 
-The final suite passed **142 tests** in both the development environment and the
+The final suite passed **144 tests** in both the development environment and the
 independently installed source package. Execution evidence remains external. Two upstream deprecation
 warnings remain: Starlette's httpx test client and AnyIO's BlockingPortal alias.
 They do not fail the suite. `pip check` reports no conflicts. The existing pinned
@@ -111,7 +111,8 @@ preserves exact archive bytes and executable modes and disables checkout
 normalization. All 66 baseline manifest entries now match the `v0.2.0` Git objects.
 The local `v0.3.0` release includes only code, tests, technical documentation and
 synthetic fixtures. Its complete source manifest, indexed blobs and source-only
-membership are checked. No remote was created, contacted or pushed.
+membership are checked. Standard Git ZIP directory entries are accepted only
+when they contain listed source files; unexpected files/directories remain rejected. No remote was created, contacted or pushed.
 
 ## Remaining limits
 

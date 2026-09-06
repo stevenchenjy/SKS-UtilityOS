@@ -74,3 +74,17 @@ def test_gitignore_covers_runtime_export_and_secret_paths(tmp_path):
     names=['private-workspace-one/records.json','secrets.json','utilityos/secrets.json','new-export.csv','new-source.pdf','new-source.xml','build/release.zip','generated.zip','new.db','new.sqlite3-wal','.env.secret','key.pem','credentials.json','.venv/a.py','browser.log']
     result=subprocess.run(['git','check-ignore','--stdin'],cwd=tmp_path,input='\n'.join(names)+'\n',capture_output=True,text=True,check=True)
     assert set(result.stdout.splitlines())==set(names)
+
+
+def test_release_accepts_directory_entries_from_git_archives(project,tmp_path):
+    archive=tmp_path/'release.zip';release.build(project,archive)
+    with zipfile.ZipFile(archive,'a') as z:
+        z.writestr(release.PREFIX,b'')
+        z.writestr(release.PREFIX+'utilityos/',b'')
+    assert release.verify(archive)['version']=='0.1.0'
+
+
+def test_release_rejects_unlisted_directory_entries(project,tmp_path):
+    archive=tmp_path/'release.zip';release.build(project,archive)
+    with zipfile.ZipFile(archive,'a') as z:z.writestr(release.PREFIX+'unlisted/',b'')
+    with pytest.raises(ValueError,match='DIRECTORY_NOT_IN_SOURCE_TREE'):release.verify(archive)

@@ -94,7 +94,11 @@ def verify(archive:Path):
         if not all(source_allowed(PurePosixPath(n)) for n in manifest['files']):
             raise ValueError('RELEASE_MEMBER_NOT_SOURCE')
         expected={PREFIX+n for n in manifest['files']}|{PREFIX+MANIFEST}
-        if set(names)!=expected:raise ValueError('ARCHIVE_MEMBERS_DO_NOT_MATCH_MANIFEST')
+        file_names={i.filename for i in infos if not i.is_dir()}
+        if file_names!=expected:raise ValueError('ARCHIVE_MEMBERS_DO_NOT_MATCH_MANIFEST')
+        for info in infos:
+            if info.is_dir() and (info.file_size or not any(name.startswith(info.filename) for name in expected)):
+                raise ValueError('ARCHIVE_DIRECTORY_NOT_IN_SOURCE_TREE')
         for name,digest in manifest['files'].items():
             if sha256(z.read(PREFIX+name)).hexdigest()!=digest:
                 raise ValueError('RELEASE_HASH_MISMATCH')

@@ -30,7 +30,8 @@ Local production-readiness development milestone, preserving the 0.2.0 ledger.
   search/100-row pages and preserved old pending drafts beyond recent-history
   limits. Existing invoice-month accounting and unit semantics remain intact.
 - Established a byte-preserving trusted Git baseline/tag, strengthened ignores
-  and source-release membership checks, and researched future macOS signing.
+  and source-release membership checks, accepted normal Git ZIP directory entries
+  without admitting unlisted files, and researched future macOS signing.
   Dependencies remain unchanged; the dated advisory scan found no known issues.
 
 Schema compatibility: 0.3.0 reads/writes schema 3. Explicit migration preserves a
