@@ -1,0 +1,3 @@
+provider,account_alias,invoice_number,bill_date,meter_code,building,commodity,period_start,period_end,usage,unit,current_charge,usage_role,read_type,current_total
+Example Electric,DEMO-E01 account,SYN-REVIEW-DEMO-E01-202608,2026-09-05,DEMO-E01,Demo Academic,electricity,2026-08-01,2026-09-01,19500,kWh,3575.00,consumption,actual,3575.00
+Example Water,DEMO-W01 account,SYN-REVIEW-DEMO-W01-202608,2026-09-05,DEMO-W01,Demo Residence,water,2026-08-01,2026-09-01,51500,gal,528.50,consumption,estimated,528.50

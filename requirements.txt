@@ -1,0 +1,6 @@
+# Runtime packages used and tested in the development environment.
+# Before staff deployment, school IT must run a current dependency advisory scan.
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn==0.48.0
+defusedxml==0.7.1

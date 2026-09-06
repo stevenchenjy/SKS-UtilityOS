@@ -1,0 +1,57 @@
+from pathlib import Path
+import importlib.util
+import json
+import zipfile
+import pytest
+
+spec=importlib.util.spec_from_file_location('release',Path(__file__).resolve().parents[1]/'scripts/release.py')
+release=importlib.util.module_from_spec(spec);spec.loader.exec_module(release)
+
+@pytest.fixture
+def project(tmp_path):
+    root=tmp_path/'source';root.mkdir()
+    for name in ['README.md','AGENTS.md','MASTER_PROMPT.md','run.py']:(root/name).write_text('Synthetic test source')
+    (root/'utilityos').mkdir();(root/'utilityos/__init__.py').write_text('"""module"""\n__version__ = "0.1.0"\n')
+    (root/'private-data').mkdir();(root/'private-data/private.csv').write_text('DO_NOT_PACKAGE')
+    (root/'secret.db').write_text('DO_NOT_PACKAGE')
+    (root/'.env').write_text('DO_NOT_PACKAGE')
+    return root
+
+def test_release_source_only_and_version(project,tmp_path):
+    archive=tmp_path/'release.zip';result=release.build(project,archive)
+    assert result['version']=='0.1.0'
+    with zipfile.ZipFile(archive) as z:
+        assert not any('private' in n or n.endswith('.db') or n.endswith('.env') for n in z.namelist())
+        assert all(b'DO_NOT_PACKAGE' not in z.read(n) for n in z.namelist())
+
+def test_tampered_release_fails(project,tmp_path):
+    archive=tmp_path/'release.zip';release.build(project,archive)
+    with zipfile.ZipFile(archive) as z:files={n:z.read(n) for n in z.namelist()}
+    files['SKS-UtilityOS/run.py']=b'changed'
+    with zipfile.ZipFile(archive,'w') as z:
+        for n,b in files.items():z.writestr(n,b)
+    with pytest.raises(ValueError,match='HASH_MISMATCH'):release.verify(archive)
+
+def test_unlisted_archive_member_fails(project,tmp_path):
+    archive=tmp_path/'release.zip';release.build(project,archive)
+    with zipfile.ZipFile(archive,'a') as z:z.writestr('SKS-UtilityOS/extra.py','unlisted')
+    with pytest.raises(ValueError,match='MEMBERS'):release.verify(archive)
+
+def test_archive_traversal_fails(project,tmp_path):
+    archive=tmp_path/'release.zip';release.build(project,archive)
+    with zipfile.ZipFile(archive,'a') as z:z.writestr('SKS-UtilityOS/../bad','bad')
+    with pytest.raises(ValueError,match='UNSAFE'):release.verify(archive)
+
+def test_release_output_inside_source_rejected(project):
+    with pytest.raises(ValueError,match='OUTSIDE_SOURCE'):release.build(project,project/'release.zip')
+
+
+def test_release_preserves_native_launcher_modes_and_bootstrap(tmp_path):
+    archive=tmp_path/'release.zip'
+    release.build(release.ROOT,archive)
+    with zipfile.ZipFile(archive) as z:
+        for name in ['Launch-Demo.command','Launch-Staff.command','scripts/setup.sh']:
+            assert z.getinfo(release.PREFIX+name).external_attr>>16 & 0o111
+        assert release.PREFIX+'requirements-bootstrap.txt' in z.namelist()
+        assert release.PREFIX+'tests/fixtures/schema_v1.sql' in z.namelist()
+        assert not any('MEETING_BRIEF' in name for name in z.namelist())

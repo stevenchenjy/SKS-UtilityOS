@@ -1,0 +1,2 @@
+provider,account_alias,invoice_number,bill_date,meter_code,building,commodity,period_start,period_end,usage,unit,current_charge,usage_role,read_type,current_total
+Example Electric,DEMO-E05 account,SYN-NEW-WORKSHOP-202608,2026-09-05,DEMO-E05,Demo Workshop,electricity,2026-08-01,2026-09-01,2860,kWh,579.80,consumption,actual,579.80

@@ -1,0 +1,2 @@
+# Installer only. Reviewed 2026-09-06; installed into the project venv, never globally.
+pip==26.2.1
