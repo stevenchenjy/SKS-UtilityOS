@@ -1,5 +1,31 @@
 # Development verification — 0.2.0
 
+## Baseline audit before 0.3.0 changes
+
+Repeated on 2026-09-06 from the unchanged tagged source and verified archive:
+100 tests passed in the existing environment and in a fresh wheelhouse
+installation; dependency consistency and the 66-file manifest passed. Native
+headed Chrome repeated the complete desktop/mobile import, review, correction,
+rebill, cancellation, export, login/logout and browser-backup sequence. Recovery
+into a new workspace passed integrity and native browser checks. The stopped-app
+schema-1 to schema-2 CLI migration also passed. No regression in those baseline
+flows was observed.
+
+Additional failure probes, reproduced **before application modifications**,
+identified three existing recovery defects for 0.3.0:
+
+- Killing a child process after a partial source write leaves a truncated final
+  hash-named file. Retrying the same import fails with `SOURCE_STORAGE_CONFLICT`.
+- Killing restore during `copy2` over a retained source leaves that source
+  truncated, although the original database remains. The integrity check fails.
+- A synthetically corrupted saved draft raises `JSONDecodeError` for the entire
+  review list. The remaining valid drafts cannot be reviewed through that list.
+
+These are new interruption/corruption coverage findings, not claims that normal
+0.2.0 imports, corrections, or recovery were absent. Evidence and disposable
+workspaces remain outside Git. The next changes address them while preserving
+the successful baseline contracts.
+
 Date: 2026-09-06. Platform: macOS arm64 (Darwin 25.6.0), Python 3.13.2, native Chrome 152.0.7977.82, Playwright 1.57.0. All workspaces used known synthetic fixtures and were created outside the source folder. No private school installation, browser profile, bill, password, or backup was inspected.
 
 ## Automated outcomes
