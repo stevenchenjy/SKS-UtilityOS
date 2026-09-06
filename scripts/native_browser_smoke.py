@@ -216,7 +216,7 @@ def main():
                 page.set_viewport_size({'width':1440,'height':1000})
         nav('Privacy & support', 'Privacy & support')
         diagnostic = json.loads(download('Download diagnostic JSON'))
-        assert set(diagnostic) == {'app', 'version', 'schema_version', 'mode', 'runtime', 'features', 'support_instructions'}
+        assert set(diagnostic) == {'app', 'version', 'schema_version', 'mode', 'runtime', 'features', 'checks', 'support_instructions'}
         exported = download('Export approved ledger CSV')
         assert len(list(csv.DictReader(io.StringIO(exported.decode('utf-8-sig'))))) >= 45
         if a.milestone:

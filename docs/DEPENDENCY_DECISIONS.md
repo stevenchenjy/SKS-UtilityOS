@@ -31,3 +31,15 @@ pip-audit was installed in an external disposable audit environment and received
 - [pip-audit license, maintenance, advisory services, and limits](https://pypi.org/project/pip-audit/2.10.1/).
 
 No fees or externally supported utility integrations are claimed. Installation still requires a trusted package source, school review, and an approved update decision.
+
+## 0.3.0 decision
+
+No runtime or development dependency was added or updated for this milestone.
+Atomic storage, audit hashing, migration orchestration, configuration guards and
+synthetic generation use the standard library and the existing project modules.
+This avoids new installation, license and transitive-dependency obligations.
+The existing pinned environment was rescanned with external pip-audit 2.10.1 on
+2026-09-06: **no known vulnerabilities**, no ignored advisory IDs. The existing
+license/maintenance inventory remains applicable. Git is used for local source
+control and development index tests, not by the running ledger. Apple signing
+research produced documentation only; it introduced no service or credential.

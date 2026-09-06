@@ -7,3 +7,5 @@
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 @media(max-width:700px){.trend .chart-label{font-size:16px}.trend .chart-axis{font-size:16px}}
+
+.source-hash{overflow-wrap:anywhere;font-family:monospace;font-size:.85rem}

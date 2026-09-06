@@ -26,7 +26,7 @@ The single-operator model provides no per-person role separation, multi-factor l
 
 ## Debugging without private records
 
-The diagnostic export uses an explicit allowlist: app version, schema version, mode, broad runtime version/platform, and fixed capability flags. It excludes account and building labels, invoice data, readings, amounts, filenames, paths, source text, logs, arbitrary exception messages, and secrets. Staff can preview the JSON before downloading it.
+The diagnostic export uses an explicit allowlist: app version, schema version, mode, broad runtime version/platform, fixed capability flags, and bounded operational health categories. It excludes account and building labels, invoice data, readings, amounts, filenames, paths, source text, logs, arbitrary exception messages, and secrets. Staff can preview the JSON before downloading it.
 
 This restricted report helps diagnose version and configuration problems. Data-dependent failures may need school IT to examine the private installation and create a synthetic reproduction. Full backups, raw logs, screenshots of private invoices, and the private ledger export must stay inside school-approved channels.
 
@@ -46,3 +46,25 @@ The original 0.1.0 build environment required a transport bridge. The 0.2.0 deve
 
 
 Browser backup creation and download require the local authenticated session; creation also requires CSRF, same origin, and private-content acknowledgement. Saved draft/history reasons and mapping labels are private and never enter diagnostics. Failed CLI archive/storage operations return bounded error codes rather than arbitrary exception content. Backups are published only after successful creation. The explicit schema upgrade preserves a pre-upgrade backup; no silent or remote updater is present.
+
+## 0.3.0 hardening
+
+Audit events now use a verified hash chain and database rules rejecting ordinary
+updates/deletes. This is append-oriented history, not proof against an OS owner
+rewriting the full installation. Actor context does not provide per-person
+attribution. Named roles are explicitly deferred with a proposed permission
+matrix in `ACCESS_AND_CONFIGURATION.md`; sensitive staff corrections/cancellation
+require the current passphrase again, and maintenance stays behind stopped-app
+OS access. No user-management or portal-secret system was added.
+
+Atomic non-overwriting source publication prevents killed imports/restores from
+truncating retained originals. Damaged drafts are isolated and require explicit
+recovery/review. Diagnostics includes coarse disk, permission, backup-location,
+port, audit and unsigned-manifest checks; tests exclude synthetic secret/config
+sentinels from those reports and operational exports. Release and Git index
+checks reject known runtime/credential paths. Private backups intentionally
+retain the app's password hash and records; future integration credentials must
+remain in an OS-managed store, subject to separate authorization.
+
+Read `OPERATIONS.md` for actual failure semantics and `RELEASE_AND_SIGNING.md`
+for researched signing options and the limits of the unsigned source release.

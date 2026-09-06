@@ -4,6 +4,7 @@ import hmac
 import secrets
 import time
 from .db import Store
+from .audit import enabled, event
 
 DEMO_PASSWORD = "synthetic-demo-only"
 ITERATIONS = 600_000
@@ -17,6 +18,8 @@ def set_password(store: Store, password: str) -> None:
     with store.connect() as db:
         for key, value in {"password_salt": salt, "password_hash": digest}.items():
             db.execute("INSERT OR REPLACE INTO settings VALUES (?,?)", (key, value))
+        if enabled(db):
+            event(db, 'SET_LOCAL_PASSPHRASE')
 
 
 def has_password(store: Store) -> bool:

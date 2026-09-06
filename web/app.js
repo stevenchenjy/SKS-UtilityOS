@@ -9,7 +9,7 @@ import {showSupport} from './modules/support.js';
 let meta,route='overview',renderGeneration=0,renderBusy=false;
 const views={overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
 const nav=[['overview','Overview'],['bills','Invoice ledger'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
-const context={navigate,refresh,openStage,openImport,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
+const context={get mode(){return meta.mode;},navigate,refresh,openStage,openImport,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
 
 async function boot(){
   try{

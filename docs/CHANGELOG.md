@@ -1,5 +1,44 @@
 # Release notes
 
+## 0.3.0 — 2026-09-06
+
+Local production-readiness development milestone, preserving the 0.2.0 ledger.
+
+- Fixed killed imports leaving truncated final sources and interrupted restore
+  overwriting retained originals. Source publication now flushes temporary bytes
+  and atomically publishes without overwriting existing files.
+- Isolated damaged drafts, added acknowledged recovery to a new pending review
+  revision, and blocked approval of corrupt stored review/interval data.
+- Added a fixed-field, hash-linked audit chain with update/delete rejection,
+  integrity checks and a paginated private browser view. Financial changes and
+  audit events commit together. Backup attempts/completion, restore snapshot
+  boundaries, migration and local passphrase setup are recorded. Legacy actors
+  remain unknown; there is no person-attribution claim.
+- Added source importer-version provenance. Existing documents are explicitly
+  unrecorded; source bytes and original review histories remain unchanged.
+- Added schema 3 and ordered migrations from schemas 1 and 2. Frozen prior-schema
+  fixtures, synthetic future-step tests and real process termination test
+  all-or-nothing recovery. No automatic migration or unattended update was added.
+- Required the current app passphrase for staff cancellation and replacement
+  approval. Named roles remain explicitly deferred under the single-operator
+  model; a future role matrix and configuration/credential boundary are documented.
+- Expanded allowlisted diagnostics with bounded runtime, database, disk,
+  backup-location, permissions, port, migration, audit and unsigned-source
+  integrity checks. Damaged/incompatible workspaces can be diagnosed read-only.
+- Added a deterministic campus with 20 buildings, 60 meters/service points,
+  24 months, 1,923 active invoices and 288 interval readings. Added invoice
+  search/100-row pages and preserved old pending drafts beyond recent-history
+  limits. Existing invoice-month accounting and unit semantics remain intact.
+- Established a byte-preserving trusted Git baseline/tag, strengthened ignores
+  and source-release membership checks, and researched future macOS signing.
+  Dependencies remain unchanged; the dated advisory scan found no known issues.
+
+Schema compatibility: 0.3.0 reads/writes schema 3. Explicit migration preserves a
+backup in the original schema. Rollback uses the corresponding old code and
+pre-upgrade backup in a new workspace. Read `VERIFICATION.md` for actual checks.
+This unsigned source release remains a development-tested single-operator pilot;
+it is not school acceptance, role-separated access or production deployment.
+
 ## 0.2.0 — 2026-09-06
 
 Development milestone B: audited bill corrections and practical local maintenance, built on the existing implementation.

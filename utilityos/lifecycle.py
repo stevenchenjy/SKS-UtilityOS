@@ -5,6 +5,7 @@ one transaction; reporting includes active versions only.
 """
 import json
 from .audit import now, event
+from .review_data import payload as stored_payload, decode
 from .parsers import ValidationError, blank_bill, text
 
 
@@ -31,12 +32,14 @@ def draft_payload(payload):
 
 class BillLifecycle:
     @staticmethod
-    def _pending(db, staged_id, revision=None):
+    def _pending(db, staged_id, revision=None, *, check_payload=True):
         row = db.execute("SELECT * FROM staged WHERE id=? AND kind='bill' AND status='pending'", (staged_id,)).fetchone()
         if not row:
             raise ValidationError('PENDING_BILL_REQUIRED')
         if revision is not None and (type(revision) is not int or row['revision'] != revision):
             raise ValidationError('DRAFT_CHANGED_REOPEN_REVIEW')
+        if check_payload:
+            stored_payload(row, db)
         return row
 
     @staticmethod
@@ -82,6 +85,34 @@ class BillLifecycle:
             self._save_revision(db, row, payload, correction_of, reason)
         return self.stage(staged_id)
 
+    def recover_draft(self, staged_id, revision, acknowledge=False):
+        if acknowledge is not True:
+            raise ValidationError('CONFIRM_DRAFT_RECOVERY')
+        if type(revision) is not int:
+            raise ValidationError('DRAFT_REVISION_REQUIRED')
+        with self.store.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = self._pending(db, staged_id, revision, check_payload=False)
+            try:
+                stored_payload(row, db)
+            except ValidationError:
+                pass
+            else:
+                raise ValidationError('DRAFT_RECOVERY_NOT_NEEDED')
+            candidates = [dict(r) for r in db.execute('SELECT payload,correction_of,reason FROM draft_history WHERE staged_id=? ORDER BY revision DESC', (staged_id,))]
+            candidates.append({'payload':row['payload'], 'correction_of':row['correction_of'], 'reason':row['correction_reason']})
+            for saved in candidates:
+                try:
+                    recovered = decode(saved['payload'], 'bill')
+                except ValidationError:
+                    continue
+                self._save_revision(db, row, recovered, saved['correction_of'], saved['reason'])
+                event(db, 'RECOVER_DRAFT', staged_id)
+                break
+            else:
+                raise ValidationError('DRAFT_RECOVERY_REQUIRES_IT_OR_BACKUP')
+        return self.stage(staged_id)
+
     def create_correction(self, bill_id, reason):
         reason = reason_text(reason)
         with self.store.connect() as db:
@@ -92,7 +123,7 @@ class BillLifecycle:
             source = db.execute('SELECT * FROM staged WHERE id=?', (original['staged_id'],)).fetchone()
             if not source:
                 raise ValidationError('ORIGINAL_REVIEW_REQUIRED')
-            payload = source['review_payload'] or source['payload']
+            payload = json.dumps(stored_payload(source, db))
             staged_id = db.execute('''INSERT INTO staged(document_id,kind,payload,created_at,correction_of,correction_reason)
                       VALUES (?,'bill',?,?,?,?)''', (original['document_id'], payload, now(), bill_id, reason)).lastrowid
             event(db, 'CREATE_CORRECTION', staged_id)

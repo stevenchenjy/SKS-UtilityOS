@@ -109,3 +109,51 @@ def test_backup_storage_errors_are_bounded(authenticated,monkeypatch):
     assert response.status_code==500
     assert '9988' not in response.text
     assert 'SYNTHETIC_PRIVATE_PATH' not in response.text
+
+
+def test_audit_and_corrupt_draft_recovery_http(authenticated,raw_csv):
+    item=authenticated.post('/api/import',content=raw_csv,headers={'content-type':'application/octet-stream','x-filename':'synthetic.csv','x-synthetic-data':'true'}).json()['staged_ids'][0]
+    ledger=authenticated.app.state.ledger
+    payload=ledger.stage(item)['payload']
+    ledger.save_draft(item,payload,0)
+    with ledger.store.connect() as db:db.execute('UPDATE staged SET review_payload=? WHERE id=?',('{broken',item))
+    assert authenticated.get('/api/staged').status_code==200
+    assert authenticated.get(f'/api/staged/{item}').json()['data_error']
+    failed=authenticated.post(f'/api/staged/{item}/approve',json={'payload':payload,'acknowledge':True,'revision':1})
+    assert failed.status_code==422
+    result=authenticated.post(f'/api/staged/{item}/recover',json={'revision':1,'acknowledge':True})
+    assert result.status_code==200 and result.json()['status']=='pending'
+    codes=[r['code'] for r in authenticated.get('/api/audit').json()['events']]
+    assert 'RECOVER_DRAFT' in codes
+    authenticated.post('/api/logout',json={})
+    assert authenticated.get('/api/audit').status_code==401
+
+
+def test_staff_sensitive_actions_require_current_passphrase(tmp_path,raw_csv):
+    from fastapi.testclient import TestClient
+    from utilityos.config import Config
+    from utilityos.app import create_app
+    from utilityos.security import set_password
+    app=create_app(Config(tmp_path/'synthetic-staff','staff'))
+    password='synthetic-staff-password-only';set_password(app.state.store,password)
+    ledger=app.state.ledger
+    item=ledger.import_file('synthetic.csv',raw_csv)['staged_ids'][0]
+    bill=ledger.approve_bill(item,ledger.stage(item)['payload'],True)['id']
+    correction=ledger.create_correction(bill,'Synthetic correction')['staged_id']
+    with TestClient(app,base_url='http://127.0.0.1:8765') as client:
+        client.headers['origin']='http://127.0.0.1:8765'
+        login=client.post('/api/login',json={'password':password})
+        client.headers['x-csrf-token']=login.json()['csrf']
+        args={'payload':ledger.stage(correction)['payload'],'acknowledge':True,'revision':0}
+        assert client.post(f'/api/staged/{correction}/approve',json=args).status_code==422
+        assert ledger.overview()['stats']['approved_bills']==1
+        result=client.post(f'/api/staged/{correction}/approve',json={**args,'current_passphrase':password})
+        assert result.status_code==200
+        new=result.json()['id'];args={'reason':'Synthetic cancellation','acknowledge':True}
+        assert client.post(f'/api/bills/{new}/cancel',json=args).status_code==422
+        assert client.post(f'/api/bills/{new}/cancel',json={**args,'current_passphrase':'wrong'}).status_code==422
+        assert ledger.overview()['total_cents']==57980
+        assert client.post(f'/api/bills/{new}/cancel',json={**args,'current_passphrase':password}).status_code==200
+        events=client.get('/api/audit').json()['events']
+        assert events[0]['actor']=='reauthenticated_operator'
+        assert password not in str(events)+client.get('/api/diagnostics').text+client.get('/api/ledger/export').text

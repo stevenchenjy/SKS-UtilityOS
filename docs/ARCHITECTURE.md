@@ -35,12 +35,12 @@ The build environment had no npm registry access. A native module frontend allow
 | providers / accounts | Supplier identity and a local account alias; no portal login |
 | meters | Stable service-point identity and commodity |
 | account_meters | Observed relationships connecting financial accounts to service points over time |
-| documents | Original bytes, content hash, source kind, and original filename |
+| documents | Original bytes, content hash, source kind, original filename, and importer release |
 | staged records | Original parsed payload, current reviewed payload, saved revision, correction target, and review status |
 | bills / bill_lines | Immutable reviewed versions, active/superseded/cancelled state, replacement links, current charges, periods, units, quantities, and treatment |
 | bill_history / draft_history / inventory_history | Private lifecycle events, saved review revisions, and before/after mapping changes |
 | interval_channels / interval_readings | Meter mapping, UTC start, duration, delta energy, and source quality |
-| audit_events | Fixed event codes for the single local operator |
+| audit_events | Fixed events, actor context, references, and predecessor hashes |
 
 The initial inventory is populated by reviewing a bill. A staff member can supply a local account label such as `Electric account A` rather than an entire account number. Meter codes should remain stable when accounts or suppliers change. The starter records observed association dates; a complete physical meter replacement and overlapping-service lifecycle editor remains future work.
 
@@ -52,7 +52,7 @@ Each service line has a quantity treatment. `consumption` contributes to billed 
 
 Service periods use an inclusive start and exclusive end. Overlapping approved consumption for one meter is blocked in this version. Staff must interpret a supplier's printed end-date convention correctly. A reviewed rebill excludes only its active original while checking overlaps, then supersedes that original and inserts the replacement atomically. Reporting includes only active versions. See `INVOICE_LIFECYCLE.md`.
 
-Costs are grouped by invoice issue month. Full service-period quantities appear with the invoices issued in the selected month. There is no pro-rata calendarization, weather normalization, completeness-adjusted comparison, savings verification, or carbon calculation in v0.2.0.
+Costs are grouped by invoice issue month. Full service-period quantities appear with the invoices issued in the selected month. There is no pro-rata calendarization, weather normalization, completeness-adjusted comparison, savings verification, or carbon calculation in v0.3.0.
 
 ## Import flow
 
@@ -74,7 +74,7 @@ The Green Button reader accepts a narrow DMD XML contract: electricity, Wh units
 
 ## Size and deployment boundaries
 
-Uploads are limited to 8 MiB. The starter additionally limits CSV rows/invoices and XML readings to bound import work. Limits are explicit engineering defaults; they can be raised after resource tests. The UI is intended for a small local utility ledger, and no enterprise throughput claim has been measured.
+Uploads are limited to 8 MiB. The starter additionally limits CSV rows/invoices and XML readings to bound import work. Limits are explicit engineering defaults; they can be raised after resource tests. The UI is intended for a small local utility ledger, and 20-building/60-service-point synthetic fixture covers 24 months. This is a measured development case, not an enterprise throughput claim.
 
 SQLite transactions keep approvals consistent. The launcher uses an OS-level workspace lock. Backup uses SQLite's backup API and verifies source-file hashes. Restore checks archive paths, hashes, database integrity, schema, mode, and referenced sources before replacing the workspace database.
 
@@ -85,3 +85,30 @@ SQLite transactions keep approvals consistent. The launcher uses an OS-level wor
 Schema 2 replaces the unconditional invoice-number uniqueness constraint with active-identity uniqueness and explicit replacement lineage. A schema-1 snapshot is retained as a test fixture. The explicit migration in `operations.py` builds a validated copy after backup; ordinary startup never migrates. The launcher holds the workspace lock for startup and maintenance. Browser backups use SQLite snapshots while the service owns that lock; restoration and migration require a stopped app.
 
 Installing into a separate code folder changes no staff data. Hash manifests protect release integrity; trusted provenance remains an external school decision. Rollback across the schema boundary requires the old code and pre-upgrade backup in a separate recovery directory. Private source retention and backup paths are not included in diagnostics.
+
+## 0.3.0 maintenance boundaries
+
+`storage.py` publishes fsynced source bytes through a same-directory temporary
+file and a non-overwriting atomic link. Migration/restore switches use flushed
+files and atomic replacement. SQLite commits financial rows, statuses, saved
+revisions and their audit events together. Temporary or complete orphan source
+files never represent approved records.
+
+`review_data.py` validates persisted payload structure and compares saved bill
+entry against its revision. A damaged item is isolated; recovery appends a new
+pending revision. `migrations.py` keeps frozen transitions separate from the
+current schema and validates the complete path on a copy. Schema 3 adds document
+importer provenance and the audit table's fixed actor/subject/reference/hash
+fields with update/delete rejection rules. Maintenance validates the chain;
+restoration records an explicit snapshot boundary and retains a safety backup.
+
+`diagnostics.py` has a fixed operational schema, coarse categories and no data
+serialization. Browser ledger rendering uses search and 100-row pages; review
+includes every pending draft plus 500 recent closed imports. Audit history uses
+a server cursor with 100-event pages. The deterministic campus generator uses
+existing ledger APIs and standard-library code. Dependencies remain unchanged.
+
+Single-operator authentication remains intentional. See
+`ACCESS_AND_CONFIGURATION.md` for the proposed future role matrix and current
+passphrase-confirmation/OS-maintenance boundary, and `OPERATIONS.md` for exact
+idempotency, recovery and audit limitations.

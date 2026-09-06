@@ -6,10 +6,8 @@ import csv
 import hashlib
 import io
 import json
-import os
-import platform
 import statistics
-from . import __version__, SCHEMA_VERSION
+from . import __version__
 from .db import Store
 from .parsers import ValidationError, parse_csv, parse_greenbutton, blank_bill, validate_bill, cents, text
 
@@ -17,6 +15,8 @@ from .parsers import ValidationError, parse_csv, parse_greenbutton, blank_bill, 
 from .audit import now, money, event
 from .lifecycle import BillLifecycle
 from .inventory import InventoryEditing
+from .storage import publish_source, read_source
+from .review_data import payload as stored_payload
 
 class Ledger(BillLifecycle, InventoryEditing):
     def __init__(self, store: Store):
@@ -46,35 +46,20 @@ class Ledger(BillLifecycle, InventoryEditing):
             # links, text extraction, or OCR are executed in this release.
             records = [('bill',blank_bill())]
         target = self.store.sources / f'{sha}{ext}'
-        created = False
-        try:
-            with self.store.connect() as db:
-                db.execute('BEGIN IMMEDIATE')
-                if db.execute('SELECT 1 FROM documents WHERE sha256=?',(sha,)).fetchone():
-                    raise ValidationError('DUPLICATE_SOURCE_DOCUMENT')
-                if target.exists() or target.is_symlink():
-                    if target.is_symlink() or not target.is_file() or hashlib.sha256(target.read_bytes()).hexdigest()!=sha:
-                        raise ValidationError('SOURCE_STORAGE_CONFLICT')
-                    # A restore can leave an immutable orphan. Verified identical
-                    # bytes may be attached again; never overwrite unknown bytes.
-                else:
-                    with target.open('xb') as out:
-                        out.write(raw)
-                    created = True
-                if os.name!='nt':
-                    target.chmod(0o600)
-                doc_id = db.execute('INSERT INTO documents(sha256,filename,extension,size,created_at) VALUES (?,?,?,?,?)',
-                                    (sha,filename,ext,len(raw),now())).lastrowid
-                ids = []
-                for kind,payload in records:
-                    ids.append(db.execute('INSERT INTO staged(document_id,kind,payload,created_at) VALUES (?,?,?,?)',
-                                         (doc_id,kind,json.dumps(payload),now())).lastrowid)
-                event(db, {'.csv':'IMPORT_CSV','.xml':'IMPORT_XML','.pdf':'IMPORT_PDF'}[ext])
-            return {'staged_ids':ids,'count':len(ids)}
-        except Exception:
-            if created:
-                target.unlink(missing_ok=True)
-            raise
+        with self.store.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            if db.execute('SELECT 1 FROM documents WHERE sha256=?',(sha,)).fetchone():
+                raise ValidationError('DUPLICATE_SOURCE_DOCUMENT')
+            publish_source(target, raw)
+            doc_id = db.execute('INSERT INTO documents(sha256,filename,extension,size,created_at,importer_version) VALUES (?,?,?,?,?,?)',
+                                (sha,filename,ext,len(raw),now(),__version__)).lastrowid
+            ids = []
+            for kind,payload in records:
+                ids.append(db.execute('INSERT INTO staged(document_id,kind,payload,created_at) VALUES (?,?,?,?)',
+                                     (doc_id,kind,json.dumps(payload),now())).lastrowid)
+                event(db, 'CREATE_DRAFT', ids[-1])
+            event(db, {'.csv':'IMPORT_CSV','.xml':'IMPORT_XML','.pdf':'IMPORT_PDF'}[ext])
+        return {'staged_ids':ids,'count':len(ids)}
 
     def _bill_flags(self, db, payload, correction_of=None):
         flags = []
@@ -165,6 +150,7 @@ class Ledger(BillLifecycle, InventoryEditing):
                 else:
                     db.execute('INSERT INTO account_meters(account_id,meter_id,valid_from,valid_to) VALUES (?,?,?,?)',
                                (account,meter,line['period_start'],line['period_end']))
+                event(db, 'OBSERVE_ACCOUNT_MAPPING', staged_id)
                 db.execute('''INSERT INTO bill_lines(bill_id,meter_id,period_start,period_end,usage,unit,charge_cents,usage_role,read_type)
                               VALUES (?,?,?,?,?,?,?,?,?)''',(bill_id,meter,line['period_start'],line['period_end'],line['usage'],line['unit'],cents(line['current_charge']),line['usage_role'],line['read_type']))
             self._save_revision(db,row,bill,correction_of,row['correction_reason'])
@@ -175,6 +161,9 @@ class Ledger(BillLifecycle, InventoryEditing):
                 db.execute("INSERT INTO bill_history(bill_id,at,action,related_bill_id,reason) VALUES (?,?,'superseded',?,?)",
                            (correction_of,now(),bill_id,row['correction_reason']))
                 event(db,'SUPERSEDE_BILL',staged_id)
+                original_document = db.execute('SELECT document_id FROM bills WHERE id=?', (correction_of,)).fetchone()[0]
+                if original_document != row['document_id']:
+                    event(db, 'APPROVE_REBILL', staged_id)
             event(db,'APPROVE_BILL',staged_id)
         return {'id':bill_id,'flags':flags}
 
@@ -185,7 +174,11 @@ class Ledger(BillLifecycle, InventoryEditing):
             stage=db.execute("SELECT * FROM staged WHERE id=? AND kind='intervals' AND status='pending'",(staged_id,)).fetchone()
             if not stage:
                 raise ValidationError('PENDING_INTERVAL_IMPORT_REQUIRED')
-            payload=json.loads(stage['payload'])
+            payload=stored_payload(stage,db)
+            document=db.execute('SELECT sha256,extension FROM documents WHERE id=?',(stage['document_id'],)).fetchone()
+            originals=parse_greenbutton(read_source(self.store,document))
+            if payload not in originals:
+                raise ValidationError('DRAFT_DATA_DAMAGED_RECOVERY_REQUIRED')
             meter=db.execute("SELECT id FROM meters WHERE code=? AND commodity='electricity' AND unit='kWh'",(meter_code,)).fetchone()
             if not meter:
                 raise ValidationError('MAP_TO_EXISTING_ELECTRICITY_KWH_METER')
@@ -240,9 +233,15 @@ class Ledger(BillLifecycle, InventoryEditing):
     def stages(self):
         with self.store.connect() as db:
             result=[]
-            for row in db.execute('SELECT s.*,d.filename,d.extension,b.status bill_status FROM staged s JOIN documents d ON d.id=s.document_id LEFT JOIN bills b ON b.staged_id=s.id ORDER BY s.id DESC LIMIT 500'):
+            for row in db.execute("SELECT s.*,d.filename,d.extension,b.status bill_status FROM staged s JOIN documents d ON d.id=s.document_id LEFT JOIN bills b ON b.staged_id=s.id WHERE s.status='pending' OR s.id IN (SELECT id FROM staged WHERE status<>'pending' ORDER BY id DESC LIMIT 500) ORDER BY s.id DESC"):
                 item=dict(row)
-                payload=json.loads(item['review_payload'] if item['kind']=='bill' and item['review_payload'] else item['payload'])
+                try:
+                    payload=stored_payload(row,db)
+                except ValidationError:
+                    item.pop('payload');item.pop('review_payload',None)
+                    item.update({'label':'Damaged review data','provider':'Recovery required','current_total':None,'data_error':'DRAFT_DATA_DAMAGED_RECOVERY_REQUIRED'})
+                    result.append(item)
+                    continue
                 item.pop('payload')
                 item.pop('review_payload',None)
                 if item['kind']=='bill':
@@ -255,11 +254,16 @@ class Ledger(BillLifecycle, InventoryEditing):
 
     def stage(self, staged_id):
         with self.store.connect() as db:
-            row=db.execute('SELECT s.*,d.filename,d.extension FROM staged s JOIN documents d ON d.id=s.document_id WHERE s.id=?',(staged_id,)).fetchone()
+            row=db.execute('SELECT s.*,d.filename,d.extension,d.sha256 source_sha256,d.importer_version FROM staged s JOIN documents d ON d.id=s.document_id WHERE s.id=?',(staged_id,)).fetchone()
             if not row:
                 raise ValidationError('ITEM_NOT_FOUND')
             item=dict(row)
-            item['payload']=json.loads(item['review_payload'] or item['payload']) if item['kind']=='bill' else json.loads(item['payload'])
+            try:
+                item['payload']=stored_payload(row,db)
+            except ValidationError:
+                item.pop('payload');item.pop('review_payload',None)
+                item['data_error']='DRAFT_DATA_DAMAGED_RECOVERY_REQUIRED'
+                return item
             item.pop('review_payload',None)
             if item['kind']=='bill':
                 try:
@@ -317,14 +321,19 @@ class Ledger(BillLifecycle, InventoryEditing):
         return {'channels':channels,'selected':channel,'readings':rows,'total_readings':total_count,
                 'display_timezone':'America/New_York','display_limit':1000}
 
-    def diagnostics(self, mode):
-        # Positive allowlist. Never include documents, filenames, IDs, usage,
-        # charges, accounts, exception messages, environment variables, or paths.
-        return {'app':'SKS UtilityOS','version':__version__,'schema_version':SCHEMA_VERSION,
-                'mode':mode,'runtime':{'python':platform.python_version(),'os_family':platform.system()},
-                'features':{'csv_template':True,'green_button_electricity_subset':True,'pdf_attachment_only':True,
-                            'portal_access':False,'outbound_connectors':False,'telemetry':False},
-                'support_instructions':'Review this file before sharing. Reproduce data issues with synthetic samples.'}
+    def diagnostics(self, mode, port=8765, *, running=False):
+        from .diagnostics import report
+        return report(self.store.directory, mode, port, running=running)
+
+    def audit_history(self, before=None):
+        from .audit import verify
+        if before is not None and (type(before) is not int or before < 1):
+            raise ValidationError('AUDIT_CURSOR_INVALID')
+        with self.store.connect() as db:
+            verify(db)
+            rows = [dict(r) for r in db.execute('SELECT id,at,code,staged_id,actor,subject_kind,subject_id,operation_id FROM audit_events WHERE id<? ORDER BY id DESC LIMIT 101', (before or 2**63-1,))]
+        return {'events':rows[:100], 'next_before':rows[99]['id'] if len(rows)>100 else None,
+                'attribution':'Single local operator; named-person attribution is unavailable.'}
 
     def export_csv(self):
         def safe(value):

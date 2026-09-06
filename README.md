@@ -1,6 +1,6 @@
 # SKS UtilityOS
 
-**Version 0.2.0 · staff-local utility ledger · synthetic demonstration**
+**Version 0.3.0 · staff-local utility ledger · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
@@ -17,7 +17,7 @@ bash scripts/setup.sh
 
 `Launch-Demo.command` and `Launch-Staff.command` are executable local launchers. They open the browser after startup and accept the same options as `run.py`. Stop the service with Ctrl+C in its terminal. The application listens only on IPv4 loopback. If port 8765 is occupied, use `--port 8878` and open the printed local URL.
 
-Choose **Open synthetic demo**. Its public passphrase is `synthetic-demo-only`. Demo imports require confirmation that the file is synthetic. Staff mode uses a separately created local application passphrase.
+Choose **Open synthetic demo**. Its public passphrase is `synthetic-demo-only`. Demo imports require confirmation that the file is synthetic. Staff mode uses a separately created local application passphrase. Staff cancellations and replacement approvals require that passphrase again.
 
 For repeatable import testing, use a fresh directory outside the repository:
 
@@ -54,11 +54,11 @@ bash scripts/setup.sh /approved/local/wheelhouse
 
 `requirements-bootstrap.txt` pins the installer; `requirements.txt` and `constraints-tested.txt` pin the tested runtime. See [dependency decisions](docs/DEPENDENCY_DECISIONS.md).
 
-This remains a single-operator local pilot. SQLite and backups have no application-level encryption. Staff need an approved encrypted disk, OS account, retention policy, and maintenance owner. Multi-user access and school deployment require additional decisions.
+This remains a single-operator local pilot. [Role enforcement is explicitly deferred](docs/ACCESS_AND_CONFIGURATION.md); audit actors identify operator context, not individual people. SQLite and backups have no application-level encryption. Staff need an approved encrypted disk, OS account, retention policy, and maintenance owner. Multi-user access and school deployment require additional decisions.
 
 ## Upgrade and recovery
 
-Version 0.2.0 uses **schema 2**. Starting the app never upgrades an existing schema-1 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a schema-1 backup before switching the database. Older code cannot read schema 2; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
+Version 0.3.0 uses **schema 3**. Starting the app never upgrades an existing schema-1 or schema-2 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 3; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
 
 Useful maintenance commands, with the selected mode and external data directory supplied consistently:
 
@@ -69,6 +69,21 @@ Useful maintenance commands, with the selected mode and external data directory 
 ```
 
 Private backups and ledger exports remain with staff. Only reviewed allowlisted diagnostics and synthetic reproductions are suitable for developer support. Releases are unsigned; hashes establish integrity, while trusted provenance requires the school's separate distribution decision.
+
+## Larger synthetic campus
+
+For a deterministic 24-month development fixture, create a new external directory:
+
+```sh
+.venv/bin/python scripts/synthetic_campus.py --data-dir /tmp/sks-new-campus
+.venv/bin/python run.py demo --data-dir /tmp/sks-new-campus --port 8884 --open
+```
+
+It contains 20 fictional buildings, 60 service points, 1,923 active invoices,
+1,927 retained versions and 288 interval readings, with seasonal usage,
+corrections, a supplier rebill, credits and deliberate anomalies. The generator
+refuses an existing directory; failed disposable generation can be repeated in
+a new directory. It uses the normal import/review services and no live data.
 
 ## Development verification
 
@@ -84,3 +99,15 @@ Private backups and ledger exports remain with staff. Only reviewed allowlisted 
 The extended browser test requires a **fresh synthetic demo**. It uses a separate browser profile, native HTTP/cookies/downloads, and desktop/mobile viewports; there is no transport bridge or mocked application API. Playwright is a development dependency only. An existing approved Chrome executable avoids an additional browser download.
 
 Read [verification results](docs/VERIFICATION.md), [release notes](docs/CHANGELOG.md), [architecture](docs/ARCHITECTURE.md), [invoice lifecycle](docs/INVOICE_LIFECYCLE.md), [security and limits](docs/SECURITY_AND_LIMITS.md), and [the roadmap](docs/ROADMAP.md). Continue development using `AGENTS.md`, `MASTER_PROMPT.md`, and the project-local engineering skill.
+
+Additional native recovery, audit, large-campus search/pagination and synthetic
+staff passphrase-confirmation checks create their own new external workspaces:
+
+```sh
+.venv/bin/python scripts/native_readiness_smoke.py \
+  --work-dir /tmp/sks-new-readiness-check \
+  --browser-executable '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+```
+
+Read the [operational contracts](docs/OPERATIONS.md), [access/configuration decision](docs/ACCESS_AND_CONFIGURATION.md),
+[release/signing notes](docs/RELEASE_AND_SIGNING.md) and [development/Git guide](docs/DEVELOPMENT.md).

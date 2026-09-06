@@ -1,8 +1,14 @@
 # Development status and next milestones
 
-## Implemented in 0.2.0
+## Current implementation
 
 The existing local service now includes reviewed CSV/manual PDF/limited electricity XML entry, saved drafts, full-invoice correction and rebill history, cancellation, independent credits, current mapping edits, active-only reporting/exports, fixed diagnostics, browser backup download, stopped-app restore, an explicit schema-1 upgrade, and source-only release verification. Native desktop/mobile browser verification runs directly on the development Mac.
+
+The 0.3.0 readiness milestone adds interruption-safe source publication, an
+append-oriented audit view, schema-3 provenance and migration coverage,
+diagnostics for local IT, staff passphrase confirmation and deterministic
+20-building campus tests. Named role enforcement remains deferred under the
+single-operator boundary; the exact proposed role contract is documented.
 
 ## Milestone A: actual-computer verification — complete on the development Mac
 

@@ -8,6 +8,14 @@ This workspace is exclusively for SKS UtilityOS software development, testing, t
 
 Version 0.2.0 continues the original implementation. Milestone A and the development portion of milestone B have been implemented and verified on the development Mac: native browser flows, invoice corrections/rebills/cancellation, saved draft history, mapping edits, backup recovery, explicit schema migration, and operator-controlled code-folder switching. Read `docs/VERIFICATION.md`, `docs/CHANGELOG.md`, and the actual tests before deciding more work is needed. School acceptance and real-data validation are still separate external decisions. The next optional entry-effort milestone needs a demonstrated synthetic-format use case; do not infer a missing feature from the historical priority list below.
 
+Version 0.3.0 is the subsequent production-readiness development milestone:
+atomic source recovery, schema-3 audit/provenance, ordered migration tests,
+privacy-safe operational diagnostics, staff passphrase confirmation and a larger
+synthetic campus. The single-operator role decision remains explicit in
+`docs/ACCESS_AND_CONFIGURATION.md`. Read the current verification report and
+release notes before choosing further work. This is not production deployment
+or school acceptance, and no portal/entry automation is implied.
+
 ## Situation and desired result
 
 The school has multiple buildings with separate electricity, water, heating, and other utility services. Finance and Facilities want one place to see reviewed invoices, costs, and consumption. The student developer will have no utility portal access and should receive no school passwords or private bill database.
@@ -24,7 +32,7 @@ You may use relevant installed engineering, testing, frontend, database, and sec
 
 ## What currently exists
 
-Version 0.2.0 uses FastAPI, SQLite, defusedxml, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
+Version 0.3.0 uses FastAPI, SQLite, defusedxml, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
 
 The app supports canonical CSV bills, PDF attachment with manual field entry, and a limited Green Button Download My Data XML importer for forward delta electricity energy. Staff review precedes approval. Invoice charges and measured usage stay separate. Synthetic fixtures include separate supplier charges, estimated readings, delivered heating fuel, and an abnormal water bill.
 

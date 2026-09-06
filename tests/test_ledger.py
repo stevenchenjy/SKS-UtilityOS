@@ -98,7 +98,7 @@ def test_diagnostics_allowlist_has_no_school_data(ledger,raw_csv):
     export=json.dumps(ledger.diagnostics('staff'))
     for secret in ['CONFIDENTIAL_PROVIDER','PRIVATE_ACCOUNT_7654','579.8','demo.csv',str(ledger.store.directory),'password']:
         assert secret not in export
-    assert set(ledger.diagnostics('staff'))=={'app','version','schema_version','mode','runtime','features','support_instructions'}
+    assert set(ledger.diagnostics('staff'))=={'app','version','schema_version','mode','runtime','features','checks','support_instructions'}
 
 def test_csv_export_protects_formula_text(ledger,raw_csv):
     identifier,bill=staged_bill(ledger,raw_csv);bill['provider']='=1+1'

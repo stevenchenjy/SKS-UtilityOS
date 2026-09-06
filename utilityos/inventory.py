@@ -37,7 +37,7 @@ class InventoryEditing:
                     db.execute('INSERT OR IGNORE INTO buildings(name) VALUES (?)', (value,))
                     building_id = db.execute('SELECT id FROM buildings WHERE name=?', (value,)).fetchone()[0]
                 db.execute('UPDATE meters SET building_id=? WHERE id=?', (building_id, entity_id))
-            db.execute('''INSERT INTO inventory_history(at,kind,entity_id,before_value,after_value,reason)
-                VALUES (?,?,?,?,?,?)''', (now(), kind, entity_id, before, value, reason))
-            event(db, 'EDIT_BUILDING_LABEL' if kind == 'building' else 'EDIT_METER_MAPPING')
+            history_id = db.execute('''INSERT INTO inventory_history(at,kind,entity_id,before_value,after_value,reason)
+                VALUES (?,?,?,?,?,?)''', (now(), kind, entity_id, before, value, reason)).lastrowid
+            event(db, 'EDIT_BUILDING_LABEL' if kind == 'building' else 'EDIT_METER_MAPPING', subject_kind='inventory_change', subject_id=history_id)
         return self.inventory()

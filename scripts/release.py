@@ -12,22 +12,31 @@ from hashlib import sha256
 import json
 from pathlib import Path, PurePosixPath
 import stat
+import re
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
 PREFIX='SKS-UtilityOS/'
 MANIFEST='RELEASE-MANIFEST.json'
-ROOT_FILES={'README.md','AGENTS.md','MASTER_PROMPT.md','LICENSE','NOTICE.md','.gitignore',
+ROOT_FILES={'README.md','AGENTS.md','MASTER_PROMPT.md','LICENSE','NOTICE.md','.gitignore','.gitattributes',
             'run.py','requirements-bootstrap.txt','requirements.txt','requirements-dev.txt','constraints-tested.txt',
             'Launch-Demo.command','Launch-Staff.command'}
 FOLDERS={'utilityos','web','samples','tests','scripts','docs','.agents'}
 SUFFIXES={'.py','.js','.css','.html','.md','.json','.csv','.xml','.pdf','.sh','.ps1','.txt','.sql'}
-SKIP={'__pycache__','.pytest_cache','.venv','.git','node_modules'}
+SKIP={'__pycache__','.pytest_cache','.venv','.git','node_modules','backups','sources','evidence','artifacts','dist','build','venv','env'}
+
+def source_allowed(relative):
+    parts=relative.parts
+    if not parts or any(part in SKIP or re.match(r'(?i)^(private(?:[-_]|$)|staff-data|demo-data|local-data|credentials|secrets|local-config|\.env(?:\.|$))',part) for part in parts):
+        return False
+    if len(parts)==1:
+        return relative.name in ROOT_FILES
+    return parts[0] in FOLDERS and relative.suffix in SUFFIXES and (relative.suffix.lower() not in {'.pdf','.csv','.xml'} or parts[0]=='samples')
 
 def source_files(root:Path):
     for path in sorted(root.rglob('*')):
         relative=path.relative_to(root)
-        if any(part in SKIP for part in relative.parts):continue
+        if any(part in SKIP or re.match(r'(?i)^(private(?:[-_]|$)|staff-data|demo-data|local-data|credentials|secrets|local-config|\.env(?:\.|$))',part) for part in relative.parts):continue
         if path.is_symlink():raise ValueError('RELEASE_SYMLINK_REJECTED')
         if not path.is_file():continue
         if len(relative.parts)==1:
@@ -35,7 +44,8 @@ def source_files(root:Path):
         elif relative.parts[0] not in FOLDERS or path.suffix not in SUFFIXES:continue
         if path.suffix.lower() in {'.pdf','.csv','.xml'} and relative.parts[0]!='samples':
             raise ValueError('ONLY_REVIEWED_SYNTHETIC_SAMPLE_DOCUMENTS_MAY_BE_PACKAGED')
-        yield relative.as_posix(),path.read_bytes()
+        if source_allowed(relative):
+            yield relative.as_posix(),path.read_bytes()
 
 def build(root:Path,destination:Path):
     if destination.resolve().is_relative_to(root.resolve()):
@@ -77,8 +87,12 @@ def verify(archive:Path):
                 or stat.S_ISLNK(info.external_attr>>16)):
                 raise ValueError('UNSAFE_ARCHIVE_MEMBER')
         manifest=json.loads(z.read(PREFIX+MANIFEST))
-        if manifest.get('format')!=1 or not isinstance(manifest.get('files'),dict):
+        if not isinstance(manifest,dict) or manifest.get('format')!=1 or not isinstance(manifest.get('files'),dict):
             raise ValueError('RELEASE_MANIFEST_INVALID')
+        if not all(isinstance(n,str) and isinstance(h,str) and re.fullmatch(r'[0-9a-f]{64}',h) for n,h in manifest['files'].items()):
+            raise ValueError('RELEASE_MANIFEST_INVALID')
+        if not all(source_allowed(PurePosixPath(n)) for n in manifest['files']):
+            raise ValueError('RELEASE_MEMBER_NOT_SOURCE')
         expected={PREFIX+n for n in manifest['files']}|{PREFIX+MANIFEST}
         if set(names)!=expected:raise ValueError('ARCHIVE_MEMBERS_DO_NOT_MATCH_MANIFEST')
         for name,digest in manifest['files'].items():

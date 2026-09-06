@@ -1,12 +1,4 @@
-"""SQLite schema and local-only persistence. Original files remain outside source."""
-from contextlib import contextmanager
-from pathlib import Path
-import sqlite3
-import os
-from . import SCHEMA_VERSION
-from .audit import TABLE as AUDIT_TABLE, TRIGGERS as AUDIT_TRIGGERS, verify as verify_audit
 
-SCHEMA = """
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS buildings (
  id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, area_sqft TEXT,
@@ -24,8 +16,7 @@ CREATE TABLE IF NOT EXISTS account_meters (
  UNIQUE(account_id,meter_id,valid_from));
 CREATE TABLE IF NOT EXISTS documents (
  id INTEGER PRIMARY KEY, sha256 TEXT UNIQUE NOT NULL, filename TEXT NOT NULL,
- extension TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL,
- importer_version TEXT NOT NULL DEFAULT 'legacy-unrecorded');
+ extension TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS staged (
  id INTEGER PRIMARY KEY, document_id INTEGER NOT NULL REFERENCES documents(id),
  kind TEXT NOT NULL CHECK(kind IN ('bill','intervals')), status TEXT NOT NULL DEFAULT 'pending'
@@ -57,6 +48,8 @@ CREATE TABLE IF NOT EXISTS interval_readings (
  channel_id INTEGER NOT NULL REFERENCES interval_channels(id), start_utc INTEGER NOT NULL,
  duration_s INTEGER NOT NULL CHECK(duration_s>0), quantity TEXT NOT NULL, quality TEXT NOT NULL,
  document_id INTEGER REFERENCES documents(id), PRIMARY KEY(channel_id,start_utc));
+CREATE TABLE IF NOT EXISTS audit_events (
+ id INTEGER PRIMARY KEY, at TEXT NOT NULL, code TEXT NOT NULL, staged_id INTEGER);
 CREATE TABLE IF NOT EXISTS bill_history (
  id INTEGER PRIMARY KEY, bill_id INTEGER NOT NULL REFERENCES bills(id),
  at TEXT NOT NULL, action TEXT NOT NULL CHECK(action IN ('approved','superseded','cancelled')),
@@ -68,53 +61,3 @@ CREATE TABLE IF NOT EXISTS draft_history (
 CREATE TABLE IF NOT EXISTS inventory_history (
  id INTEGER PRIMARY KEY, at TEXT NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('building','meter')),
  entity_id INTEGER NOT NULL, before_value TEXT NOT NULL, after_value TEXT NOT NULL, reason TEXT NOT NULL);
-"""
-
-
-class Store:
-    def __init__(self, directory: Path, mode: str, *, initialize=True, expected_schema=SCHEMA_VERSION):
-        self.directory = directory.resolve()
-        self.sources = self.directory / "sources"
-        self.path = self.directory / "utilityos.sqlite3"
-        if not initialize and not self.path.is_file():
-            raise ValueError("EXISTING_WORKSPACE_REQUIRED")
-        if initialize:
-            self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-        existing = self.path.is_file()
-        with self.connect() as db:
-            if existing:
-                try:
-                    settings = dict(db.execute("SELECT key,value FROM settings"))
-                except sqlite3.DatabaseError:
-                    raise ValueError("WORKSPACE_DATABASE_INVALID") from None
-                if settings.get('mode') != mode:
-                    raise ValueError("MODE_DATA_MISMATCH_USE_A_SEPARATE_DIRECTORY")
-                if settings.get('schema_version') != str(expected_schema):
-                    raise ValueError("SCHEMA_VERSION_UNSUPPORTED_REQUIRES_REVIEWED_MIGRATION")
-                if expected_schema >= 3 and verify_audit(db) != 'ok':
-                    raise ValueError("AUDIT_INTEGRITY_FAILED")
-            elif initialize and expected_schema == SCHEMA_VERSION:
-                db.executescript(SCHEMA + AUDIT_TABLE + AUDIT_TRIGGERS)
-                db.executemany("INSERT INTO settings VALUES (?,?)", [('schema_version',str(SCHEMA_VERSION)),('mode',mode)])
-            else:
-                raise ValueError("EXISTING_WORKSPACE_REQUIRED")
-        if initialize:
-            self.sources.mkdir(exist_ok=True, mode=0o700)
-            if os.name != 'nt':
-                self.directory.chmod(0o700)
-                self.sources.chmod(0o700)
-                self.path.chmod(0o600)
-
-    @contextmanager
-    def connect(self):
-        db = sqlite3.connect(self.path, timeout=20)
-        db.row_factory = sqlite3.Row
-        db.execute("PRAGMA foreign_keys=ON")
-        try:
-            yield db
-            db.commit()
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()

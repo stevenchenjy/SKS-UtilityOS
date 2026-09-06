@@ -17,9 +17,11 @@ from utilityos.db import Store
 from utilityos.security import set_password,has_password,DEMO_PASSWORD
 from utilityos.service import Ledger
 from utilityos.operations import instance_lock,backup,restore,check,migrate
-from utilityos import __version__
+from utilityos import __version__, SCHEMA_VERSION
+from utilityos.audit import acting_as
 
 
+@acting_as('synthetic_generator')
 def seed_demo(ledger):
     with ledger.store.connect() as db:
         if db.execute("SELECT 1 FROM settings WHERE key='demo_seed_complete'").fetchone():return
@@ -62,10 +64,14 @@ def main():
         raise ValueError('MIGRATION_REQUIRES_CONFIRM_MIGRATE')
     if args.command=='restore' and (not args.archive or not args.confirm_restore):
         raise ValueError('RESTORE_REQUIRES_ARCHIVE_AND_CONFIRM_RESTORE')
-    with instance_lock(config.data_dir):
+    if args.command=='diagnostics':
+        from utilityos.diagnostics import report
+        print(json.dumps(report(config.data_dir,mode,args.port),indent=2))
+        return
+    with instance_lock(config.data_dir), acting_as('local_operator' if args.command in {'demo','staff'} else 'local_maintainer'):
         if args.command=='migrate':
             saved=migrate(config.data_dir,mode)
-            print('Schema 1 upgraded to schema 2. Pre-upgrade private backup:',saved)
+            print(f'Workspace upgraded to schema {SCHEMA_VERSION}. Pre-upgrade private backup:',saved)
             return
         store=Store(config.data_dir,mode,initialize=args.command in {'demo','staff'} or args.restore_to_new_workspace)
         ledger=Ledger(store)
@@ -73,9 +79,6 @@ def main():
             saved=backup(store)
             print('PRIVATE BACKUP CREATED. Contains records, source files, and password hash.')
             print(saved)
-            return
-        if args.command=='diagnostics':
-            print(json.dumps(ledger.diagnostics(mode),indent=2))
             return
         if args.command=='check':
             print(json.dumps(check(store),indent=2))

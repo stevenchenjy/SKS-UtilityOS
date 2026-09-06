@@ -6,6 +6,8 @@ import time
 import sqlite3
 import re
 from .operations import backup
+from .audit import acting_as
+from .storage import read_source
 from urllib.parse import unquote
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, FileResponse, Response
@@ -97,6 +99,17 @@ def create_app(config: Config):
             raise ValidationError('JSON_OBJECT_REQUIRED')
         return data
 
+    def reauthenticate(data):
+        if config.mode == 'demo':
+            return 'local_operator'
+        if sessions.rate_limited():
+            raise ValidationError('TOO_MANY_ATTEMPTS_WAIT_ONE_MINUTE')
+        password = data.get('current_passphrase')
+        if not isinstance(password, str) or not verify_password(store, password):
+            sessions.failures.append(time.monotonic())
+            raise ValidationError('CURRENT_PASSPHRASE_REQUIRED_FOR_SENSITIVE_ACTION')
+        return 'reauthenticated_operator'
+
     @app.get('/api/meta')
     def meta(request: Request):
         return {'authenticated':sessions.get(request.cookies.get('utilityos_session')) is not None,'app':'SKS UtilityOS','version':__version__,'mode':config.mode,'local_only':True,'synthetic':config.mode=='demo'}
@@ -156,6 +169,15 @@ def create_app(config: Config):
         data=await json_body(request)
         return ledger.save_draft(item_id,data.get('payload'),data.get('revision'),data.get('correction_of'),data.get('reason',''))
 
+    @app.post('/api/staged/{item_id}/recover')
+    async def recover_draft(item_id:int,request:Request):
+        data=await json_body(request)
+        return ledger.recover_draft(item_id,data.get('revision'),data.get('acknowledge') is True)
+
+    @app.get('/api/audit')
+    def audit_history(before:int|None=None):
+        return ledger.audit_history(before)
+
     @app.post('/api/bills/{bill_id}/correct')
     async def correct(bill_id:int,request:Request):
         return ledger.create_correction(bill_id,(await json_body(request)).get('reason',''))
@@ -163,7 +185,8 @@ def create_app(config: Config):
     @app.post('/api/bills/{bill_id}/cancel')
     async def cancel(bill_id:int,request:Request):
         data=await json_body(request)
-        return ledger.cancel_bill(bill_id,data.get('reason',''),data.get('acknowledge') is True)
+        with acting_as(reauthenticate(data)):
+            return ledger.cancel_bill(bill_id,data.get('reason',''),data.get('acknowledge') is True)
 
     @app.post('/api/inventory/{kind}/{entity_id}')
     async def edit_inventory(kind:str,entity_id:int,request:Request):
@@ -192,7 +215,8 @@ def create_app(config: Config):
         data=await json_body(request)
         item=ledger.stage(item_id)
         if item['kind']=='bill':
-            return ledger.approve_bill(item_id,data.get('payload'),data.get('acknowledge') is True,revision=data.get('revision',0))
+            with acting_as(reauthenticate(data) if item.get('correction_of') is not None else 'local_operator'):
+                return ledger.approve_bill(item_id,data.get('payload'),data.get('acknowledge') is True,revision=data.get('revision',0))
         if data.get('acknowledge') is not True:
             raise ValidationError('CONFIRM_INTERVAL_MAPPING_AND_SOURCE_REVIEW')
         return ledger.approve_intervals(item_id,data.get('meter_code',''))
@@ -218,6 +242,7 @@ def create_app(config: Config):
             row=db.execute('SELECT * FROM documents WHERE id=?',(document_id,)).fetchone()
         if not row:
             return JSONResponse({'error':'SOURCE_NOT_FOUND'},status_code=404)
+        read_source(store,row)
         path=store.sources/f"{row['sha256']}{row['extension']}"
         return FileResponse(path,media_type='application/octet-stream',filename=f"local-source-{document_id}{row['extension']}",content_disposition_type='attachment')
 
@@ -227,11 +252,11 @@ def create_app(config: Config):
 
     @app.get('/api/diagnostics')
     def diagnostics():
-        return ledger.diagnostics(config.mode)
+        return ledger.diagnostics(config.mode,config.port,running=True)
 
     @app.get('/api/diagnostics/export')
     def diagnostics_export():
-        return Response(json.dumps(ledger.diagnostics(config.mode),indent=2),media_type='application/json',
+        return Response(json.dumps(ledger.diagnostics(config.mode,config.port,running=True),indent=2),media_type='application/json',
                         headers={'Content-Disposition':'attachment; filename="utilityos-safe-diagnostics.json"'})
 
     @app.get('/api/ledger/export')

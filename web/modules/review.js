@@ -26,7 +26,7 @@ export async function showReview(container,ctx) {
   const pending=stages.filter(r=>r.status==='pending').length;
   ctx.updatePending(pending);
   container.innerHTML=header('Review queue','Check source records before they enter the ledger.',`<button class="primary" id="import-review">Import a file</button>`)+
-    `<div class="tabs" role="group" aria-label="Review filter"><button class="active" data-filter="pending">Awaiting review <span>${pending}</span></button><button data-filter="all">All imports</button></div><div id="review-list"></div>`;
+    `<div class="tabs" role="group" aria-label="Review filter"><button class="active" data-filter="pending">Awaiting review <span>${pending}</span></button><button data-filter="all">All imports</button></div><p class="caption">All pending drafts and the latest 500 closed imports. Older invoices remain searchable in Invoice ledger.</p><div id="review-list"></div>`;
   function render(filter){
     const rows=stages.filter(r=>filter==='all'||r.status==='pending');
     $('#review-list').innerHTML=rows.length?`<section class="panel table-panel"><div class="table-scroll"><table><thead><tr><th>Source / reference</th><th>Type</th><th>Status</th><th class="numeric">Current charges</th><th></th></tr></thead><tbody>${rows.map(row=>`<tr><td><strong>${esc(row.label)}</strong><small>${esc(row.provider)} · ${esc(row.filename)}</small></td><td>${row.kind==='bill'?'Utility invoice':'Interval data'}</td><td><span class="status ${row.status}">${esc(title(row.bill_status||row.status))}</span></td><td class="numeric">${row.current_total?exactDollars(Number(row.current_total)*100):row.interval_count?`${row.interval_count} readings`:'Needs entry'}</td><td class="numeric"><button class="secondary compact" data-review="${row.id}">${row.status==='pending'?'Review':'View'}</button></td></tr>`).join('')}</tbody></table></div></section>`:empty('The review queue is clear','Import a CSV, an electricity XML export, or a PDF source to add the next item.');
@@ -38,6 +38,7 @@ export async function showReview(container,ctx) {
 }
 export async function showStage(container,ctx,id) {
   const item=await api(`/staged/${id}`);
+  if(item.data_error)return showDamagedStage(container,ctx,item);
   const readonly=item.status!=='pending';
   if(item.kind==='intervals')return showIntervalStage(container,ctx,item);
   let payload=item.payload;
@@ -45,6 +46,7 @@ export async function showStage(container,ctx,id) {
     container.innerHTML=`<button class="text-button back-button" id="back-review">Back to review queue</button>`+
       header(payload.invoice_number||'Enter the source invoice',`${item.filename} · ${title(item.bill?.status||item.status)}`,`<a class="secondary" href="/api/sources/${item.document_id}">Download original locally</a>`)+
       (item.extension==='.pdf'?notice('PDFs are stored locally as source attachments. Open the downloaded original in your trusted PDF viewer and enter the fields. Automatic PDF extraction and OCR are outside this release.'):notice('Compare the imported values with the original. The source file is retained unchanged.'))+
+      `<details class="panel"><summary>Source provenance</summary><p class="source-hash">SHA-256: ${esc(item.source_sha256)}</p><p>Importer release: ${esc(item.importer_version)}. Earlier releases did not record their importer version. The retained original and saved review revisions stay separate.</p></details>`+
       `<form id="bill-editor"><fieldset ${readonly?'disabled':''}><section class="panel"><h2>Invoice details</h2><div class="form-grid three">
       ${field('Provider','provider',payload.provider)}${field('Local account label','account_alias',payload.account_alias)}${field('Invoice reference','invoice_number',payload.invoice_number)}
       ${field('Invoice date','bill_date',payload.bill_date,'date')}${field('Total current charges, USD','current_total',payload.current_total,'text','inputmode="decimal"')}
@@ -52,7 +54,7 @@ export async function showStage(container,ctx,id) {
       ${payload.lines.map((line,index)=>lineFields(line,index,readonly)).join('')}
       ${readonly?'':`<button type="button" id="add-line" class="secondary">Add a service line</button>`}</fieldset></form>
       ${lifecyclePanel(item)}
-      ${readonly?'': `<section class="review-checks"><h2>Review checks</h2><div id="flags">${renderFlags(item.flags)}</div><label class="check-label"><input type="checkbox" id="acknowledge"> <span>I checked the source, current charges, units, and meter-to-building mapping.</span></label><div class="action-row"><button class="primary" id="approve" disabled>Approve into ledger</button><button class="secondary" id="validate">Check fields</button><button class="text-button danger-text" id="reject">Reject draft</button></div></section>`}`;
+      ${readonly?'': `<section class="review-checks"><h2>Review checks</h2><div id="flags">${renderFlags(item.flags)}</div><label class="check-label"><input type="checkbox" id="acknowledge"> <span>I checked the source, current charges, units, and meter-to-building mapping.</span></label>${item.correction_of&&ctx.mode==='staff'?field('Confirm local app passphrase','current_passphrase','','password','autocomplete="current-password" maxlength="256"'):''}<div class="action-row"><button class="primary" id="approve" disabled>Approve into ledger</button><button class="secondary" id="validate">Check fields</button><button class="text-button danger-text" id="reject">Reject draft</button></div></section>`}`;
     $('#back-review').onclick=()=>ctx.navigate('review');
     bindLifecycle(item,ctx,collectBill);
     if(readonly)return;
@@ -74,7 +76,7 @@ export async function showStage(container,ctx,id) {
     };
     $('#approve').onclick=async()=>{
       $('#approve').disabled=true;
-      try {await api(`/staged/${id}/approve`,{method:'POST',body:{payload:collectBill(),revision:item.revision,acknowledge:$('#acknowledge').checked}});toast('Approved. The ledger totals have updated.');ctx.navigate('review');}
+      try {await api(`/staged/${id}/approve`,{method:'POST',body:{payload:collectBill(),revision:item.revision,acknowledge:$('#acknowledge').checked,current_passphrase:$('[name=current_passphrase]')?.value}});toast('Approved. The ledger totals have updated.');ctx.navigate('review');}
       catch(error){$('#flags').innerHTML=notice(message(error.message),'danger');$('#approve').disabled=false;}
     };
     $('#reject').onclick=async()=>{if(confirm('Reject this draft? The original source will remain in local history.')){await api(`/staged/${id}/reject`,{method:'POST',body:{}});toast('Draft rejected. Source preserved locally.');ctx.navigate('review');}};
@@ -96,4 +98,16 @@ async function showIntervalStage(container,ctx,item){
     catch(error){$('#interval-error').innerHTML=notice(message(error.message),'danger');}
   };
   $('#reject-interval').onclick=async()=>{if(confirm('Reject this interval draft?')){await api(`/staged/${item.id}/reject`,{method:'POST',body:{}});ctx.navigate('review');}};
+}
+
+function showDamagedStage(container,ctx,item){
+  container.innerHTML=header('Review data needs recovery','This item has not been silently repaired.',`<a class="secondary" href="/api/sources/${item.document_id}">Download original locally</a>`)+notice('The saved review could not be validated. Financial records remain unchanged. Recover the most recent readable saved revision or original draft, then check it against the source before approval. If recovery is unavailable, preserve the workspace and ask authorized local IT to inspect it.','danger')+`<div id="recovery-error"></div>`+(item.status==='pending'?`<section class="panel">${item.kind==='bill'?'<label class="check-label"><input type="checkbox" id="recover-ack"><span>I will review the recovered values against the retained original.</span></label><button class="primary" id="recover-draft" disabled>Recover saved draft</button>':''}<button class="secondary" id="reject-damaged">Reject damaged draft</button></section>`:'')+`<button class="secondary" id="recovery-back">Back to review queue</button>`;
+  $('#recovery-back').onclick=()=>ctx.navigate('review');
+  if(item.status!=='pending')return;
+  const fail=error=>$('#recovery-error').innerHTML=notice(message(error.message),'danger');
+  if(item.kind==='bill'){
+    $('#recover-ack').onchange=e=>$('#recover-draft').disabled=!e.target.checked;
+    $('#recover-draft').onclick=async()=>{try{await api(`/staged/${item.id}/recover`,{method:'POST',body:{revision:item.revision,acknowledge:$('#recover-ack').checked}});await ctx.openStage(item.id);}catch(e){fail(e);}};
+  }
+  $('#reject-damaged').onclick=async()=>{try{await api(`/staged/${item.id}/reject`,{method:'POST',body:{}});await ctx.navigate('review');}catch(e){fail(e);}};
 }

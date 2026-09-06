@@ -6,12 +6,12 @@ Use a school-controlled encrypted disk, approved staff-only OS account, and a na
 
 The current service supports one operator on the same computer at `127.0.0.1`. Separate installations do not synchronize. The terminal remains open while the service runs; Ctrl+C stops it. Use **Lock workspace** to revoke the current browser session. A shared server, unattended updater, remote administration, and private data in AI tools are outside this release.
 
-Version 0.2.0 uses schema 2. macOS arm64 launch/setup, native Chrome, synthetic staff setup, backup recovery, and version switching were tested. Windows launchers and ACLs still require native target validation. School IT approval of the actual staff machine remains outstanding.
+Version 0.3.0 uses schema 3. macOS arm64 launch/setup, native Chrome, synthetic staff setup, backup recovery, and version switching were tested. Windows launchers and ACLs still require native target validation. School IT approval of the actual staff machine remains outstanding.
 
 ## Install into a separate code folder
 
 1. Obtain the source ZIP through the school's approved distribution process. Verify who supplied it separately from its integrity manifest. The release is unsigned; no Apple/Windows certificate or paid distribution mechanism has been chosen.
-2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/SKS-UtilityOS-0.2.0.zip` using a trusted copy of the verifier. A matching hash alone does not establish trusted authorship.
+2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/SKS-UtilityOS-0.3.0.zip` using a trusted copy of the verifier. A matching hash alone does not establish trusted authorship.
 3. Unpack into a new code folder. Keep every private data directory and backup outside it and outside cloud-synchronized folders. Do not overwrite the previous release.
 4. Use an approved Python 3.11+. Run `bash scripts/setup.sh` on macOS, or the supplied PowerShell setup through normal school policy. Setup writes only the new folder's `.venv`. It never selects or opens a staff workspace.
 5. Run a fresh synthetic demo and verify the browser. Supply the same explicit `--data-dir` and `--port` when repeating maintenance or launch commands.
@@ -64,22 +64,39 @@ Use `--data-dir /approved/local/workspace` to choose another approved location. 
 
 Maintenance commands require the workspace to be stopped. The browser can create a consistent backup while its app is running. No scheduled download, silent migration, or unattended switch is implemented.
 
-## Upgrade schema 1 to schema 2
+## Upgrade schema 1 or 2 to schema 3
 
-This is the only implemented schema migration. Normal startup of 0.2.0 refuses a schema-1 database without migrating it. After the separate code review, dependency checks, synthetic rehearsal, and school approval:
+0.3.0 implements ordered 1 → 2 → 3 and 2 → 3 migrations. Startup never migrates.
+After source/dependency review, synthetic rehearsal and school approval:
 
-1. Stop version 0.1.0 and create a backup using that version. Retain both its source release and working dependency environment.
-2. In the prepared 0.2.0 folder, run:
+1. Stop the old app. Back it up with its own version and retain the old code and
+   environment. Older code cannot open schema 3.
+2. From the separately prepared 0.3.0 folder, run:
 
    ```sh
    .venv/bin/python run.py migrate --mode staff \
      --data-dir /approved/local/workspace --confirm-migrate
    ```
 
-3. The command requires the workspace lock, verifies integrity and sources, and makes an additional schema-1 backup. It migrates a database copy, validates foreign keys and integrity, then atomically replaces the database. Original source files are untouched. Failure before replacement leaves the original database and backup available.
-4. Run `check` and launch the updated app. Verify active invoices, retained original reviews, source downloads, and a disposable test of the correction workflow before accepting the release.
+3. The command locks the stopped workspace, checks integrity and retained sources,
+   and creates another backup in the original schema. It applies every registered
+   step in one transaction on a copy, checks integrity/foreign keys/audit history,
+   then atomically switches the database. Original source bytes are unchanged.
+4. Run `check`, launch 0.3.0 and verify totals, versions, original downloads, audit,
+   exports and backup before accepting the switch. Historical importer versions
+   and actor identities are explicitly marked unrecorded/unknown.
 
-For rollback, stop 0.2.0 and use the retained **0.1.0 code and pre-upgrade schema-1 backup**. Restore into a separate new recovery directory using the old version's restore command, then point that old version at the recovered directory. Do not open schema 2 with old code or copy its database back under an old release. Preserve the upgraded workspace until staff decides how to recover any later entries. Other schema transitions are unsupported.
+Schema 3 adds the append-oriented audit chain and document importer version; it
+was not introduced just to test migrations. Frozen schema-1/schema-2 fixtures
+and synthetic future-step tests exercise the migration runner. Unregistered
+paths fail before switching any data.
+
+Rollback requires the retained old release and its compatible pre-upgrade backup
+in a **new recovery directory**. Stop the new app, restore using the old version's
+commands, and verify that recovered installation before switching to it. Preserve
+the upgraded workspace for recovery of later entries. There is no schema downgrade
+or automatic merging of post-backup work. See `OPERATIONS.md` for interruption
+states and audit continuity across restore.
 
 ## Backup and restoration
 
@@ -115,3 +132,17 @@ Restoring an older snapshot can leave immutable source files that are no longer 
 Preview the allowlisted diagnostic JSON before sharing. It excludes record labels, quantities, charges, filenames, paths, source text, histories/reasons, and credentials. Give data-specific problems to authorized school IT for private inspection and a synthetic reproduction. Do not send the developer private invoices, backups, database files, or a staff browser session.
 
 Before real-data use, the school must approve the installation and trusted distribution, target OS/browser, dependencies/advisories, local data and encryption policies, access/retention, backup destinations, named maintainer, and patch cadence. Finance must confirm current charges, credit/rebill treatment, and service-date semantics; Facilities must confirm physical meter mappings and coverage. No real records, school installation, public publication, or portal integration was performed in development.
+
+## Operational diagnostics and authorization
+
+The browser support page previews fixed diagnostic categories and the private
+audit view separately. `diagnostics` can inspect an incompatible or damaged
+stopped database without opening records or changing its bytes. `check` additionally
+validates every retained source and the audit chain. A low-space warning is a
+coarse threshold, not a guarantee that a particular backup will fit.
+
+Staff cancellation and replacement approval require the local app passphrase
+again. Restore/migration require stopped-app OS access and explicit confirmation.
+Named roles remain deferred; see `ACCESS_AND_CONFIGURATION.md`. For unsigned
+source distribution and the future macOS signing decision, see
+`RELEASE_AND_SIGNING.md`. No update runs unattended.

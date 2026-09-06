@@ -1,84 +1,135 @@
-# Development verification — 0.2.0
+# Development verification — 0.3.0
 
-## Baseline audit before 0.3.0 changes
+Date: 2026-09-06. macOS arm64 (Darwin 25.6.0), Python 3.13.2,
+native Chrome 152.0.7977.82, Playwright 1.57.0. Every workspace, source, credential
+and screenshot used here was synthetic and created outside the repository.
 
-Repeated on 2026-09-06 from the unchanged tagged source and verified archive:
-100 tests passed in the existing environment and in a fresh wheelhouse
-installation; dependency consistency and the 66-file manifest passed. Native
-headed Chrome repeated the complete desktop/mobile import, review, correction,
-rebill, cancellation, export, login/logout and browser-backup sequence. Recovery
-into a new workspace passed integrity and native browser checks. The stopped-app
-schema-1 to schema-2 CLI migration also passed. No regression in those baseline
-flows was observed.
+## Baseline before changes
 
-Additional failure probes, reproduced **before application modifications**,
-identified three existing recovery defects for 0.3.0:
+The original 0.2.0 working source matched all 66 entries in the verified archive.
+Its full suite passed **100 tests** in both the existing environment and a fresh
+wheelhouse installation. Native headed Chrome repeated login/logout, CSV,
+PDF-assisted entry, XML, approval/rejection, corrections/rebills/cancellation,
+exports, backup and desktop/mobile navigation. Browser-generated backup recovery,
+stopped-app schema-1 → 2 migration and release integrity passed.
 
-- Killing a child process after a partial source write leaves a truncated final
-  hash-named file. Retrying the same import fails with `SOURCE_STORAGE_CONFLICT`.
-- Killing restore during `copy2` over a retained source leaves that source
-  truncated, although the original database remains. The integrity check fails.
-- A synthetically corrupted saved draft raises `JSONDecodeError` for the entire
-  review list. The remaining valid drafts cannot be reviewed through that list.
+Before modifying application code, real child-process interruption probes
+reproduced truncated final source files during import and overwritten sources
+during restore. A corrupted review payload also broke the whole review list.
+Those observations were recorded in Git before the fixes. Ordinary 0.2.0 paths
+passed; roadmap wording was not treated as evidence of a missing implementation.
 
-These are new interruption/corruption coverage findings, not claims that normal
-0.2.0 imports, corrections, or recovery were absent. Evidence and disposable
-workspaces remain outside Git. The next changes address them while preserving
-the successful baseline contracts.
+## Regression and failure recovery
 
-Date: 2026-09-06. Platform: macOS arm64 (Darwin 25.6.0), Python 3.13.2, native Chrome 152.0.7977.82, Playwright 1.57.0. All workspaces used known synthetic fixtures and were created outside the source folder. No private school installation, browser profile, bill, password, or backup was inspected.
+The final suite passed **142 tests** in both the development environment and the
+independently installed source package. Execution evidence remains external. Two upstream deprecation
+warnings remain: Starlette's httpx test client and AnyIO's BlockingPortal alias.
+They do not fail the suite. `pip check` reports no conflicts. The existing pinned
+environment's pip-audit 2.10.1 scan on this date found **no known vulnerabilities**
+and ignored no advisory IDs. No dependency was added for 0.3.0.
 
-## Automated outcomes
+Tests retain the previous accounting, lifecycle, imports, security and release
+coverage, and add these recovery checks:
 
-- Initial suite: **66 passed**, one upstream deprecation warning. The first attempted run could not start until the already-declared development dependencies were installed.
-- Final suite: **100 passed**, two upstream test-client deprecation warnings. Repeated against an independently installed source release with its own virtual environment, also **100 passed**.
-- `pip check`: no dependency conflicts in both development and clean-install environments.
-- Live PyPI advisory scan with pip-audit 2.10.1: initial findings in Starlette, pytest, and pip; **no known vulnerabilities** after the documented updates. No ignored advisory identifiers. See `DEPENDENCY_DECISIONS.md`.
-- Source archive verification checks its complete manifest, source-only membership, required bootstrap/schema fixture, and executable launcher attributes. No runtime databases, backups, environments, screenshots, or non-development documents are packaged.
-
-The remaining warnings are the upstream Starlette/httpx test-client deprecation and AnyIO's deprecated BlockingPortal alias. They do not fail tests; dependencies were not added solely to suppress warnings. Advisory results are dated rather than a security certification.
-
-Coverage includes invoice accounting, CSV/XML validation, negative credits, supply-only treatment, duplicate files/invoices, same-reference replacement chains, new-source rebills, multiple meters, unrelated overlaps, atomic failed approval, cancellation, rejected corrections, saved partial entry, stale revisions/mappings, source retention, interval conflicts and duplicate stream mapping, tiny decimal round trips, authentication/origin/CSRF, diagnostic exclusions, backup integrity, failed writes, migration failure, and recovery.
-
-## Native browser evidence
-
-The flow under test is: local launch → login → import/review → approve or reject → active ledger/history → downloads/backup → logout, including recovery into another workspace.
-
-The Browser plugin was unavailable. The existing Playwright dependency controlled an isolated native Chrome profile through real loopback HTTP. There was **no HTTP transport bridge, mocked API, private browser profile, remote tunnel, or change to browser administration policy**. Headed Chrome and the native macOS launchers were also exercised.
-
-| Check | Outcome |
+| Scenario actually executed | Verified result |
 |---|---|
-| Page identity and nonblank content | Correct local URL, `Overview | SKS UtilityOS`, and functional screens |
-| Runtime/console | Zero unexpected console warnings/errors or uncaught page errors; the explicit duplicate-file check returns the expected HTTP 422 |
-| Desktop / mobile | 1440×1000 and 390×844; six navigation screens, dialogs, forms, tables, and exports exercised; no document-wide horizontal overflow |
-| Login/logout | Native HttpOnly/SameSite cookie, authenticated navigation, cookie removal and session revocation |
-| CSV | Upload, unchanged source download, validation, acknowledgement, approval, and duplicate rejection |
-| PDF-assisted entry | Original bytes downloaded unchanged; the supplied synthetic water invoice's actual printed values manually entered, saved, reopened, and approved |
-| XML | Supported file imported, mapping confirmed to `DEMO-E01`, approved; interval and bill draft rejection exercised |
-| Corrections | Transcription correction saved and approved; active charge changes from $579.80 to $500; original retained as superseded |
-| Supplier rebill | Separate source imported and explicitly linked; same invoice reference replaces the $500 version with $499.80 |
-| Rejection/cancellation | Mobile correction rejection leaves the active original intact; mobile PDF invoice cancellation retains history and excludes its charges/quantity |
-| Credit/report precision | Independent October credit is −$50 with zero consumption; chart labels remain separated; decimal strings retain precision |
-| Mapping | Mobile meter reassignment and building rename update grouping with before/after history |
-| Downloads | Original CSV/PDF/XML source links, private ledger CSV, safe diagnostic JSON, private backup ZIP; mobile exports |
-| Backup/restore | Browser-generated ZIP restored into a separate workspace; matching dashboard/active totals, source integrity, login, exports, and native browser smoke checks |
+| Kill during partial source write or after source publication | No partial document/invoice rows; retry succeeds or explicitly identifies an already committed source |
+| Kill within approval transaction | Original financial state and pending review remain; retry posts once |
+| Kill after approval commit before caller response | Approved state remains; retry cannot duplicate it |
+| Kill within migration transaction or before database switch | Original bytes/schema remain usable; backup exists; explicit retry succeeds |
+| Kill restore during source publication or before database switch | Current financial rows and original source hashes remain valid; retry restores the selected snapshot |
+| Kill incomplete backup / simulate full-disk write failure | No unfinished backup is published; failed import creates no financial rows |
+| Corrupt JSON, wrong payload structure or changed saved revision | Other reviews remain accessible; approval is blocked; acknowledged recovery stays pending |
+| No readable draft history | Bounded recovery failure, with source retention and rejection still available |
+| Changed cached XML readings | Approval refuses data that does not match its retained original |
+| Tampered audit / update-delete attempt | Append rules reject mutation; startup/check/backup detect invalid history |
+| Restore audit boundary | Boundary hash matches the exact head actually retained in the safety backup |
+| Future synthetic upgrade from each supported schema | Registered steps commit together; failed step rolls back; unknown path creates no replacement |
+| Old pending draft beyond 500 closed imports | Pending review stays visible; closed history stays bounded |
 
-The final synthetic ledger export verifies September's active current charges at **$499.80** after replacement and cancellation, and October's independent credit at **−$50.00**. Superseded originals and the cancelled PDF are excluded. Screenshots were inspected for desktop history, PDF review, mobile cancellation/mapping, corrected reports, support, and negative-credit charts. Screenshot/log evidence is retained outside the repository.
+The interruption tests terminate separate Python processes executing production
+storage/ledger/maintenance operations at test-controlled checkpoints. They do
+not add runtime fault hooks or claim physical power-loss/drive-failure testing.
+Fixed error/diagnostic schemas are tested with synthetic path, filename, account,
+amount, configuration, environment and credential sentinels.
 
-## Operational checks actually run
+## Native browser outcomes
 
-- Native executable `Launch-Demo.command`, argument forwarding, browser opening after startup, and Ctrl+C shutdown on this Mac. Port 8765 was occupied; verification used disposable loopback ports. A second service on an occupied test port received a fixed `LOCAL_PORT_UNAVAILABLE_CHOOSE_ANOTHER_PORT` error.
-- Native `Launch-Staff.command` first-time passphrase setup in a newly created **synthetic staff-mode** directory, followed by browser login, sample CSV approval, ledger export, and logout. No default private staff directory was opened.
-- Source archive unpacked to a separate folder; `scripts/setup.sh` installed from a prepared local wheelhouse using `--no-index` and wheels only. The clean environment ran the complete regression suite. Database/source hashes before and after code installation matched.
-- Deliberate same-schema switch: stop the original app, back up, run `check` with the second code folder, and launch that folder against the same known synthetic workspace. Native browser checks and exports passed. The prior code folder remains usable for rollback.
-- Explicit schema 1 → 2 upgrade of a full synthetic demo, including database/foreign-key/source checks and pre-upgrade backup. Automated tests also validate original IDs, reviewed payloads, source bytes, password hash, and new corrections after migration.
-- Rollback rehearsal with the retained 0.1.0 code and pre-upgrade schema-1 backup restored into a new recovery directory. Old-version integrity and mode checks passed. This does not assert that old code can read schema 2.
-- Damaged paths, hashes, mode/schema, foreign keys, malformed archives, failed backup writes, failed final migration replacement, and stopped-workspace locks tested. Failed migration preserves the original database; failed restore does not replace it. Orphaned source reimports require identical bytes.
+The Browser plugin was unavailable; the existing Playwright dependency controlled
+isolated native Chrome profiles through real loopback HTTP. No transport bridge,
+mocked API, private browser session, remote tunnel or device-policy change was used.
+The full workflow and readiness checks passed in the workspace and independently
+installed source package, with **zero unexpected console/runtime errors**.
 
-## Remaining external validation
+| Flow | Evidence |
+|---|---|
+| Application launch and sessions | Native macOS demo/staff launch, first-time synthetic staff passphrase setup; local login, HttpOnly/SameSite cookie, logout/revocation |
+| CSV / PDF-assisted / XML | Uploads, original/sample downloads, retained bytes, manual PDF values, validation, mapping, approval and rejection |
+| Invoice lifecycle | Correction, new-source supplier rebill, same reference, independent negative credit, mobile rejection/cancellation and mapping history |
+| Damaged bill draft | Isolated recovery screen, acknowledged recovery of saved values, fresh review acknowledgement and approval |
+| Staff sensitive operations | Missing passphrase blocks replacement approval; correct passphrase approves; mobile cancellation confirms passphrase; actor context appears in audit |
+| Audit | Current/older event pages, private review links, bounded fields and truthful shared-operator attribution |
+| Large ledger | 100-row paging, lookup of an old invoice, all 24 months, current totals and complete CSV export |
+| Responsive behavior | 1440×1000 and 390×844; six screens, dialogs, input controls and downloads; no page-wide horizontal overflow |
+| Restore | Native browser recovery of a browser-generated backup, matching ledger/source integrity and fresh login |
 
-Windows launch/ACLs, other browsers, the actual staff workstation, Finder quarantine/Gatekeeper treatment of a distributed archive, code signing/trusted distribution, school ownership/retention/encryption decisions, and Finance/Facilities validation against private source records remain unverified. No public publishing, school installation, portal access, paid integration, cloud extraction, or live data occurred. This completes the development milestone, not school pilot acceptance.
+The expected negative HTTP responses are the explicit duplicate-source rejection
+and missing staff passphrase in their respective tests. Screenshots of recovered
+entry, source provenance, mobile passphrase confirmation, audit history and campus
+overview were inspected. Screenshots/downloads remain outside Git.
+
+## Larger campus and version switching
+
+The deterministic fixture includes **20 buildings, 60 service points, 80 accounts,
+six synthetic vendors, 24 service months, 1,923 active invoices, 1,927 retained
+versions and 288 interval readings**. It uses electricity, water, gas, oil and
+propane, separate supply charges, seasonal profiles, three corrections, a supplier
+rebill, three credits and two deliberate anomalies. Generated monthly charges
+reconcile independently with the active export; supply quantities stay zero and
+fuel quantities stay purchases. Fixture generation on this Mac took about 2.7 s.
+The dedicated campus browser run observed navigation below 0.2 s; this is a dated
+small-campus development measurement, not a deployment throughput guarantee.
+
+The fixture was also created using the **actual retained 0.2.0 code**, then
+migrated with 0.3.0. Source hashes and the full active CSV export matched byte for
+byte across the upgrade. Old code rejected schema 3 without changing its bytes.
+The pre-upgrade backup was restored with 0.2.0 into a new workspace; integrity
+and native browser checks passed. Automated tests separately cover frozen schema
+1 and schema 2 and simulated future transitions beyond schema 3.
+
+## Installation, Git and release integrity
+
+Fresh macOS virtual environments were installed from reviewed local wheels with
+`--no-index` and wheel-only setup. Installing code left the selected existing
+synthetic workspace's database, sources and backups byte-identical. Source-only
+archives were unpacked independently; regression, native import/recovery,
+large-campus and synthetic staff checks passed there.
+
+The existing Git initial commit is retained. An object-level release review found
+four CSV blobs normalized by the old Git attribute. Baseline commit `38d20e6`
+preserves exact archive bytes and executable modes and disables checkout
+normalization. All 66 baseline manifest entries now match the `v0.2.0` Git objects.
+The local `v0.3.0` release includes only code, tests, technical documentation and
+synthetic fixtures. Its complete source manifest, indexed blobs and source-only
+membership are checked. No remote was created, contacted or pushed.
+
+## Remaining limits
+
+Named users/role enforcement are explicitly deferred with a proposed exact matrix
+in `ACCESS_AND_CONFIGURATION.md`. Audit actor contexts do not identify people;
+an OS owner can rewrite the full database/code and replace the chain. Private
+backup encryption, hardware power-loss behavior, native Windows/ACLs, other
+browsers, Finder quarantine/Gatekeeper treatment, signing/trusted distribution,
+the actual school workstation, maintenance/retention ownership and private-data
+accounting acceptance remain outside the tested boundary. Signing research is
+documented; no credentials, signing service, payment or production deployment
+was configured. No portals, school records, paid APIs or cloud extraction were used.
 
 ## Reproduction
 
-Use a fresh external synthetic directory and the commands in `README.md`. `scripts/native_browser_smoke.py --exercise-imports --milestone` performs the extended browser path and intentionally mutates only an explicitly checked demo installation. Omit `--exercise-imports` for a smoke check after restoration or a code-folder switch. Retain native screenshots/downloads outside source with `--evidence-dir`. Separate staff setup and cross-version rollback checks were executed against disposable developer-created directories as described above.
+Use `README.md` for the full suite and extended native import test. Run
+`scripts/native_readiness_smoke.py` with a **new external** work directory for
+its self-created recovery, campus and synthetic-staff cases. Run
+`scripts/synthetic_campus.py` only with a new demo directory. See `OPERATIONS.md`
+for exact retry, provenance, diagnostic and audit semantics and
+`STAFF_INSTALL_AND_UPDATES.md` for stopped-app upgrade and rollback.
