@@ -1,2 +1,5 @@
 # Source-release manifests require byte-identical checkouts on every OS.
 * -text
+
+# PDF fixtures are byte-preserved artifacts, not line-oriented source.
+*.pdf binary

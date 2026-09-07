@@ -1,3 +1,5 @@
+import {showInbox} from './modules/inbox.js';
+import {showCompleteness} from './modules/completeness.js';
 import {api,setCsrf,message} from './modules/api.js';
 import {$,$$,esc,icon,toast,openDialog,closeDialog,notice} from './modules/ui.js';
 import {showBills} from './modules/bills.js';
@@ -7,8 +9,8 @@ import {showInventory} from './modules/inventory.js';
 import {showIntervals} from './modules/intervals.js';
 import {showSupport} from './modules/support.js';
 let meta,route='overview',renderGeneration=0,renderBusy=false;
-const views={overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
-const nav=[['overview','Overview'],['bills','Invoice ledger'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
+const views={inbox:showInbox,completeness:showCompleteness,overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
+const nav=[['overview','Overview'],['bills','Invoice ledger'],['inbox','Utility Inbox'],['completeness','Bill completeness'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
 const context={get mode(){return meta.mode;},navigate,refresh,openStage,openImport,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
 
 async function boot(){
@@ -49,17 +51,32 @@ async function openStage(id){
 }
 function handleError(error,target){if(error.status===401){toast('Local session expired.',true);login();}else{target.innerHTML=notice(message(error.message),'danger');}}
 function openImport(){
-  openDialog(`<div class="modal-heading"><div><h2>Import a source file</h2><p>The file stays in this local workspace.</p></div><button class="close-button" data-close aria-label="Close import">×</button></div><form id="import-form"><label class="dropzone" id="dropzone">${icon('upload')}<strong>Choose a CSV, XML, or PDF</strong><span>Maximum 8 MB per file</span><input type="file" id="import-file" accept=".csv,.xml,.pdf" required aria-label="Source file"></label><div class="file-help"><p><strong>CSV:</strong> Use the supplied bill template. Each line retains its service period and unit.</p><p><strong>XML:</strong> The current parser accepts incremental electricity in the supported Green Button format.</p><p><strong>PDF:</strong> Stored as an attachment for staff entry and review.</p></div>${meta.mode==='demo'?'<label class="check-label"><input type="checkbox" id="synthetic-confirm" required><span>I confirm this file contains synthetic data only.</span></label>':''}<div id="import-error"></div><div class="action-row"><button class="primary" type="submit">Import for review</button><span class="muted">Totals update after approval.</span></div></form><div class="sample-links"><span>Try a synthetic source</span><a href="/api/samples/demo-import.csv">CSV invoice</a><a href="/api/samples/demo-intervals.xml">Electricity XML</a><a href="/api/samples/demo-invoice.pdf">PDF invoice</a><a href="/api/samples/blank-bill-template.csv">Blank template</a></div>`);
+  openDialog(`<div class="modal-heading"><div><h2>Import a source file</h2><p>The file stays in this local workspace.</p></div><button class="close-button" data-close aria-label="Close import">×</button></div><form id="import-form"><label class="dropzone" id="dropzone">${icon('upload')}<strong>Choose or drop CSV, XML, or PDF files</strong><span>Maximum 8 MB per file · Up to 25 files per batch</span><input type="file" id="import-file" accept=".csv,.xml,.pdf" multiple required aria-label="Source file"></label><div class="file-help"><p><strong>CSV:</strong> Use the supplied bill template. Each line retains its service period and unit.</p><p><strong>XML:</strong> The current parser accepts incremental electricity in the supported Green Button format.</p><p><strong>PDF:</strong> Local text extraction and optional OCR propose fields with source evidence. Staff review is always required.</p></div>${meta.mode==='demo'?'<label class="check-label"><input type="checkbox" id="synthetic-confirm" required><span>I confirm this file contains synthetic data only.</span></label>':''}<div id="import-error"></div><div class="action-row"><button class="primary" type="submit">Import for review</button><span class="muted">Totals update after approval.</span></div></form><div class="sample-links"><span>Try a synthetic source</span><a href="/api/samples/demo-import.csv">CSV invoice</a><a href="/api/samples/demo-intervals.xml">Electricity XML</a><a href="/api/samples/demo-invoice.pdf">PDF invoice</a><a href="/api/samples/blank-bill-template.csv">Blank template</a><a href="/api/intake-samples/electricity-digital.pdf">Extractable fictional PDF</a><a href="/api/intake-samples/electricity-scan.pdf">Fictional scan (optional OCR)</a><a href="/api/intake-samples/layout-v2.pdf">Fictional layout v2</a></div>`);
   const input=$('#import-file');
-  input.onchange=()=>{if(input.files[0])$('strong',$('#dropzone')).textContent=input.files[0].name;};
+  const zone=$('#dropzone');
+  const picked=()=>{if(input.files.length)$('strong',zone).textContent=input.files.length===1?input.files[0].name:`${input.files.length} files selected`;};
+  input.onchange=picked;
+  zone.ondragover=e=>{e.preventDefault();zone.classList.add('dragging');};
+  zone.ondragleave=()=>zone.classList.remove('dragging');
+  zone.ondrop=e=>{e.preventDefault();zone.classList.remove('dragging');input.files=e.dataTransfer.files;picked();};
   $('#import-form').onsubmit=async e=>{
-    e.preventDefault();const file=input.files[0];if(!file)return;
-    const button=$('button[type=submit]',e.currentTarget);button.disabled=true;
-    try{
-      if(file.size>8*1024*1024)throw new Error('FILE_EXCEEDS_8_MB');
-      const result=await api('/import',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':encodeURIComponent(file.name),'X-Synthetic-Data':String(meta.mode==='demo'&&$('#synthetic-confirm').checked)},body:file});
-      closeDialog();toast(`${result.count} item${result.count===1?'':'s'} added for review.`);if(result.count===1)await openStage(result.staged_ids[0]);else await navigate('review');
-    }catch(error){$('#import-error').innerHTML=notice(message(error.message),'danger');button.disabled=false;}
+    e.preventDefault();const files=[...input.files];if(!files.length)return;
+    const target=$('#import-error'),button=$('button[type=submit]',e.currentTarget),dialog=$('dialog');
+    if(files.length>25){target.innerHTML=notice('Choose up to 25 files per batch.','danger');return;}
+    button.disabled=true;input.disabled=true;
+    const synthetic=meta.mode==='demo'&&$('#synthetic-confirm').checked,results=[];
+    for(const file of files){
+      target.innerHTML=notice(`Processing ${results.length+1} of ${files.length}: ${file.name}`);
+      try{
+        if(file.size>8*1024*1024)throw new Error('FILE_EXCEEDS_8_MB');
+        const result=await api(files.length===1?'/import':'/intake',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':encodeURIComponent(file.name),'X-Synthetic-Data':String(synthetic)},body:file});
+        results.push({...result,filename:file.name});
+      }catch(error){results.push({filename:file.name,state:'failed_safely',code:error.message,count:0,staged_ids:[]});}
+    }
+    if(!dialog.isConnected)return;
+    if(files.length===1&&results[0].count){closeDialog();toast(`${results[0].count} item(s) added for review.`);if(results[0].count===1)await openStage(results[0].staged_ids[0]);else await navigate('review');}
+    else if(files.length===1){target.innerHTML=notice(message(results[0].code),'danger');button.disabled=false;input.disabled=false;}
+    else{target.innerHTML=results.map(row=>`<p>${esc(row.filename)} · ${esc(row.state.replaceAll('_',' '))}${row.code?` · ${esc(message(row.code))}`:''}</p>`).join('')+'<button type="button" class="secondary" id="open-intake-results">Open Utility Inbox</button>';button.hidden=true;$('#open-intake-results').onclick=()=>{closeDialog();navigate('inbox');};}
   };
 }
 window.addEventListener('unhandledrejection',()=>toast('A local action failed. Reload and reproduce the issue with synthetic data.',true));

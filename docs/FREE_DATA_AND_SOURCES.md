@@ -6,7 +6,7 @@ Research date: September 6, 2026. This document separates an application's licen
 
 The starter reads files already obtained by authorized staff. It includes no metered API, paid bill aggregator, cloud OCR, model inference service, hosted database, or commercial license key. Runtime internet access is unnecessary for local import and reporting.
 
-Python/FastAPI/Uvicorn/SQLite/defusedxml are the selected local components. FastAPI is MIT licensed, Uvicorn is BSD-3-Clause, defusedxml uses the Python Software Foundation license, and SQLite's core is public domain. Exact installed package metadata is recorded in `DEPENDENCY_INVENTORY.json`. Package distribution, hardware, IT labor, backups, code signing, and the user's separate Codex subscription can still incur costs.
+Python/FastAPI/Uvicorn/SQLite/defusedxml plus the reviewed local PDF/OCR components are selected; see `DOCUMENT_EXTRACTION_DEPENDENCIES.md` for the added licenses and optional model. FastAPI is MIT licensed, Uvicorn is BSD-3-Clause, defusedxml uses the Python Software Foundation license, and SQLite's core is public domain. Exact installed package metadata is recorded in `DEPENDENCY_INVENTORY.json`. Package distribution, hardware, IT labor, backups, code signing, and the user's separate Codex subscription can still incur costs.
 
 Sources: [FastAPI official documentation](https://fastapi.tiangolo.com/), [Uvicorn source license](https://github.com/Kludex/uvicorn/blob/main/LICENSE.md), [defusedxml repository](https://github.com/tiran/defusedxml), and [SQLite copyright statement](https://www.sqlite.org/copyright.html). Dependency versions require current advisory review before staff installation.
 
@@ -29,7 +29,7 @@ Before enabling an automatic source, document its provider and customer class, a
 | Source | Starter decision | Unresolved item |
 |---|---|---|
 | Staff-supplied canonical CSV | Enabled, local parsing | Staff process for preparing rows |
-| PDF invoice already held by staff | Enabled, attachment and manual entry | Supplier-specific extraction templates |
+| PDF invoice already held by staff | Enabled, local candidate extraction, optional OCR and manual fallback | Real supplier layouts unverified; shipped templates are fictional |
 | Green Button DMD XML | Enabled for supported electricity subset | Actual utility availability, account coverage, fee, schema |
 | Green Button CMD/OAuth | Disabled | Utility registration, consent, credentials, coverage and fees |
 | Commercial bill/interval aggregator | Excluded | Any approved service arrangement and pricing |

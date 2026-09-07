@@ -1,0 +1,4 @@
+# Optional local English OCR. Model preparation is a separate explicit action.
+# Reviewed macOS arm64 wheel requires macOS 15+. No model downloads at runtime.
+tesserocr==2.11.0
+cysignals==1.12.6

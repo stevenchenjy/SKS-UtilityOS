@@ -1,6 +1,6 @@
 # Local operation and recovery contracts
 
-Version 0.3.0 remains a single-operator, loopback-only application. Use explicit
+Version 0.4.0 remains a single-operator, loopback-only application. Use explicit
 external data directories for every command. See `STAFF_INSTALL_AND_UPDATES.md`
 for installation, backups, and the stopped-app migration procedure.
 
@@ -8,7 +8,7 @@ for installation, backups, and the stopped-app migration procedure.
 
 | Situation | Deliberate behavior |
 |---|---|
-| Identical bytes, even under another filename | Reject as `DUPLICATE_SOURCE_DOCUMENT`; retain the existing review and source |
+| Identical bytes, even under another filename | Legacy import rejects as `DUPLICATE_SOURCE_DOCUMENT`; batch/inbox reports duplicate and links the existing review/source |
 | Different bytes, same provider/account/invoice reference | Stage for review; block independent approval; staff may explicitly link a replacement with a reason |
 | Overlapping consumption on the same stable meter | Block approval; a replacement excludes only the selected active original from overlap checks |
 | Separate supply charges | Require zero quantity on charges-only lines; do not repeat delivery consumption |
@@ -95,3 +95,21 @@ integrity. It emits no paths, record IDs, names, financial values, filenames,
 source excerpts, environment values or exception text. CLI diagnostics also
 works on an incompatible or damaged database without modifying it. Review the
 report before sharing; it does not replace the full stopped-app `check`.
+
+## Intake operation in schema 4
+
+Read `BILL_INTAKE.md` for explicit scanning, cursor continuation, source evidence,
+manual fallback, extraction bounds and model preparation. Each intake attempt
+commits new/processing status before parsing; on restart unfinished attempts
+become a safe retry or resolve to their already committed source. Extraction
+hash, draft and extraction audit event commit together. Approval and supplementary
+review values append together under the existing revision guard. A malformed
+extraction snapshot is rejected by integrity checks, not silently re-extracted.
+
+Private backups include extraction and review history, cadence/history and the
+saved inbox location. They exclude public model assets and temporary page images
+(which exist only in worker memory). Restore does not scan any directory or load
+a model automatically. Reconfirm the visible location and use the installed
+release's explicit `--ocr-model-dir` when launching. Source hash/audit checks
+cover retained extraction snapshots as well as original bytes. Legacy schema-3
+PDFs retain their original manual workflow after migration.

@@ -12,6 +12,8 @@ from urllib.parse import unquote
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
+from .intake import Intake
 from . import __version__
 from .config import Config, ROOT, MAX_UPLOAD
 from .db import Store
@@ -23,12 +25,15 @@ from .parsers import ValidationError
 def create_app(config: Config):
     config.validate()
     store=Store(config.data_dir,config.mode)
-    ledger=Ledger(store)
+    ledger=Ledger(store,config.ocr_model_dir)
+    intake=Intake(ledger,config.mode)
+    intake.recover_interrupted()
     sessions=Sessions()
     app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
     app.state.ledger=ledger
     app.state.sessions=sessions
     app.state.store=store
+    app.state.intake=intake
 
     @app.middleware('http')
     async def boundary(request: Request, call_next):
@@ -158,7 +163,7 @@ def create_app(config: Config):
     @app.post('/api/validate-bill')
     async def validate(request:Request):
         data=await json_body(request)
-        return ledger.validate_draft(data.get('payload'),data.get('staged_id'))
+        return ledger.validate_draft(data.get('payload'),data.get('staged_id'),data.get('intake_details'))
 
     @app.get('/api/bills')
     def bills():
@@ -167,7 +172,7 @@ def create_app(config: Config):
     @app.post('/api/staged/{item_id}/draft')
     async def save_draft(item_id:int,request:Request):
         data=await json_body(request)
-        return ledger.save_draft(item_id,data.get('payload'),data.get('revision'),data.get('correction_of'),data.get('reason',''))
+        return ledger.save_draft(item_id,data.get('payload'),data.get('revision'),data.get('correction_of'),data.get('reason',''),data.get('intake_details'))
 
     @app.post('/api/staged/{item_id}/recover')
     async def recover_draft(item_id:int,request:Request):
@@ -216,7 +221,7 @@ def create_app(config: Config):
         item=ledger.stage(item_id)
         if item['kind']=='bill':
             with acting_as(reauthenticate(data) if item.get('correction_of') is not None else 'local_operator'):
-                return ledger.approve_bill(item_id,data.get('payload'),data.get('acknowledge') is True,revision=data.get('revision',0))
+                return ledger.approve_bill(item_id,data.get('payload'),data.get('acknowledge') is True,revision=data.get('revision',0),intake_details=data.get('intake_details'))
         if data.get('acknowledge') is not True:
             raise ValidationError('CONFIRM_INTERVAL_MAPPING_AND_SOURCE_REVIEW')
         return ledger.approve_intervals(item_id,data.get('meter_code',''))
@@ -234,7 +239,70 @@ def create_app(config: Config):
         if config.mode=='demo' and request.headers.get('x-synthetic-data')!='true':
             raise ValidationError('DEMO_REQUIRES_SYNTHETIC_DATA_CONFIRMATION')
         filename=unquote(request.headers.get('x-filename',''))
-        return ledger.import_file(filename,await body(request,MAX_UPLOAD))
+        result=await run_in_threadpool(intake.import_file,filename,await body(request,MAX_UPLOAD))
+        if result['count']==0 and result['state'] in {'duplicate','failed_safely','unsupported'}:
+            raise ValidationError(result['code'])
+        return result
+
+    @app.get('/api/intake')
+    def intake_history():
+        return {'items':intake.history(),'configuration':intake.configuration()}
+
+    @app.get('/api/intake/quality')
+    def intake_quality():
+        from .extraction_quality import report
+        return report(store)
+
+    @app.get('/api/intake/quality/export')
+    def intake_quality_export():
+        from .extraction_quality import report
+        return Response(json.dumps(report(store),indent=2),media_type='application/json',
+                        headers={'Content-Disposition':'attachment; filename="utilityos-extraction-quality.json"'})
+
+    @app.get('/api/completeness')
+    def completeness(month:str|None=None):
+        from .completeness import Completeness
+        return Completeness(store).report(month)
+
+    @app.post('/api/completeness')
+    async def configure_completeness(request:Request):
+        from .completeness import Completeness
+        return Completeness(store).configure(await json_body(request))
+
+    @app.post('/api/intake')
+    async def intake_upload(request:Request):
+        if request.headers.get('content-type','').split(';')[0]!='application/octet-stream':
+            raise ValidationError('OCTET_STREAM_REQUIRED')
+        if config.mode=='demo' and request.headers.get('x-synthetic-data')!='true':
+            raise ValidationError('DEMO_REQUIRES_SYNTHETIC_DATA_CONFIRMATION')
+        return await run_in_threadpool(intake.import_file,unquote(request.headers.get('x-filename','')),await body(request,MAX_UPLOAD))
+
+    @app.post('/api/intake/configuration')
+    async def configure_inbox(request:Request):
+        data=await json_body(request)
+        return intake.configure(data.get('directory'),data.get('acknowledge'))
+
+    @app.post('/api/intake/scan')
+    async def scan_inbox(request:Request):
+        data=await json_body(request)
+        if config.mode=='demo' and data.get('synthetic') is not True:
+            raise ValidationError('DEMO_REQUIRES_SYNTHETIC_DATA_CONFIRMATION')
+        return await run_in_threadpool(intake.scan,data.get('directory'),data.get('acknowledge'),data.get('cursor',0))
+
+    @app.get('/api/sources/{document_id}/pages/{page_number}')
+    def source_page(document_id:int,page_number:int,rotation:int=0):
+        import base64
+        from .pdf_extract import task
+        if not 1<=page_number<=20 or rotation not in {0,90,180,270}:
+            raise ValidationError('PDF_PAGE_INVALID')
+        with store.connect() as db:
+            row=db.execute("SELECT * FROM documents WHERE id=? AND extension='.pdf'",(document_id,)).fetchone()
+        if not row:
+            raise ValidationError('PDF_SOURCE_REQUIRED')
+        result=task(read_source(store,row),action='render',page=page_number,rotation=rotation)
+        if 'png' not in result:
+            raise ValidationError('PDF_PREVIEW_UNAVAILABLE_USE_ORIGINAL')
+        return Response(base64.b64decode(result['png']),media_type='image/png')
 
     @app.get('/api/sources/{document_id}')
     def source(document_id:int):
@@ -270,6 +338,13 @@ def create_app(config: Config):
         if filename not in allowed:
             return JSONResponse({'error':'SAMPLE_NOT_FOUND'},status_code=404)
         return FileResponse(ROOT/'samples'/filename,media_type='application/octet-stream',filename=filename)
+
+    @app.get('/api/intake-samples/{filename}')
+    def intake_sample(filename:str):
+        # Explicit fictional examples only; never resolve user-selected paths.
+        if filename not in {'electricity-digital.pdf','electricity-scan.pdf','layout-v2.pdf'}:
+            return JSONResponse({'error':'SAMPLE_NOT_FOUND'},status_code=404)
+        return FileResponse(ROOT/'samples'/'intake'/filename,media_type='application/pdf',filename=filename)
 
     app.mount('/',StaticFiles(directory=ROOT/'web',html=True),name='web')
     return app

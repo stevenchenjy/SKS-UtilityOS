@@ -6,12 +6,12 @@ Use a school-controlled encrypted disk, approved staff-only OS account, and a na
 
 The current service supports one operator on the same computer at `127.0.0.1`. Separate installations do not synchronize. The terminal remains open while the service runs; Ctrl+C stops it. Use **Lock workspace** to revoke the current browser session. A shared server, unattended updater, remote administration, and private data in AI tools are outside this release.
 
-Version 0.3.0 uses schema 3. macOS arm64 launch/setup, native Chrome, synthetic staff setup, backup recovery, and version switching were tested. Windows launchers and ACLs still require native target validation. School IT approval of the actual staff machine remains outstanding.
+Version 0.4.0 uses schema 4. macOS arm64 launch/setup, native Chrome, synthetic staff setup, backup recovery, and version switching were tested. Windows launchers and ACLs still require native target validation. School IT approval of the actual staff machine remains outstanding.
 
 ## Install into a separate code folder
 
 1. Obtain the source ZIP through the school's approved distribution process. Verify who supplied it separately from its integrity manifest. The release is unsigned; no Apple/Windows certificate or paid distribution mechanism has been chosen.
-2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/SKS-UtilityOS-0.3.0.zip` using a trusted copy of the verifier. A matching hash alone does not establish trusted authorship.
+2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/SKS-UtilityOS-0.4.0.zip` using a trusted copy of the verifier. A matching hash alone does not establish trusted authorship.
 3. Unpack into a new code folder. Keep every private data directory and backup outside it and outside cloud-synchronized folders. Do not overwrite the previous release.
 4. Use an approved Python 3.11+. Run `bash scripts/setup.sh` on macOS, or the supplied PowerShell setup through normal school policy. Setup writes only the new folder's `.venv`. It never selects or opens a staff workspace.
 5. Run a fresh synthetic demo and verify the browser. Supply the same explicit `--data-dir` and `--port` when repeating maintenance or launch commands.
@@ -34,6 +34,51 @@ bash scripts/setup.sh /approved/wheelhouse
 ```
 
 Windows uses `scripts/setup.ps1 -Wheelhouse C:\approved\wheelhouse`. The offline path uses `--no-index`, `--find-links`, wheel-only installation, and disables pip's version check. Obtain wheels for the target Python/OS, review their provenance, and run a current advisory scan before transfer. The developer's clean macOS installation and regression tests used an external wheelhouse. Wheels are not bundled in the source release.
+
+## Optional local OCR preparation
+
+Base setup provides digital PDF extraction and source previews. OCR is optional;
+without its library or reviewed model, a scan remains a manual draft. Review
+`DOCUMENT_EXTRACTION_DEPENDENCIES.md` before enabling the experimental scan path,
+including its older bundled native engine and strictly pinned-model restriction.
+The tested Apple Silicon OCR wheel requires macOS 15+ and Python 3.13; other
+platforms need separate wheel/native verification. Digital rendering's tested
+Mac wheel requires macOS 13+. No GPU or model server is used.
+
+On an approved compatible staging computer, collect the optional wheels:
+
+```sh
+python -m pip download --only-binary=:all: -r requirements-ocr.txt \
+  -c constraints-tested.txt --dest /approved/wheelhouse
+```
+
+Manually obtain the pinned public English model and its Apache-2.0 license from
+`DOCUMENT_EXTRACTION_DEPENDENCIES.md` through the approved software-distribution
+process. It is 4,113,088 bytes; model revision and SHA-256 are documented there.
+UtilityOS has no automatic model downloader. Transfer the model, licenses and
+reviewed wheelhouse for offline installation, then run from the new code folder:
+
+```sh
+.venv/bin/python -m pip install --no-index --find-links /approved/wheelhouse \
+  --only-binary=:all: --disable-pip-version-check \
+  -r requirements-ocr.txt -c constraints-tested.txt
+.venv/bin/python scripts/prepare_ocr.py \
+  --model-file /approved/staging/eng.traineddata \
+  --destination /approved/local/utilityos-models
+.venv/bin/python run.py demo --data-dir /approved/local/new-synthetic-demo \
+  --ocr-model-dir /approved/local/utilityos-models --open
+```
+
+Preparation verifies size/hash and atomically copies the public model. It never
+opens a utility workspace or changes installed code. Keep the external model
+folder under IT control; do not replace it with arbitrary/custom traineddata.
+The app performs no fine tuning and stores no page-image/model cache. Supply the
+model argument again on each launch (the `.command` launcher forwards it). Model
+assets are not in private backups; retain their reviewed software distribution
+separately. Base digital dependencies add about 48.4 MB, optional OCR about 9.8 MB
+plus the 4.1 MB model, excluding interpreter, documents, backups and staging.
+A source-only release contains no weights or wheels; keep dependency licenses and
+corresponding LGPL source availability with a redistributed optional wheelhouse.
 
 ## First staff setup
 
@@ -64,14 +109,14 @@ Use `--data-dir /approved/local/workspace` to choose another approved location. 
 
 Maintenance commands require the workspace to be stopped. The browser can create a consistent backup while its app is running. No scheduled download, silent migration, or unattended switch is implemented.
 
-## Upgrade schema 1 or 2 to schema 3
+## Upgrade schema 1, 2 or 3 to schema 4
 
-0.3.0 implements ordered 1 → 2 → 3 and 2 → 3 migrations. Startup never migrates.
+0.4.0 implements ordered 1 → 2 → 3 → 4, 2 → 3 → 4 and 3 → 4 migrations. Startup never migrates.
 After source/dependency review, synthetic rehearsal and school approval:
 
 1. Stop the old app. Back it up with its own version and retain the old code and
-   environment. Older code cannot open schema 3.
-2. From the separately prepared 0.3.0 folder, run:
+   environment. Older code cannot open schema 4.
+2. From the separately prepared 0.4.0 folder, run:
 
    ```sh
    .venv/bin/python run.py migrate --mode staff \
@@ -82,12 +127,12 @@ After source/dependency review, synthetic rehearsal and school approval:
    and creates another backup in the original schema. It applies every registered
    step in one transaction on a copy, checks integrity/foreign keys/audit history,
    then atomically switches the database. Original source bytes are unchanged.
-4. Run `check`, launch 0.3.0 and verify totals, versions, original downloads, audit,
+4. Run `check`, launch 0.4.0 and verify totals, versions, original downloads, audit,
    exports and backup before accepting the switch. Historical importer versions
    and actor identities are explicitly marked unrecorded/unknown.
 
 Schema 3 adds the append-oriented audit chain and document importer version; it
-was not introduced just to test migrations. Frozen schema-1/schema-2 fixtures
+was not introduced just to test migrations. Schema 4 adds immutable extraction/review snapshots, intake attempts and expected cadence/history without reparsing old PDFs. Frozen schema-1/schema-2/schema-3 fixtures
 and synthetic future-step tests exercise the migration runner. Unregistered
 paths fail before switching any data.
 
@@ -100,7 +145,7 @@ states and audit continuity across restore.
 
 ## Backup and restoration
 
-**Privacy & support** previews diagnostics separately from the private ledger and backup controls. A backup requires acknowledgement and includes the SQLite database, local password hash, original source files, saved drafts, invoice history, and mapping history. It is retained in the workspace's `backups` folder; **Download private backup ZIP** downloads an additional copy through the native browser. Treat both as confidential and keep browser downloads under approved retention rules.
+**Privacy & support** previews diagnostics separately from the private ledger and backup controls. A backup requires acknowledgement and includes the SQLite database, local password hash, original source files, saved drafts, invoice history, mapping history, extraction evidence, reviewed differences, intake status and cadence settings. It is retained in the workspace's `backups` folder; **Download private backup ZIP** downloads an additional copy through the native browser. Treat both as confidential and keep browser downloads under approved retention rules.
 
 Backups use a consistent SQLite snapshot and content hashes. A failed write does not expose an incomplete archive as a completed backup. Backup and restore share limits of 5,000 members and 1 GiB expanded size; larger workspaces need an explicitly reviewed extension. Archives have no application-level encryption.
 

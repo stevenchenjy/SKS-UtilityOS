@@ -29,3 +29,16 @@ Bill history records approval, supersession, cancellation, related versions, UTC
 Inventory edits require the expected previous value, a reason, and acknowledgement of the reporting effect. A stale mapping edit is rejected. Renaming a building changes the current label for its meters; assigning a meter to a building changes reporting for all invoice months. A blank mapping represents unassigned/shared service. Before/after values are retained in `inventory_history` and shown in the app.
 
 Prior approved review snapshots are not rewritten by inventory edits. To correct a wrong account or service-point code on an invoice, create an invoice correction. Commodity/unit changes to an existing meter and automatic sharing allocations remain unsupported. This release does not add a physical meter replacement lifecycle or a free-form account association editor.
+
+## Extraction evidence in 0.4.0
+
+PDF proposals retain immutable raw/normalized fields, page coordinates, parser/
+model and template versions. Saved review snapshots and structured differences
+share the draft revision. An approved correction starts with the previous human
+values, including supplementary demand, dates, readings and balances, while the
+original machine observation remains unchanged. A new-source rebill has its own
+extraction snapshot and explicit replacement target. Only main current charges
+and service quantities affect the financial ledger; amount due and prior balance
+do not substitute for current charges. Changing any field clears the browser
+review acknowledgement. Source evidence remains usable on closed versions and
+after recovery from a verified backup.

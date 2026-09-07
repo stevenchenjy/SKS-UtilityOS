@@ -1,0 +1,307 @@
+{
+  "$defs": {
+    "EvidenceField": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "raw": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "method": {
+          "default": "unavailable",
+          "enum": [
+            "native_text",
+            "template",
+            "ocr",
+            "unavailable"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "template_version": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Template Version"
+        },
+        "parser_version": {
+          "maxLength": 160,
+          "title": "Parser Version",
+          "type": "string"
+        },
+        "state": {
+          "default": "missing",
+          "enum": [
+            "high_evidence",
+            "needs_review",
+            "missing",
+            "conflict"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parser_version"
+      ],
+      "title": "EvidenceField",
+      "type": "object"
+    },
+    "SourcePage": {
+      "additionalProperties": false,
+      "properties": {
+        "number": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Number",
+          "type": "integer"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "maximum": 4000,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "maximum": 4000,
+          "title": "Height",
+          "type": "number"
+        },
+        "rotation": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rotation",
+          "type": "integer"
+        },
+        "method": {
+          "enum": [
+            "native_text",
+            "ocr",
+            "unavailable"
+          ],
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "width",
+        "height",
+        "method"
+      ],
+      "title": "SourcePage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "file_type": {
+      "const": "pdf",
+      "default": "pdf",
+      "title": "File Type",
+      "type": "string"
+    },
+    "pdf_kind": {
+      "enum": [
+        "digital_text",
+        "scanned",
+        "mixed",
+        "unreadable"
+      ],
+      "title": "Pdf Kind",
+      "type": "string"
+    },
+    "provider_key": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Key"
+    },
+    "provider_fingerprint": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Fingerprint"
+    },
+    "layout_fingerprint": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Layout Fingerprint"
+    },
+    "layout_state": {
+      "enum": [
+        "known",
+        "known_provider_unknown_layout",
+        "unknown_provider",
+        "unreadable"
+      ],
+      "title": "Layout State",
+      "type": "string"
+    },
+    "template_version": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Template Version"
+    },
+    "document_type": {
+      "enum": [
+        "invoice",
+        "supporting_document",
+        "unknown"
+      ],
+      "title": "Document Type",
+      "type": "string"
+    },
+    "fields": {
+      "additionalProperties": {
+        "$ref": "#/$defs/EvidenceField"
+      },
+      "maxProperties": 1063,
+      "title": "Fields",
+      "type": "object"
+    },
+    "pages": {
+      "items": {
+        "$ref": "#/$defs/SourcePage"
+      },
+      "maxItems": 20,
+      "title": "Pages",
+      "type": "array"
+    },
+    "codes": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 30,
+      "title": "Codes",
+      "type": "array"
+    },
+    "parser_version": {
+      "maxLength": 160,
+      "title": "Parser Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "pdf_kind",
+    "layout_state",
+    "document_type",
+    "fields",
+    "parser_version"
+  ],
+  "title": "Extraction",
+  "type": "object"
+}

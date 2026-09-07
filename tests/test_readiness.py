@@ -198,11 +198,21 @@ def previous_store(tmp_path,raw_csv,version):
         upgraded=tmp_path/'step.sqlite3'
         upgrade_copy(store,upgraded,target_version=version)
         os.replace(upgraded,store.path)
+        if version==3:
+            frozen=tmp_path/'frozen-v3.sqlite3'
+            with sqlite3.connect(frozen) as target,store.connect() as source:
+                target.executescript((ROOT/'tests/fixtures/schema_v3.sql').read_text())
+                tables=[r[0] for r in target.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+                for table in tables:
+                    columns=[r[1] for r in target.execute(f'PRAGMA table_info({table})')]
+                    values=source.execute(f"SELECT {','.join(columns)} FROM {table}").fetchall()
+                    target.executemany(f"INSERT INTO {table}({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})",values)
+            target.close();os.replace(frozen,store.path)
         store=Store(store.directory,'demo',initialize=False,expected_schema=version)
     return store
 
 
-@pytest.mark.parametrize('version',[1,2])
+@pytest.mark.parametrize('version',[1,2,3])
 def test_each_supported_previous_schema_upgrades_with_provenance(tmp_path,raw_csv,version):
     old=previous_store(tmp_path,raw_csv,version)
     saved=migrate(old.directory,'demo')
@@ -213,7 +223,7 @@ def test_each_supported_previous_schema_upgrades_with_provenance(tmp_path,raw_cs
     assert check(new)['audit']=='ok'
 
 
-@pytest.mark.parametrize('version',[1,2,3])
+@pytest.mark.parametrize('version',[1,2,3,4])
 @pytest.mark.parametrize('fail',[False,True])
 def test_future_upgrade_framework_from_every_supported_schema(tmp_path,raw_csv,version,fail):
     old=previous_store(tmp_path,raw_csv,version)
@@ -221,15 +231,15 @@ def test_future_upgrade_framework_from_every_supported_schema(tmp_path,raw_csv,v
     def future(db):
         db.execute('CREATE TABLE synthetic_future_probe(id INTEGER PRIMARY KEY)')
         if fail:raise ValueError('SYNTHETIC_FUTURE_STEP_FAILED')
-    steps={**STEPS,3:future};target=tmp_path/'future.sqlite3'
+    steps={**STEPS,SCHEMA_VERSION:future};target=tmp_path/'future.sqlite3'
     if fail:
-        with pytest.raises(ValueError,match='SYNTHETIC_FUTURE'):upgrade_copy(old,target,4,steps)
+        with pytest.raises(ValueError,match='SYNTHETIC_FUTURE'):upgrade_copy(old,target,SCHEMA_VERSION+1,steps)
         with sqlite3.connect(target) as db:
             assert not db.execute("SELECT 1 FROM sqlite_master WHERE name='synthetic_future_probe'").fetchone()
     else:
-        upgrade_copy(old,target,4,steps)
+        upgrade_copy(old,target,SCHEMA_VERSION+1,steps)
         with sqlite3.connect(target) as db:
-            assert db.execute("SELECT value FROM settings WHERE key='schema_version'").fetchone()[0]=='4'
+            assert db.execute("SELECT value FROM settings WHERE key='schema_version'").fetchone()[0]==str(SCHEMA_VERSION+1)
             assert db.execute('SELECT COUNT(*) FROM bills').fetchone()[0]==1
             assert audit.verify(db)=='ok'
     assert old.path.read_bytes()==original
@@ -238,7 +248,7 @@ def test_future_upgrade_framework_from_every_supported_schema(tmp_path,raw_csv,v
 def test_unregistered_migration_refuses_before_creating_copy(tmp_path,raw_csv):
     old=previous_store(tmp_path,raw_csv,2);target=tmp_path/'unsupported.sqlite3'
     with pytest.raises(ValueError,match='MIGRATION_PATH_UNSUPPORTED'):
-        upgrade_copy(old,target,4)
+        upgrade_copy(old,target,SCHEMA_VERSION+1)
     assert not target.exists()
 
 

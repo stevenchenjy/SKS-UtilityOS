@@ -24,6 +24,17 @@ def test_release_source_only_and_version(project,tmp_path):
         assert not any('private' in n or n.endswith('.db') or n.endswith('.env') for n in z.namelist())
         assert all(b'DO_NOT_PACKAGE' not in z.read(n) for n in z.namelist())
 
+
+def test_fixed_timestamp_rebuild_is_byte_identical(project,tmp_path):
+    first,second=tmp_path/'first.zip',tmp_path/'second.zip'
+    result=release.build(project,first,source_date_epoch=1788652800)
+    release.build(project,second,source_date_epoch=1788652800)
+    assert first.read_bytes()==second.read_bytes()
+    assert result['sha256']==release.verify(second)['sha256']
+    for invalid in (-1,True,'1788652800',4102444801):
+        with pytest.raises(ValueError,match='SOURCE_DATE_EPOCH_INVALID'):
+            release.build(project,second,source_date_epoch=invalid)
+
 def test_tampered_release_fails(project,tmp_path):
     archive=tmp_path/'release.zip';release.build(project,archive)
     with zipfile.ZipFile(archive) as z:files={n:z.read(n) for n in z.namelist()}
@@ -53,6 +64,7 @@ def test_release_preserves_native_launcher_modes_and_bootstrap(tmp_path):
         for name in ['Launch-Demo.command','Launch-Staff.command','scripts/setup.sh']:
             assert z.getinfo(release.PREFIX+name).external_attr>>16 & 0o111
         assert release.PREFIX+'requirements-bootstrap.txt' in z.namelist()
+        assert release.PREFIX+'requirements-ocr.txt' in z.namelist()
         assert release.PREFIX+'tests/fixtures/schema_v1.sql' in z.namelist()
         assert not any('MEETING_BRIEF' in name for name in z.namelist())
 

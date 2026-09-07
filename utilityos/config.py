@@ -22,6 +22,7 @@ class Config:
     data_dir: Path
     mode: str = "demo"
     port: int = 8765
+    ocr_model_dir: Path | None = None
 
     def validate(self) -> None:
         if self.mode not in {"demo", "staff"}:
@@ -31,6 +32,8 @@ class Config:
         path = self.data_dir.resolve()
         if path == ROOT or ROOT in path.parents:
             raise ValueError("DATA_DIRECTORY_MUST_BE_OUTSIDE_SOURCE")
+        if self.ocr_model_dir and self.ocr_model_dir.resolve().is_relative_to(ROOT):
+            raise ValueError("MODEL_DIRECTORY_MUST_BE_OUTSIDE_SOURCE")
         if self.mode == "staff":
             blocked = {"desktop", "documents", "mobile documents", "icloud drive", "onedrive", "dropbox", "google drive", "googledrive"}
             if any(part.lower() in blocked or part.lower().startswith("onedrive -") for part in path.parts):

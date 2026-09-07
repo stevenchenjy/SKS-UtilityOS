@@ -49,7 +49,13 @@ def to_v3(db):
     event(db, 'MIGRATE_SCHEMA')
 
 
-STEPS = {1: to_v2, 2: to_v3}
+def to_v4(db):
+    from .intake_storage import initialize
+    initialize(db)
+    event(db, 'MIGRATE_SCHEMA')
+
+
+STEPS = {1: to_v2, 2: to_v3, 3: to_v4}
 
 
 def plan(start, target=SCHEMA_VERSION, steps=None):
@@ -91,6 +97,9 @@ def upgrade_copy(store, target: Path, target_version=SCHEMA_VERSION, steps=None)
                 raise ValidationError('MIGRATION_VALIDATION_FAILED')
             if version >= 3:
                 verify(db)
+            if version >= 4:
+                from .intake_storage import verify as verify_extraction
+                verify_extraction(db)
         db.commit()
     except BaseException:
         db.rollback()

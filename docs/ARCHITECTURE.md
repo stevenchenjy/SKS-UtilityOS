@@ -52,14 +52,14 @@ Each service line has a quantity treatment. `consumption` contributes to billed 
 
 Service periods use an inclusive start and exclusive end. Overlapping approved consumption for one meter is blocked in this version. Staff must interpret a supplier's printed end-date convention correctly. A reviewed rebill excludes only its active original while checking overlaps, then supersedes that original and inserts the replacement atomically. Reporting includes only active versions. See `INVOICE_LIFECYCLE.md`.
 
-Costs are grouped by invoice issue month. Full service-period quantities appear with the invoices issued in the selected month. There is no pro-rata calendarization, weather normalization, completeness-adjusted comparison, savings verification, or carbon calculation in v0.3.0.
+Costs are grouped by invoice issue month. Full service-period quantities appear with the invoices issued in the selected month. There is no pro-rata calendarization, weather normalization, completeness-adjusted comparison, savings verification, or carbon calculation in v0.4.0.
 
 ## Import flow
 
 ```text
 Authorized local file
     -> size/type checks and immutable source storage
-    -> parser or blank PDF-entry draft
+    -> parser or evidence-backed PDF candidate / manual draft
     -> field validation and possible warning flags
     -> staff review and acknowledgement
     -> transaction commits approved records
@@ -68,7 +68,7 @@ Authorized local file
 
 Canonical CSV rows can describe multiple service lines. The parser enforces invoice identity consistency, supported units, quantity treatment, dates, and charge reconciliation. Exact source duplicates, repeated invoice identity, and duplicate consumption are checked separately.
 
-PDF handling preserves the source and creates a blank entry form. The application contains no PDF text extractor, OCR model, or external inference API. The synthetic PDF is a test fixture for this workflow.
+PDF handling preserves the source and immutable field evidence from a bounded local worker. Digital text uses pdfplumber; PDFium supplies the preview. Optional hash-pinned English Tesseract OCR proposes scan fields. Versioned fictional templates abstain on unknown layouts, and missing/unsupported fields remain for staff completion. There is no external inference API. See `BILL_INTAKE.md`.
 
 The Green Button reader accepts a narrow DMD XML contract: electricity, Wh units, forward flow, delta energy, an explicit power-of-ten multiplier, and correctly linked ReadingType/MeterReading/IntervalBlock resources. Readings are normalized to kWh and stored separately from monthly bill consumption. Unsupported water, gas, net/export, cumulative, demand, or ambiguous readings fail validation. Source links are resolved within the document and are never fetched over the network.
 
@@ -112,3 +112,26 @@ Single-operator authentication remains intentional. See
 `ACCESS_AND_CONFIGURATION.md` for the proposed future role matrix and current
 passphrase-confirmation/OS-maintenance boundary, and `OPERATIONS.md` for exact
 idempotency, recovery and audit limitations.
+
+## 0.4.0 intake boundaries
+
+`extraction_schema.py` defines the strict candidate contract; `extraction.py`
+normalizes exact values and separates invoice totals from balances. Literal-label
+`provider_templates.py` is independent from ledger/storage. `pdf_worker.py` runs
+bounded parsing/rendering/OCR in a disposable process; `pdf_extract.py` limits
+concurrency, private IPC and deadlines. `intake.py` owns durable attempts and
+explicit stable-file scans. Neither worker nor inbox can approve records.
+
+Schema 4 adds immutable extraction/audit bindings, revision-linked intake review
+snapshots and structured differences, durable intake attempts, and explicit
+cadence/history tables. `intake_storage.py` joins these with the existing draft
+and approval transactions. `extraction_quality.py` aggregates fixed-key counts;
+`completeness.py` reports only explicitly configured invoice-month expectations.
+New evidence, inbox and completeness browser modules extend the existing shell.
+The ledger payload and active-only accounting contracts are unchanged.
+
+Migration 3 → 4 adds these tables and rules without reparsing historical PDFs,
+changing old payloads or fabricating extraction evidence. Backup/restore carries
+the private extraction/review snapshots and verifies their source/audit integrity.
+Model weights remain separately installed software assets outside both code and
+private backups. No OCR cache, trained model or document log is generated.

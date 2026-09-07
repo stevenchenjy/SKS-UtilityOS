@@ -1,6 +1,6 @@
 # Access and local configuration
 
-## 0.3.0 decision
+## 0.4.0 access decision (preserved from 0.3.0)
 
 Named users and role enforcement are **deferred**. The supported installation
 has one designated operator, one school-controlled OS account, a local app
@@ -54,8 +54,8 @@ entry. The school may revise the proposed matrix before implementing it.
 ## Configuration and secrets
 
 Current executable configuration is the small `Config` dataclass: selected
-mode, data directory and loopback port. The SQLite settings table contains the
-schema/mode, local password salt/hash and fixed internal state. There are no
+mode, data directory, loopback port and an optional external OCR model directory. The SQLite settings table contains the
+schema/mode, local password salt/hash, explicit inbox location and fixed internal state. Cadence has dedicated versioned tables. There are no
 portal passwords, provider tokens, external endpoints, environment-driven
 connectors or developer telemetry. Diagnostic and ledger exports select their
 own fields; they never dump settings. Access/traceback logging is disabled.

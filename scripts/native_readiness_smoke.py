@@ -30,10 +30,12 @@ from scripts.synthetic_campus import seed
 
 
 @contextmanager
-def server(directory,mode,work):
+def server(directory,mode,work,ocr_model_dir=None):
     with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
     with (work/(directory.name+'-server.log')).open('w') as output:
-        process=subprocess.Popen([sys.executable,str(ROOT/'run.py'),mode,'--data-dir',str(directory),'--port',str(port)],stdout=output,stderr=output)
+        command=[sys.executable,str(ROOT/'run.py'),mode,'--data-dir',str(directory),'--port',str(port)]
+        if ocr_model_dir:command+=['--ocr-model-dir',str(ocr_model_dir)]
+        process=subprocess.Popen(command,stdout=output,stderr=output)
         url=f'http://127.0.0.1:{port}'
         try:
             for _ in range(150):

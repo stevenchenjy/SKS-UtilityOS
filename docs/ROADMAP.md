@@ -2,7 +2,7 @@
 
 ## Current implementation
 
-The existing local service now includes reviewed CSV/manual PDF/limited electricity XML entry, saved drafts, full-invoice correction and rebill history, cancellation, independent credits, current mapping edits, active-only reporting/exports, fixed diagnostics, browser backup download, stopped-app restore, an explicit schema-1 upgrade, and source-only release verification. Native desktop/mobile browser verification runs directly on the development Mac.
+The existing local service now includes reviewed CSV/evidence-backed PDF/limited electricity XML entry, saved drafts, full-invoice correction and rebill history, cancellation, independent credits, current mapping edits, active-only reporting/exports, fixed diagnostics, browser backup download, stopped-app restore, explicit schema-1/2/3 upgrades, and source-only release verification. Native desktop/mobile browser verification runs directly on the development Mac.
 
 The 0.3.0 readiness milestone adds interruption-safe source publication, an
 append-oriented audit view, schema-3 provenance and migration coverage,
@@ -20,9 +20,11 @@ Completed and tested corrections/supersession, same-number supplier rebills, neg
 
 **School pilot acceptance remains a school decision.** The school must approve trusted distribution, target-machine validation, dependencies/advisories, encryption, private storage and retention, access rules, and maintenance ownership. Finance must confirm current-charge/credit/rebill semantics; Facilities must confirm stable service points and physical coverage. Private records may be evaluated only by authorized staff in the school's installation. No school deployment or live records were used in this milestone.
 
-## Milestone C: lower monthly entry effort — future development
+## Milestone C: Intelligent Bill Intake — implemented and tested in 0.4.0
 
-Use a demonstrated synthetic-format use case and staff-authorized private feedback to choose reusable CSV mappings or a narrow local text-PDF adapter. Measure saved time and correction rates before claiming automation. Optional folder ingestion requires completeness checks, duplication protection, explicit failure status, and staff review. Scanned PDF OCR remains a separate cost/license/resource decision. The current manual entry path remains usable.
+The 0.4.0 slice includes picker/drop/batch and explicit folder scanning, digital PDF extraction, two versioned layouts for each of five fictional providers, optional local English OCR, field evidence, drift handling and retained correction differences. A deterministic 28-document corpus and exact benchmark exercise those paths. Explicit monthly/delivery/irregular cadence powers a labelled experimental completeness view. Manual entry remains usable without OCR.
+
+Actual provider templates, richer table layouts, multilingual OCR and CSV mappings need a demonstrated use case and new independent synthetic cases. Measure saved time and real correction rates privately with school authorization before claiming broad automation. See `BILL_INTAKE.md` and `VERIFICATION.md`.
 
 No utility connector, portal automation, paid service, CMD/OAuth, email integration, or cloud extraction is enabled. A future external integration requires school authorization and confirmed coverage, security, fees, and maintenance. File-only operation remains supported.
 
@@ -30,7 +32,7 @@ No utility connector, portal automation, paid service, CMD/OAuth, email integrat
 
 Only pursue concurrent users after a school request and a design for identity, roles, HTTPS, concurrency, backups, and person-attributed audits. Current installations are independent and local.
 
-Coverage and expected cadence must be confirmed before missing-bill claims. Fiscal budgets, normalization, calendarized consumption, carbon factors, and public aggregate reports remain future work with explicit assumptions and source provenance.
+The experimental completeness view requires confirmed cadence; it does not establish real coverage or an authoritative missing-bill claim. Fiscal budgets, normalization, calendarized consumption, carbon factors, and public aggregate reports remain future work with explicit assumptions and source provenance.
 
 ## Unverified external matters
 

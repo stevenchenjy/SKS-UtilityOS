@@ -63,6 +63,25 @@ elif checkpoint == 'incomplete_backup':
     original_write=zipfile.ZipFile.write
     def write(*args,**kwargs): original_write(*args,**kwargs);pause()
     zipfile.ZipFile.write=write
+elif checkpoint == 'extraction_finished':
+    from utilityos import pdf_extract
+    original_task=pdf_extract.task
+    def task(*args,**kwargs):
+        result=original_task(*args,**kwargs);pause();return result
+    pdf_extract.task=task
+elif checkpoint == 'extraction_transaction':
+    original_connect=Store.connect
+    @contextmanager
+    def connect(self):
+        with original_connect(self) as db:
+            def trace(statement):
+                if statement.startswith('INSERT INTO document_extractions'):pause()
+            db.set_trace_callback(trace);yield db
+    Store.connect=connect
+elif checkpoint == 'intake_migration':
+    original_step=migrations.STEPS[3]
+    def step(db):original_step(db);pause()
+    migrations.STEPS[3]=step
 
 with instance_lock(directory):
     if operation=='migration':migrate(directory,'demo')
@@ -70,6 +89,9 @@ with instance_lock(directory):
         store=Store(directory,'demo',initialize=False,expected_schema=read_version(directory/'utilityos.sqlite3'))
         ledger=Ledger(store)
         if operation=='import':ledger.import_file('synthetic.csv',(ROOT/'samples/demo-import.csv').read_bytes())
+        elif operation=='intake':
+            from utilityos.intake import Intake
+            Intake(ledger,'demo').import_file('synthetic.pdf',(ROOT/'samples/intake/electricity-digital.pdf').read_bytes())
         elif operation=='approval':
             ledger.approve_bill(int(rest[0]),ledger.stage(int(rest[0]))['payload'],True)
             if checkpoint=='lost_response':pause()

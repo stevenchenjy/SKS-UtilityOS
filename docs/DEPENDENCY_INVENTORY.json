@@ -1,9 +1,10 @@
 {
   "generated_for": "macOS arm64 / Python 3.13.2 / 2026-09-06",
   "notes": [
-    "Direct and active transitive runtime packages; optional extras are not installed.",
+    "Active runtime closure plus optional OCR and the added development-only PDF generator. Declared requirements include extras that are not installed.",
     "PyPI advisory scan with pip-audit 2.10.1: no known vulnerabilities in the updated development environment on 2026-09-06. Recheck before staff installation.",
-    "No dependency source or wheel bundled; development audit tooling is isolated outside the project."
+    "No dependency source or wheel bundled; development audit tooling is isolated outside the project.",
+    "Native PDFium 153.0.7999.0; optional Tesseract 5.5.1 / Leptonica 1.85.0. Review DOCUMENT_EXTRACTION_DEPENDENCIES.md for native library limits, model hash and notices; Python package scans do not cover OS/native libraries."
   ],
   "components": [
     {
@@ -30,9 +31,43 @@
       ]
     },
     {
+      "name": "cffi",
+      "version": "2.1.1",
+      "license": "MIT-0",
+      "scope": "runtime",
+      "declared_requirements": [
+        "pycparser; implementation_name != \"PyPy\""
+      ]
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.1",
+      "license": "MIT",
+      "scope": "runtime",
+      "declared_requirements": []
+    },
+    {
       "name": "click",
       "version": "8.5.0",
       "license": "BSD-3-Clause",
+      "declared_requirements": []
+    },
+    {
+      "name": "cryptography",
+      "version": "50.0.1",
+      "license": "Apache-2.0 OR BSD-3-Clause",
+      "scope": "runtime",
+      "declared_requirements": [
+        "cffi>=2.0.0 ; platform_python_implementation != 'PyPy'",
+        "typing-extensions>=4.13.2 ; python_full_version < '3.11'",
+        "bcrypt>=3.1.5 ; extra == 'ssh'"
+      ]
+    },
+    {
+      "name": "cysignals",
+      "version": "1.12.6",
+      "license": "LGPL-3.0",
+      "scope": "optional_ocr",
       "declared_requirements": []
     },
     {
@@ -100,6 +135,68 @@
       ]
     },
     {
+      "name": "pdfminer.six",
+      "version": "20260107",
+      "license": "MIT",
+      "scope": "runtime",
+      "declared_requirements": [
+        "charset-normalizer>=2.0.0",
+        "cryptography>=36.0.0",
+        "Pillow; extra == \"image\""
+      ]
+    },
+    {
+      "name": "pdfplumber",
+      "version": "0.11.10",
+      "license": "MIT",
+      "scope": "runtime",
+      "declared_requirements": [
+        "pdfminer.six==20260107",
+        "Pillow>=12.2.0",
+        "pypdfium2>=5.9.0"
+      ]
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "license": "MIT-CMU",
+      "scope": "runtime",
+      "declared_requirements": [
+        "furo; extra == \"docs\"",
+        "olefile; extra == \"docs\"",
+        "sphinx>=8.2; extra == \"docs\"",
+        "sphinx-autobuild; extra == \"docs\"",
+        "sphinx-copybutton; extra == \"docs\"",
+        "sphinx-inline-tabs; extra == \"docs\"",
+        "sphinxext-opengraph; extra == \"docs\"",
+        "olefile; extra == \"fpx\"",
+        "olefile; extra == \"mic\"",
+        "arro3-compute; extra == \"test-arrow\"",
+        "arro3-core; extra == \"test-arrow\"",
+        "nanoarrow; extra == \"test-arrow\"",
+        "pyarrow; extra == \"test-arrow\"",
+        "coverage>=7.4.2; extra == \"tests\"",
+        "defusedxml; extra == \"tests\"",
+        "markdown2; extra == \"tests\"",
+        "olefile; extra == \"tests\"",
+        "packaging; extra == \"tests\"",
+        "pytest; extra == \"tests\"",
+        "pytest-cov; extra == \"tests\"",
+        "pytest-timeout; extra == \"tests\"",
+        "pytest-xdist; extra == \"tests\"",
+        "setuptools; extra == \"tests\"",
+        "trove-classifiers>=2024.10.12; extra == \"tests\"",
+        "defusedxml; extra == \"xmp\""
+      ]
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0",
+      "license": "BSD-3-Clause",
+      "scope": "runtime",
+      "declared_requirements": []
+    },
+    {
       "name": "pydantic",
       "version": "2.13.5",
       "license": "MIT",
@@ -121,6 +218,28 @@
       ]
     },
     {
+      "name": "pypdfium2",
+      "version": "5.13.0",
+      "license": "Apache-2.0 AND BSD-3-Clause; bundled permissive notices",
+      "scope": "runtime",
+      "declared_requirements": []
+    },
+    {
+      "name": "reportlab",
+      "version": "5.0.1",
+      "license": "BSD-3-Clause; unused separately licensed bundled fonts",
+      "scope": "development",
+      "declared_requirements": [
+        "pillow>=9.0.0",
+        "charset-normalizer",
+        "rl_accel<1.1,>=0.9.0; extra == \"accel\"",
+        "rlPyCairo<1,>=0.2.0; extra == \"pycairo\"",
+        "freetype-py<2.4,>=2.3.0; extra == \"pycairo\"",
+        "rlbidi; extra == \"bidi\"",
+        "uharfbuzz; extra == \"shaping\""
+      ]
+    },
+    {
       "name": "starlette",
       "version": "1.6.0",
       "license": "BSD-3-Clause",
@@ -133,6 +252,15 @@
         "jinja2; extra == 'full'",
         "python-multipart>=0.0.18; extra == 'full'",
         "pyyaml; extra == 'full'"
+      ]
+    },
+    {
+      "name": "tesserocr",
+      "version": "2.11.0",
+      "license": "MIT; native Tesseract Apache-2.0 and Leptonica BSD-2-Clause",
+      "scope": "optional_ocr",
+      "declared_requirements": [
+        "cysignals"
       ]
     },
     {

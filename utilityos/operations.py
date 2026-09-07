@@ -13,6 +13,7 @@ from . import __version__, SCHEMA_VERSION
 from .audit import now
 from .db import Store
 from . import audit
+from .intake_storage import verify as verify_extraction
 from .migrations import read_version, plan, upgrade_copy
 from .parsers import ValidationError
 from .storage import publish_source, replace_file
@@ -57,6 +58,7 @@ def check(store: Store):
         settings = dict(db.execute('SELECT key,value FROM settings'))
         documents = db.execute('SELECT sha256,extension FROM documents').fetchall()
         audit_status = audit.verify(db)
+        verify_extraction(db)
     for sha, extension in documents:
         if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf'}:
             raise ValidationError('SOURCE_REFERENCE_INVALID')
@@ -71,6 +73,7 @@ def backup(store: Store) -> Path:
     operation_id = secrets.token_hex(16)
     with store.connect() as db:
         audit.verify(db)
+        verify_extraction(db)
         protected = audit.enabled(db)
         if protected:
             audit.event(db, 'BACKUP_STARTED', operation_id=operation_id)
@@ -89,6 +92,7 @@ def backup(store: Store) -> Path:
             if db.execute('PRAGMA integrity_check').fetchone()[0] != 'ok' or db.execute('PRAGMA foreign_key_check').fetchone():
                 raise ValidationError('BACKUP_DATABASE_INVALID')
             audit.verify(db)
+            verify_extraction(db)
             docs = db.execute('SELECT sha256,extension FROM documents').fetchall()
             settings = dict(db.execute('SELECT key,value FROM settings'))
         db.close()
@@ -184,6 +188,7 @@ def restore(store: Store, archive_path: Path, mode: str):
                 if restored.execute('PRAGMA foreign_key_check').fetchone():
                     raise ValidationError('BACKUP_FOREIGN_KEYS_INVALID')
                 audit.verify(restored)
+                verify_extraction(restored)
                 for sha,extension in restored.execute('SELECT sha256,extension FROM documents'):
                     name=f'sources/{sha}{extension}'
                     if expected.get(name)!=sha:

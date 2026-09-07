@@ -14,7 +14,8 @@ CODES = {'IMPORT_CSV', 'IMPORT_XML', 'IMPORT_PDF', 'CREATE_DRAFT', 'SAVE_DRAFT',
          'APPROVE_BILL', 'SUPERSEDE_BILL', 'APPROVE_REBILL', 'APPROVE_INTERVALS',
          'REJECT_DRAFT', 'CREATE_CORRECTION', 'CANCEL_BILL', 'EDIT_BUILDING_LABEL',
          'EDIT_METER_MAPPING', 'OBSERVE_ACCOUNT_MAPPING', 'RECOVER_DRAFT',
-         'BACKUP_STARTED', 'BACKUP_CREATED', 'RESTORE_SNAPSHOT', 'MIGRATE_SCHEMA', 'SET_LOCAL_PASSPHRASE'}
+         'BACKUP_STARTED', 'BACKUP_CREATED', 'RESTORE_SNAPSHOT', 'MIGRATE_SCHEMA', 'SET_LOCAL_PASSPHRASE',
+         'EXTRACT_DOCUMENT', 'CONFIGURE_INBOX', 'SCAN_INBOX', 'INTAKE_ATTEMPT', 'CONFIGURE_EXPECTATION'}
 ACTOR = ContextVar('audit_actor', default='local_operator')
 TABLE = """CREATE TABLE audit_events (
  id INTEGER PRIMARY KEY, at TEXT NOT NULL, code TEXT NOT NULL, staged_id INTEGER,
@@ -90,7 +91,7 @@ def event(db, code, staged_id=None, *, subject_kind=None, subject_id=None, opera
 def verify(db):
     if not enabled(db):
         row=db.execute("SELECT value FROM settings WHERE key='schema_version'").fetchone()
-        if row and row[0]=='3':
+        if row and int(row[0])>=3:
             raise ValidationError('AUDIT_INTEGRITY_FAILED')
         return 'legacy_unprotected'
     previous = ZERO

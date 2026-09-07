@@ -36,11 +36,11 @@ A redaction promise is weaker than a bounded diagnostic schema. Future logging c
 
 School IT should approve the data location, encryption, installer, dependencies, local browser behavior, patch ownership, and backup retention. Finance and Facilities should confirm bill-date conventions, account aliases, meter mapping, current-charge treatment, and what staff may share externally. The correction/supersession workflow is implemented and tested synthetically; Finance must confirm its treatment of actual supplier credits and rebills privately.
 
-Run a current dependency advisory scan with approved tooling and resolve relevant issues before staff deployment. A live PyPI advisory scan on 2026-09-06 found no known vulnerabilities after the documented dependency updates. Native macOS launch and isolated wheelhouse installation were tested. Windows installation remains unverified; repeat advisory and target-machine checks before staff deployment.
+Run a current dependency advisory scan with approved tooling and resolve relevant issues before staff deployment. A live Python-package advisory scan on 2026-09-06 found no known vulnerabilities in the tested application/development/optional-OCR environment. Native libraries and OS components require separate review; see `DOCUMENT_EXTRACTION_DEPENDENCIES.md`. Native macOS launch and isolated wheelhouse installation were tested. Windows installation remains unverified; repeat advisory and target-machine checks before staff deployment.
 
 ## Other release gaps
 
-There is no automated retention purge, backup encryption, credential recovery/change UI, budget module, school-wide coverage inventory, expected-bill schedule, supplier CSV mapping UI, general PDF extraction, or current-carbon-factor service. Approved financial payloads remain immutable; explicit corrections, supersession, cancellation, and saved revisions preserve private audit history. Mapping changes are recorded separately and affect current reporting across invoice months. Source files no longer referenced by a restored older database may remain locally as retained artifacts; cleanup needs an explicit retention policy.
+There is no automated retention purge, backup encryption, credential recovery/change UI, budget module, authoritative school-wide coverage inventory, supplier CSV mapping UI, general-purpose PDF extraction, or current-carbon-factor service. Approved financial payloads remain immutable; explicit corrections, supersession, cancellation, and saved revisions preserve private audit history. Mapping changes are recorded separately and affect current reporting across invoice months. Source files no longer referenced by a restored older database may remain locally as retained artifacts; cleanup needs an explicit retention policy.
 
 The original 0.1.0 build environment required a transport bridge. The 0.2.0 development Mac was verified through native Chrome on loopback with actual cookies, CSP, downloads, imports, desktop/mobile controls, logout, and backup recovery. No transport bridge, mocked API, staff browser profile, or weakened administration policy was used. School target-machine acceptance remains separate.
 
@@ -68,3 +68,20 @@ remain in an OS-managed store, subject to separate authorization.
 
 Read `OPERATIONS.md` for actual failure semantics and `RELEASE_AND_SIGNING.md`
 for researched signing options and the limits of the unsigned source release.
+
+## 0.4.0 document boundary
+
+Source text, raw/normalized extraction, coordinates and human differences are
+private workspace data. Diagnostics never serializes them. The separate local
+quality export selects fixed provider/template/field keys and counts only; it
+requires an authenticated deliberate download. Inbox paths remain private settings.
+Rendered page responses require authentication and use no-store caching.
+
+The PDF worker has bounded bytes/pages/pixels/text, one-worker concurrency and a
+parent deadline. It suppresses exception text and closes in-memory page images.
+This is process isolation for reliability, not a complete OS security sandbox.
+The reviewed OCR model is hash/size checked, never downloaded automatically, and
+not included in utility backups. The optional native engine has dependencies
+beyond what pip-audit inspects; review the documented version/model restrictions
+and OS patch status before use with private files. No document URLs, PDF scripts,
+Tesseract network image inputs or external extraction endpoints are invoked.

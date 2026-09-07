@@ -56,9 +56,9 @@ def operational_checks(directory, port=8765, *, running=False, root=ROOT):
             with sqlite3.connect(database.resolve().as_uri() + '?mode=ro', uri=True, timeout=2) as db:
                 value = db.execute("SELECT value FROM settings WHERE key='schema_version'").fetchone()
                 version = int(value[0]) if value else -1
-                schema = version if version in {1, 2, SCHEMA_VERSION} else None
+                schema = version if version in {1, 2, 3, SCHEMA_VERSION} else None
                 result['database'] = 'accessible' if db.execute('PRAGMA quick_check').fetchone()[0] == 'ok' else 'invalid'
-                result['migration'] = 'current' if version == SCHEMA_VERSION else 'explicit_upgrade_available' if version in {1, 2} else 'unsupported'
+                result['migration'] = 'current' if version == SCHEMA_VERSION else 'explicit_upgrade_available' if version in {1, 2, 3} else 'unsupported'
                 result['audit'] = verify(db)
             db.close()
     except (OSError, sqlite3.Error, ValueError, TypeError):
@@ -88,7 +88,8 @@ def report(directory, mode, port=8765, *, running=False, root=ROOT):
     return {'app': 'SKS UtilityOS', 'version': __version__, 'schema_version': schema,
             'mode': mode if mode in {'demo', 'staff'} else 'unknown',
             'runtime': {'python': platform.python_version(), 'os_family': platform.system()},
-            'features': {'csv_template': True, 'green_button_electricity_subset': True, 'pdf_attachment_only': True,
+            'features': {'csv_template': True, 'green_button_electricity_subset': True, 'pdf_attachment_only': False,
+                         'pdf_text_templates': True, 'local_ocr_optional': True, 'explicit_inbox_scan': True,
                          'portal_access': False, 'outbound_connectors': False, 'telemetry': False},
             'checks': checks,
             'support_instructions': 'Review this file before sharing. Reproduce data issues with synthetic samples.'}

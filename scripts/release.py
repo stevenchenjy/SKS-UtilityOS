@@ -19,7 +19,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PREFIX='SKS-UtilityOS/'
 MANIFEST='RELEASE-MANIFEST.json'
 ROOT_FILES={'README.md','AGENTS.md','MASTER_PROMPT.md','LICENSE','NOTICE.md','.gitignore','.gitattributes',
-            'run.py','requirements-bootstrap.txt','requirements.txt','requirements-dev.txt','constraints-tested.txt',
+            'run.py','requirements-bootstrap.txt','requirements.txt','requirements-dev.txt','requirements-ocr.txt','constraints-tested.txt',
             'Launch-Demo.command','Launch-Staff.command'}
 FOLDERS={'utilityos','web','samples','tests','scripts','docs','.agents'}
 SUFFIXES={'.py','.js','.css','.html','.md','.json','.csv','.xml','.pdf','.sh','.ps1','.txt','.sql'}
@@ -47,7 +47,7 @@ def source_files(root:Path):
         if source_allowed(relative):
             yield relative.as_posix(),path.read_bytes()
 
-def build(root:Path,destination:Path):
+def build(root:Path,destination:Path,*,source_date_epoch=None):
     if destination.resolve().is_relative_to(root.resolve()):
         raise ValueError('RELEASE_OUTPUT_MUST_BE_OUTSIDE_SOURCE')
     files=dict(source_files(root))
@@ -58,8 +58,11 @@ def build(root:Path,destination:Path):
         if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='__version__' for t in node.targets):
             version=ast.literal_eval(node.value)
     if not isinstance(version,str) or not version:raise ValueError('RELEASE_VERSION_MISSING')
+    if source_date_epoch is not None and (type(source_date_epoch) is not int or not 0<=source_date_epoch<=4102444800):
+        raise ValueError('SOURCE_DATE_EPOCH_INVALID')
+    created=datetime.fromtimestamp(source_date_epoch,timezone.utc) if source_date_epoch is not None else datetime.now(timezone.utc)
     manifest={'format':1,'product':'SKS UtilityOS','version':version,
-              'created_utc':datetime.now(timezone.utc).isoformat(),
+              'created_utc':created.isoformat(),
               'data_classification':'source code and synthetic fixtures only',
               'authenticity':'Unsigned. Authenticate using school-approved distribution.',
               'files':{name:sha256(data).hexdigest() for name,data in files.items()}}
@@ -71,7 +74,9 @@ def build(root:Path,destination:Path):
             info.external_attr=(0o100755 if name.endswith(('.command','.sh')) else 0o100644)<<16
             info.compress_type=zipfile.ZIP_DEFLATED
             z.writestr(info,data)
-        z.writestr(PREFIX+MANIFEST,json.dumps(manifest,indent=2)+'\n')
+        info=zipfile.ZipInfo(PREFIX+MANIFEST)
+        info.create_system=3;info.external_attr=0o100644<<16;info.compress_type=zipfile.ZIP_DEFLATED
+        z.writestr(info,json.dumps(manifest,indent=2)+'\n')
     return verify(destination)
 
 def verify(archive:Path):
@@ -109,7 +114,8 @@ def verify(archive:Path):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('action',choices=['build','verify']);p.add_argument('archive',type=Path)
+    p.add_argument('--source-date-epoch',type=int,help='Fixed source timestamp for byte-reproducible release builds')
     args=p.parse_args()
-    print(json.dumps(build(ROOT,args.archive) if args.action=='build' else verify(args.archive),indent=2))
+    print(json.dumps(build(ROOT,args.archive,source_date_epoch=args.source_date_epoch) if args.action=='build' else verify(args.archive),indent=2))
 
 if __name__=='__main__':main()

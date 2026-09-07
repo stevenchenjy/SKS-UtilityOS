@@ -1,6 +1,6 @@
 # SKS UtilityOS
 
-**Version 0.3.0 · staff-local utility ledger · synthetic demonstration**
+**Version 0.4.0 · staff-local utility ledger · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
@@ -32,13 +32,19 @@ Windows scripts are supplied, but native Windows execution and ACL behavior rema
 ## Working file workflows
 
 - Import `samples/demo-import.csv`, compare it with the retained original, check its fields, acknowledge the review, and approve. September gains $579.80 in current charges.
-- Import `samples/demo-invoice.pdf`. Download the source and manually enter its printed fields: Example Water, `DEMO-W03 account`, reference `SYN-PDF-W03-202608`, 6,200 gal, and $125.80. The PDF remains an attachment; there is no PDF extraction or OCR in the application.
+- Import `samples/demo-invoice.pdf`. Download the source and manually enter its printed fields: Example Water, `DEMO-W03 account`, reference `SYN-PDF-W03-202608`, 6,200 gal, and $125.80. This older layout exercises manual completion; the original source is retained.
 - Import `samples/demo-intervals.xml`, confirm mapping to `DEMO-E01`, and approve. Interval history grows without adding invoice charges or billed consumption.
 - Save an incomplete bill draft before leaving its page. Reopen it through **Review queue**. Rejected drafts retain their source and any saved revisions.
 - Open **Invoice ledger** to inspect active invoices or all retained versions. A correction creates a reviewable replacement. A supplier rebill is imported as a new document and explicitly linked to the original active invoice. Only an approved replacement takes over reporting.
 - Cancel an incorrectly posted invoice with a reason and explicit confirmation. A separate financial credit remains an independent invoice with negative charges and zero quantity on charges-only lines.
 - Use **Utility inventory** to correct a building label or confirmed meter mapping. Reporting uses the current mapping; original approved review values and mapping history remain available.
 - Use **Privacy & support** to preview safe diagnostics, export the private active ledger, or create and download a private backup. Restoration runs with the app stopped.
+
+## Intelligent Bill Intake
+
+Open **Utility Inbox** to import files by picker or drag/drop, review a batch result, or explicitly scan a configured external local folder. The import dialog offers extractable fictional PDFs and a scanned example. Text/template extraction proposes fields beside a rendered original; optional English OCR supports the scanned corpus. Every draft still needs human review and approval.
+
+The shipped providers and layouts are fictional. Unknown layouts, missing fields and conflicts require completion; no general real-provider compatibility is claimed. Saved corrections preserve machine evidence and prior approved values. **Bill completeness** starts with explicitly configured account/meter cadence and remains experimental. Read [the intake guide](docs/BILL_INTAKE.md), [the dependency/model decision](docs/DOCUMENT_EXTRACTION_DEPENDENCIES.md), and [offline OCR setup](docs/STAFF_INSTALL_AND_UPDATES.md).
 
 ## Data and accounting boundaries
 
@@ -58,7 +64,7 @@ This remains a single-operator local pilot. [Role enforcement is explicitly defe
 
 ## Upgrade and recovery
 
-Version 0.3.0 uses **schema 3**. Starting the app never upgrades an existing schema-1 or schema-2 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 3; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
+Version 0.4.0 uses **schema 4**. Starting the app never upgrades an existing schema-1, schema-2 or schema-3 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 4; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
 
 Useful maintenance commands, with the selected mode and external data directory supplied consistently:
 
@@ -111,3 +117,14 @@ staff passphrase-confirmation checks create their own new external workspaces:
 
 Read the [operational contracts](docs/OPERATIONS.md), [access/configuration decision](docs/ACCESS_AND_CONFIGURATION.md),
 [release/signing notes](docs/RELEASE_AND_SIGNING.md) and [development/Git guide](docs/DEVELOPMENT.md).
+
+The intake benchmark and native evidence/batch/OCR/recovery checks use only the
+checked-in fictional PDF corpus and a reviewed external model directory:
+
+```sh
+.venv/bin/python scripts/benchmark_extraction.py --ocr-model-dir /approved/local/models \
+  --output /tmp/sks-extraction-benchmark.json
+.venv/bin/python scripts/native_intake_smoke.py --work-dir /tmp/sks-new-intake-check \
+  --ocr-model-dir /approved/local/models \
+  --browser-executable '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+```

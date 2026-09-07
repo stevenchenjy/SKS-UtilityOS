@@ -1,3 +1,4 @@
+import {evidencePanel,detailPanel,bindEvidence,collectDetails} from './evidence.js';
 import {lifecyclePanel,bindLifecycle} from './lifecycle.js';
 import {api,message} from './api.js';
 import {$,$$,esc,exactDollars,title,header,empty,field,selectField,toast,notice,localTime,quantity} from './ui.js';
@@ -42,26 +43,32 @@ export async function showStage(container,ctx,id) {
   const readonly=item.status!=='pending';
   if(item.kind==='intervals')return showIntervalStage(container,ctx,item);
   let payload=item.payload;
+  // Rendering a changed service-line list must not discard unsaved bill details.
+  const retainDetails=()=>{if(item.intake)Object.assign(item.intake.reviewed_values,collectDetails(item));};
   function render(){
     container.innerHTML=`<button class="text-button back-button" id="back-review">Back to review queue</button>`+
       header(payload.invoice_number||'Enter the source invoice',`${item.filename} · ${title(item.bill?.status||item.status)}`,`<a class="secondary" href="/api/sources/${item.document_id}">Download original locally</a>`)+
-      (item.extension==='.pdf'?notice('PDFs are stored locally as source attachments. Open the downloaded original in your trusted PDF viewer and enter the fields. Automatic PDF extraction and OCR are outside this release.'):notice('Compare the imported values with the original. The source file is retained unchanged.'))+
+      (item.extension==='.pdf'?notice('Local extraction proposes values for review. Compare every field with the retained original. Missing or conflicting values need staff entry; no draft is approved automatically.'):notice('Compare the imported values with the original. The source file is retained unchanged.'))+
       `<details class="panel"><summary>Source provenance</summary><p class="source-hash">SHA-256: ${esc(item.source_sha256)}</p><p>Importer release: ${esc(item.importer_version)}. Earlier releases did not record their importer version. The retained original and saved review revisions stay separate.</p></details>`+
-      `<form id="bill-editor"><fieldset ${readonly?'disabled':''}><section class="panel"><h2>Invoice details</h2><div class="form-grid three">
+      `${item.intake?`<div class="evidence-workspace">${evidencePanel(item)}<div class="evidence-entry">`:''}<form id="bill-editor"><fieldset><section class="panel"><h2>Invoice details</h2><div class="form-grid three">
       ${field('Provider','provider',payload.provider)}${field('Local account label','account_alias',payload.account_alias)}${field('Invoice reference','invoice_number',payload.invoice_number)}
       ${field('Invoice date','bill_date',payload.bill_date,'date')}${field('Total current charges, USD','current_total',payload.current_total,'text','inputmode="decimal"')}
       </div><p class="caption">Use current-period charges. A balance due may include earlier invoices, payments, or adjustments. Full portal account numbers are unnecessary.</p></section>
       ${payload.lines.map((line,index)=>lineFields(line,index,readonly)).join('')}
       ${readonly?'':`<button type="button" id="add-line" class="secondary">Add a service line</button>`}</fieldset></form>
-      ${lifecyclePanel(item)}
+      ${detailPanel(item,readonly)}${item.intake?'</div></div>':''}${lifecyclePanel(item)}
       ${readonly?'': `<section class="review-checks"><h2>Review checks</h2><div id="flags">${renderFlags(item.flags)}</div><label class="check-label"><input type="checkbox" id="acknowledge"> <span>I checked the source, current charges, units, and meter-to-building mapping.</span></label>${item.correction_of&&ctx.mode==='staff'?field('Confirm local app passphrase','current_passphrase','','password','autocomplete="current-password" maxlength="256"'):''}<div class="action-row"><button class="primary" id="approve" disabled>Approve into ledger</button><button class="secondary" id="validate">Check fields</button><button class="text-button danger-text" id="reject">Reject draft</button></div></section>`}`;
     $('#back-review').onclick=()=>ctx.navigate('review');
-    bindLifecycle(item,ctx,collectBill);
+    if(readonly)$$('input,select',$('#bill-editor')).forEach(input=>input.disabled=true);
+    bindLifecycle(item,ctx,collectBill,()=>collectDetails(item));
+    bindEvidence(item);
     if(readonly)return;
     $('#acknowledge').onchange=e=>$('#approve').disabled=!e.target.checked;
     $('#bill-editor').onsubmit=e=>e.preventDefault();
-    $('#bill-editor').oninput=()=>{$('#acknowledge').checked=false;$('#approve').disabled=true;};
-    $$('[data-remove-line]').forEach(b=>b.onclick=()=>{payload=collectBill();if(payload.lines.length===1){toast('An invoice needs at least one service line.',true);return;}payload.lines.splice(Number(b.dataset.removeLine),1);render();});
+    const invalidate=()=>{$('#acknowledge').checked=false;$('#approve').disabled=true;};
+    $('#bill-editor').oninput=invalidate;
+    const details=$('.intake-details');if(details)details.oninput=invalidate;
+    $$('[data-remove-line]').forEach(b=>b.onclick=()=>{payload=collectBill();if(payload.lines.length===1){toast('An invoice needs at least one service line.',true);return;}retainDetails();payload.lines.splice(Number(b.dataset.removeLine),1);render();});
     $$('[data-line]').forEach(line=>{
       $('[name=commodity]',line).onchange=e=>{
         const value=e.target.value;
@@ -69,14 +76,14 @@ export async function showStage(container,ctx,id) {
         if(['heating_oil','propane'].includes(value))$('[name=usage_role]',line).value='delivery';
       };
     });
-    $('#add-line').onclick=()=>{payload=collectBill();payload.lines.push({meter_code:'',building:'',commodity:'electricity',unit:'kWh',period_start:'',period_end:'',usage:'',current_charge:'',usage_role:'charges_only',read_type:'unknown'});render();};
+    $('#add-line').onclick=()=>{payload=collectBill();retainDetails();payload.lines.push({meter_code:'',building:'',commodity:'electricity',unit:'kWh',period_start:'',period_end:'',usage:'',current_charge:'',usage_role:'charges_only',read_type:'unknown'});render();};
     $('#validate').onclick=async()=>{
-      try {const data=await api('/validate-bill',{method:'POST',body:{payload:collectBill(),staged_id:id}});$('#flags').innerHTML=renderFlags(data.flags);toast('Field checks completed.');}
+      try {const data=await api('/validate-bill',{method:'POST',body:{payload:collectBill(),staged_id:id,intake_details:collectDetails(item)}});$('#flags').innerHTML=renderFlags(data.flags);toast('Field checks completed.');}
       catch(error){$('#flags').innerHTML=notice(message(error.message),'danger');}
     };
     $('#approve').onclick=async()=>{
       $('#approve').disabled=true;
-      try {await api(`/staged/${id}/approve`,{method:'POST',body:{payload:collectBill(),revision:item.revision,acknowledge:$('#acknowledge').checked,current_passphrase:$('[name=current_passphrase]')?.value}});toast('Approved. The ledger totals have updated.');ctx.navigate('review');}
+      try {await api(`/staged/${id}/approve`,{method:'POST',body:{payload:collectBill(),intake_details:collectDetails(item),revision:item.revision,acknowledge:$('#acknowledge').checked,current_passphrase:$('[name=current_passphrase]')?.value}});toast('Approved. The ledger totals have updated.');ctx.navigate('review');}
       catch(error){$('#flags').innerHTML=notice(message(error.message),'danger');$('#approve').disabled=false;}
     };
     $('#reject').onclick=async()=>{if(confirm('Reject this draft? The original source will remain in local history.')){await api(`/staged/${id}/reject`,{method:'POST',body:{}});toast('Draft rejected. Source preserved locally.');ctx.navigate('review');}};

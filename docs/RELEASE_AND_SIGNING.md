@@ -2,7 +2,7 @@
 
 ## Current local release
 
-0.3.0 is an **unsigned source ZIP** containing Python, browser modules, scripts,
+0.4.0 is an **unsigned source ZIP** containing Python, browser modules, scripts,
 tests and synthetic fixtures. Its manifest verifies the exact packaged bytes;
 the local Git tags preserve reviewed source states. No remote publishing or
 automatic updater is involved. Obtain the verifier and expected release through
@@ -18,7 +18,7 @@ correctly show a changed manifest until a new release is built. The check does
 not attest the installed Python interpreter, dependency environment or OS.
 
 `python scripts/check_source_control.py` checks the Git index's source paths.
-`python scripts/release.py build /external/SKS-UtilityOS-0.3.0.zip` creates a
+`python scripts/release.py build /external/SKS-UtilityOS-0.4.0.zip` creates a
 source-only archive; `verify` validates its paths, membership and hashes. Review
 contents as well as names. Generated archives, wheels, screenshots, logs,
 workspaces, backups and credentials stay outside source control.
@@ -56,3 +56,20 @@ Until that decision, use the separately reviewed source-install process. Finder
 quarantine/Gatekeeper behavior for a school-distributed download remains a target
 acceptance check. Do not disable Gatekeeper or weaken browser/device policy to
 make a demonstration run.
+
+## Reproducible source archive
+
+Pass the fixed release timestamp when building:
+
+```sh
+python scripts/release.py build /external/SKS-UtilityOS-0.4.0.zip \
+  --source-date-epoch 1788652800
+```
+
+File order, timestamps, modes, manifest formatting and compression settings are
+fixed. Two builds with unchanged inputs and the tested Python/zlib toolchain must
+be byte-identical; changing the source timestamp changes the manifest. A standard
+Git ZIP need not have identical container bytes, but its file contents must match
+the same manifest. The source contains only reviewed code/docs/tests/fictional
+fixtures, never OCR weights, wheels, logs or workspace data. `v0.3.0` remains
+immutable; create `v0.4.0` only after the final install and workflow checks pass.

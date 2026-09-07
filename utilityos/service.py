@@ -19,8 +19,9 @@ from .storage import publish_source, read_source
 from .review_data import payload as stored_payload
 
 class Ledger(BillLifecycle, InventoryEditing):
-    def __init__(self, store: Store):
+    def __init__(self, store: Store, ocr_model_dir=None):
         self.store = store
+        self.ocr_model_dir = ocr_model_dir
 
     def import_file(self, filename: str, raw: bytes):
         filename = Path(filename.replace('\\','/')).name[:180]
@@ -35,6 +36,7 @@ class Ledger(BillLifecycle, InventoryEditing):
         with self.store.connect() as db:
             if db.execute('SELECT 1 FROM documents WHERE sha256=?', (sha,)).fetchone():
                 raise ValidationError('DUPLICATE_SOURCE_DOCUMENT')
+        extraction = None
         if ext=='.csv':
             records = [('bill',bill) for bill in parse_csv(raw)]
         elif ext=='.xml':
@@ -42,9 +44,10 @@ class Ledger(BillLifecycle, InventoryEditing):
         else:
             if not raw.startswith(b'%PDF-'):
                 raise ValidationError('PDF_SIGNATURE_INVALID')
-            # PDFs are archived as attachments. No embedded programs, network
-            # links, text extraction, or OCR are executed in this release.
-            records = [('bill',blank_bill())]
+            from .pdf_extract import task
+            from .extraction import proposed_bill
+            extraction = task(raw, model_dir=self.ocr_model_dir)
+            records = [('bill', proposed_bill(extraction))]
         target = self.store.sources / f'{sha}{ext}'
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -58,6 +61,9 @@ class Ledger(BillLifecycle, InventoryEditing):
                 ids.append(db.execute('INSERT INTO staged(document_id,kind,payload,created_at) VALUES (?,?,?,?)',
                                      (doc_id,kind,json.dumps(payload),now())).lastrowid)
                 event(db, 'CREATE_DRAFT', ids[-1])
+            if extraction:
+                from .intake_storage import store_extraction
+                store_extraction(db, doc_id, ids[0], extraction)
             event(db, {'.csv':'IMPORT_CSV','.xml':'IMPORT_XML','.pdf':'IMPORT_PDF'}[ext])
         return {'staged_ids':ids,'count':len(ids)}
 
@@ -107,19 +113,25 @@ class Ledger(BillLifecycle, InventoryEditing):
                         flags.append({'code':'DAILY_USAGE_ABOVE_150_PERCENT_OF_RECENT_MEDIAN','blocking':False})
         return list({flag['code']:flag for flag in flags}.values())
 
-    def validate_draft(self, payload, staged_id=None):
+    def validate_draft(self, payload, staged_id=None, intake_details=None):
         bill=validate_bill(payload)
         with self.store.connect() as db:
             row=self._pending(db,staged_id) if staged_id is not None else None
-            return {'payload':bill,'flags':self._bill_flags(db,bill,row['correction_of'] if row else None)}
+            flags = self._bill_flags(db,bill,row['correction_of'] if row else None)
+            if row:
+                from .intake_storage import validation_flags
+                flags += validation_flags(db,row,bill,intake_details)
+            return {'payload':bill,'flags':flags}
 
-    def approve_bill(self, staged_id: int, payload, acknowledge=False, revision=None):
+    def approve_bill(self, staged_id: int, payload, acknowledge=False, revision=None, intake_details=None):
         bill=validate_bill(payload)
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             row=self._pending(db,staged_id,revision)
             correction_of=row['correction_of']
             flags=self._bill_flags(db,bill,correction_of)
+            from .intake_storage import validation_flags
+            flags += validation_flags(db,row,bill,intake_details)
             if correction_of is not None and acknowledge is not True:
                 raise ValidationError('REVIEW_WARNINGS_AND_ACKNOWLEDGE')
             if any(flag['blocking'] for flag in flags):
@@ -153,7 +165,7 @@ class Ledger(BillLifecycle, InventoryEditing):
                 event(db, 'OBSERVE_ACCOUNT_MAPPING', staged_id)
                 db.execute('''INSERT INTO bill_lines(bill_id,meter_id,period_start,period_end,usage,unit,charge_cents,usage_role,read_type)
                               VALUES (?,?,?,?,?,?,?,?,?)''',(bill_id,meter,line['period_start'],line['period_end'],line['usage'],line['unit'],cents(line['current_charge']),line['usage_role'],line['read_type']))
-            self._save_revision(db,row,bill,correction_of,row['correction_reason'])
+            self._save_revision(db,row,bill,correction_of,row['correction_reason'],intake_details)
             db.execute('UPDATE staged SET status=?,reviewed_at=? WHERE id=?',('approved',now(),staged_id))
             db.execute("INSERT INTO bill_history(bill_id,at,action,related_bill_id,reason) VALUES (?,?,'approved',?,?)",
                        (bill_id,now(),correction_of,row['correction_reason']))
@@ -266,9 +278,13 @@ class Ledger(BillLifecycle, InventoryEditing):
                 return item
             item.pop('review_payload',None)
             if item['kind']=='bill':
+                from .intake_storage import review_info, validation_flags
+                item['intake'] = review_info(db,row,item['payload'])
                 try:
                     payload=validate_bill(item['payload'])
                     item['flags']=self._bill_flags(db,payload,item['correction_of']) if item['status']=='pending' else []
+                    if item['status']=='pending':
+                        item['flags'] += validation_flags(db,row,payload)
                 except ValidationError as exc:
                     item['flags']=[{'code':exc.code,'blocking':True}]
                 approved=db.execute('SELECT id FROM bills WHERE staged_id=?',(staged_id,)).fetchone()

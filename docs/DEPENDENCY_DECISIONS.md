@@ -1,6 +1,6 @@
 # Dependency decisions — 2026-09-06
 
-The existing Python/FastAPI/SQLite and browser ES module architecture is retained. Corrections, private history, migrations, and backup controls use Python's standard library and existing dependencies. No cloud service, connector, PDF parser, OCR library, JavaScript build system, or paid dependency was introduced into the application.
+The existing Python/FastAPI/SQLite and browser ES module architecture is retained. Corrections, private history, migrations, and backup controls use Python's standard library and existing dependencies. The 0.2/0.3 ledger work introduced no new parser/runtime. The 0.4.0 intake slice adds the separately reviewed local PDF/OCR components below; no cloud service, connector, JavaScript build system or paid dependency is required.
 
 ## Advisory-driven updates
 
@@ -43,3 +43,13 @@ The existing pinned environment was rescanned with external pip-audit 2.10.1 on
 license/maintenance inventory remains applicable. Git is used for local source
 control and development index tests, not by the running ledger. Apple signing
 research produced documentation only; it introduced no service or credential.
+
+## 0.4.0 document extraction
+
+Read `DOCUMENT_EXTRACTION_DEPENDENCIES.md` for the measured evaluation of
+pdfplumber, invoice2data, Docling and Granite-Docling, the selected native-text/
+small optional OCR path, licensing and native-library limits. `requirements.txt`
+adds pdfplumber; `requirements-ocr.txt` adds optional tesserocr/cysignals; the
+development corpus generator adds ReportLab. `constraints-tested.txt` and
+`DEPENDENCY_INVENTORY.json` include the active closure and optional scope. No
+AGPL code, cloud model, automatic weight download or vendor template was copied.

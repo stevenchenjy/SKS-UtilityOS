@@ -93,8 +93,13 @@ class Store:
                     raise ValueError("SCHEMA_VERSION_UNSUPPORTED_REQUIRES_REVIEWED_MIGRATION")
                 if expected_schema >= 3 and verify_audit(db) != 'ok':
                     raise ValueError("AUDIT_INTEGRITY_FAILED")
+                if expected_schema >= 4:
+                    from .intake_storage import verify
+                    verify(db)
             elif initialize and expected_schema == SCHEMA_VERSION:
                 db.executescript(SCHEMA + AUDIT_TABLE + AUDIT_TRIGGERS)
+                from .intake_storage import initialize
+                initialize(db)
                 db.executemany("INSERT INTO settings VALUES (?,?)", [('schema_version',str(SCHEMA_VERSION)),('mode',mode)])
             else:
                 raise ValueError("EXISTING_WORKSPACE_REQUIRED")

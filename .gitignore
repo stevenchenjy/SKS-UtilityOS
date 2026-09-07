@@ -65,3 +65,4 @@ Desktop.ini
 !samples/*.csv
 !samples/*.xml
 !samples/*.pdf
+!samples/intake/*.pdf

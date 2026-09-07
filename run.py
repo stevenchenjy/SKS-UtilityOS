@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--mode',choices=['demo','staff'],default='staff',help='Workspace for maintenance commands')
     parser.add_argument('--data-dir',type=Path)
     parser.add_argument('--port',type=int,default=8765)
+    parser.add_argument('--ocr-model-dir',type=Path,help='Optional local directory holding reviewed eng.traineddata; no downloads')
     parser.add_argument('--archive',type=Path,help='Private backup ZIP for restore')
     parser.add_argument('--confirm-restore',action='store_true')
     parser.add_argument('--confirm-migrate',action='store_true')
@@ -53,7 +54,7 @@ def main():
     args=parser.parse_args()
     if args.command=='version':print(__version__);return
     mode=args.command if args.command in {'demo','staff'} else args.mode
-    config=Config((args.data_dir or default_data_dir(mode)).expanduser(),mode,args.port)
+    config=Config((args.data_dir or default_data_dir(mode)).expanduser(),mode,args.port,args.ocr_model_dir.expanduser() if args.ocr_model_dir else None)
     config.validate()
     if os.name!='nt':os.umask(0o077)
     if args.command not in {'demo','staff'} and not config.data_dir.is_dir() and not args.restore_to_new_workspace:

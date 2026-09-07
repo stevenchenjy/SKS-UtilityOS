@@ -1,5 +1,36 @@
 # Release notes
 
+## 0.4.0 — 2026-09-06
+
+Intelligent Bill Intake, preserving the immutable 0.3.0 ledger and audit baseline.
+
+- Added batch picker/drop intake, durable per-file status, duplicate links and an
+  explicit configurable external folder scan with stable-read guards and paging.
+- Added bounded digital PDF extraction and optional offline English OCR. Reviewed
+  pdfplumber, invoice2data, Docling and Granite-Docling before selecting the small
+  local path; no cloud extraction or model download occurs in the application.
+- Added formal per-field evidence, exact normalization, five fictional providers
+  with versioned layouts, explicit drift/unsupported handling and source previews.
+- Added desktop side-by-side/mobile evidence review, manual completion and saved
+  supplementary values. Corrections/rebills preserve original machine observations,
+  prior approved values, source bytes, revision protection and active-only totals.
+- Added final-approved correction counts and proposed template investigation with
+  no automatic training or template changes. Added explicit cadence/history and
+  a labelled experimental invoice-month completeness view.
+- Added schema 4 with ordered migration from 1/2/3, extraction audit/hash integrity,
+  crash recovery, backup/restore and privacy sentinel tests. Legacy PDF records
+  are not silently reprocessed. Diagnostics excludes document/evidence content.
+- Added 28 deterministic fictional PDFs, exact method-separated benchmarking and
+  native desktop/mobile intake tests. Fixed rotated-scan selection, late preview
+  callbacks, unsaved supplementary fields and folder continuation during testing.
+- Added reproducible source builds with a fixed source timestamp, updated offline
+  installation/model guidance and preserved the trusted v0.3.0 tag unchanged.
+
+Only staff approval posts an invoice. This unsigned release is development-tested;
+real provider compatibility, school installation and private-data acceptance remain
+unverified. Optional OCR's native engine/model limitations are recorded in
+`DOCUMENT_EXTRACTION_DEPENDENCIES.md`; results are in `VERIFICATION.md`.
+
 ## 0.3.0 — 2026-09-06
 
 Local production-readiness development milestone, preserving the 0.2.0 ledger.

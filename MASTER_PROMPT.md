@@ -6,7 +6,7 @@ You are continuing an existing working starter for The Storm King School. Act as
 
 This workspace is exclusively for SKS UtilityOS software development, testing, technical documentation, and release engineering. Do not create or restore meeting briefs, presentations, procurement materials, or stakeholder proposals unless explicitly requested. The removed meeting brief is intentional.
 
-Version 0.2.0 continues the original implementation. Milestone A and the development portion of milestone B have been implemented and verified on the development Mac: native browser flows, invoice corrections/rebills/cancellation, saved draft history, mapping edits, backup recovery, explicit schema migration, and operator-controlled code-folder switching. Read `docs/VERIFICATION.md`, `docs/CHANGELOG.md`, and the actual tests before deciding more work is needed. School acceptance and real-data validation are still separate external decisions. The next optional entry-effort milestone needs a demonstrated synthetic-format use case; do not infer a missing feature from the historical priority list below.
+Version 0.2.0 continues the original implementation. Milestone A and the development portion of milestone B have been implemented and verified on the development Mac: native browser flows, invoice corrections/rebills/cancellation, saved draft history, mapping edits, backup recovery, explicit schema migration, and operator-controlled code-folder switching. Read `docs/VERIFICATION.md`, `docs/CHANGELOG.md`, and the actual tests before deciding more work is needed. School acceptance and real-data validation are still separate external decisions. Historical priorities below are context; inspect the implemented 0.4.0 slice before assuming a feature is missing.
 
 Version 0.3.0 is the subsequent production-readiness development milestone:
 atomic source recovery, schema-3 audit/provenance, ordered migration tests,
@@ -15,6 +15,14 @@ synthetic campus. The single-operator role decision remains explicit in
 `docs/ACCESS_AND_CONFIGURATION.md`. Read the current verification report and
 release notes before choosing further work. This is not production deployment
 or school acceptance, and no portal/entry automation is implied.
+
+Version 0.4.0 completes the Intelligent Bill Intake development milestone:
+local picker/drop/batch and explicit inbox scans, candidate PDF/OCR extraction,
+versioned fictional layouts and drift handling, source-region review, preserved
+machine/human history, and experimental explicit cadence. Read `docs/BILL_INTAKE.md`
+and the exact synthetic benchmark/limits. The trusted `v0.3.0` tag is immutable.
+Further intake work requires a new demonstrated format or failure case; no portal
+automation, live records, real-provider claim or unattended update is implied.
 
 ## Situation and desired result
 
@@ -32,9 +40,9 @@ You may use relevant installed engineering, testing, frontend, database, and sec
 
 ## What currently exists
 
-Version 0.3.0 uses FastAPI, SQLite, defusedxml, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
+Version 0.4.0 uses FastAPI, SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
 
-The app supports canonical CSV bills, PDF attachment with manual field entry, and a limited Green Button Download My Data XML importer for forward delta electricity energy. Staff review precedes approval. Invoice charges and measured usage stay separate. Synthetic fixtures include separate supplier charges, estimated readings, delivered heating fuel, and an abnormal water bill.
+The app supports canonical CSV bills, local evidence-backed PDF extraction with manual fallback, and a limited Green Button Download My Data XML importer for forward delta electricity energy. Staff review precedes approval. Invoice charges and measured usage stay separate. Synthetic fixtures include separate supplier charges, estimated readings, delivered heating fuel, and an abnormal water bill.
 
 Use this implementation as the starting point. Choose a different component when there is a clear benefit and preserve the working contracts through tests. A full rewrite, a large EMS fork, a cloud deployment, and a commercial aggregator are unnecessary prerequisites.
 
@@ -60,17 +68,17 @@ Extend tests to cover the same invoice number being rebilled, a credit-only docu
 
 ### 3. Reduce entry effort while keeping records local
 
-Improve the canonical CSV workflow with preview and reusable column mappings when a real synthetic-format use case supports it. Add an optional local import folder only after designing file completeness checks, duplicate protection, clear failure status, and explicit staff review. A folder watcher does not download invoices by itself.
+Improve the canonical CSV workflow with preview and reusable column mappings when a real synthetic-format use case supports it. The explicit local import folder already has stability checks, duplicate protection, failure status and staff review; preserve these before extending it. A folder watcher does not download invoices by itself.
 
-PDF entry currently requires staff transcription. Explore a local, permissively licensed text parser for text-based PDFs and provider-template adapters. Keep extraction reviewable and preserve source-to-field evidence. Reject unsupported formats cleanly. Use synthetic examples now; ask school IT to validate templates privately against actual files later.
+The 0.4.0 Intelligent Bill Intake milestone implements batch picker/drop, explicit local-folder scans, digital PDF evidence extraction, versioned fictional templates, drift detection, immutable correction provenance and optional local English OCR. Preserve these contracts and their benchmark before extending them. Read `docs/BILL_INTAKE.md` and `docs/DOCUMENT_EXTRACTION_DEPENDENCIES.md`. Real provider templates still require school-controlled validation; do not request private bills here.
 
-Treat scanned PDFs as a separate future capability. Evaluate local OCR accuracy, installation burden, license, and resource use before adding it. No cloud OCR or metered model API may receive school bills. Do not advertise general automatic bill extraction until varied representative test cases support the claim.
+The bounded scanned-PDF fallback is implemented and measured on the fictional corpus. Evaluate corpus accuracy, installation burden, license, and resources again before broadening it. No cloud OCR or metered model API may receive school bills. Do not advertise general automatic bill extraction until varied representative test cases support the claim.
 
 ### 4. Improve useful reporting and support
 
 Keep invoice-month charges understandable. Add the basic filters, original-source links, exports, and selected building/meter history that Finance and Facilities need. Preserve full precision and correct negative-credit charts. Label delivered fuel as purchased volume and keep units separate.
 
-Define source coverage before adding missing-bill or campus-total claims. A missing expected invoice needs a staff-confirmed active account and expected cadence. A percentage change requires comparable coverage and periods. Any future normalization, carbon calculation, or calendarization must expose assumptions and source factors.
+Preserve the experimental account/meter cadence view and define actual source coverage before authoritative missing-bill or campus-total claims. A missing expected invoice needs a staff-confirmed active account and expected cadence. A percentage change requires comparable coverage and periods. Any future normalization, carbon calculation, or calendarization must expose assumptions and source factors.
 
 Enhance debugging through bounded, fixed error codes and schema-validated diagnostics. Test that identifiers, source names, quantities, charges, paths, account numbers, and secrets cannot enter a shared report. Staff should preview the diagnostic JSON and explicitly export it. When private data is needed to investigate a problem, keep the inspection with authorized school IT and reproduce the issue with synthetic data.
 

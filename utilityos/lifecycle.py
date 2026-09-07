@@ -59,17 +59,19 @@ class BillLifecycle:
             SELECT id FROM chain''', (bill_id,))]
 
     @staticmethod
-    def _save_revision(db, row, payload, correction_of, reason):
+    def _save_revision(db, row, payload, correction_of, reason, intake_details=None):
         revision = row['revision'] + 1
         serialized = json.dumps(payload)
         db.execute('''UPDATE staged SET review_payload=?,revision=?,correction_of=?,correction_reason=? WHERE id=?''',
                    (serialized, revision, correction_of, reason, row['id']))
         db.execute('''INSERT INTO draft_history(staged_id,at,revision,payload,correction_of,reason)
                       VALUES (?,?,?,?,?,?)''', (row['id'], now(), revision, serialized, correction_of, reason))
+        from .intake_storage import save_review
+        save_review(db,row,revision,payload,intake_details)
         event(db, 'SAVE_DRAFT', row['id'])
         return revision
 
-    def save_draft(self, staged_id, payload, revision, correction_of=None, reason=''):
+    def save_draft(self, staged_id, payload, revision, correction_of=None, reason='', intake_details=None):
         payload = draft_payload(payload)
         if type(revision) is not int:
             raise ValidationError('DRAFT_REVISION_REQUIRED')
@@ -82,7 +84,7 @@ class BillLifecycle:
                 other = db.execute("SELECT id FROM staged WHERE correction_of=? AND status='pending' AND id<>?", (correction_of, staged_id)).fetchone()
                 if other:
                     raise ValidationError('PENDING_CORRECTION_ALREADY_EXISTS')
-            self._save_revision(db, row, payload, correction_of, reason)
+            self._save_revision(db, row, payload, correction_of, reason, intake_details)
         return self.stage(staged_id)
 
     def recover_draft(self, staged_id, revision, acknowledge=False):
@@ -127,6 +129,9 @@ class BillLifecycle:
             staged_id = db.execute('''INSERT INTO staged(document_id,kind,payload,created_at,correction_of,correction_reason)
                       VALUES (?,'bill',?,?,?,?)''', (original['document_id'], payload, now(), bill_id, reason)).lastrowid
             event(db, 'CREATE_CORRECTION', staged_id)
+            details = db.execute('SELECT fields,differences FROM intake_reviews WHERE staged_id=? ORDER BY revision DESC LIMIT 1', (source['id'],)).fetchone()
+            if details:
+                db.execute('INSERT INTO intake_reviews VALUES (?,0,?,?)', (staged_id,details[0],details[1]))
         return {'staged_id': staged_id}
 
     def cancel_bill(self, bill_id, reason, acknowledge=False):

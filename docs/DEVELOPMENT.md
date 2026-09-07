@@ -38,8 +38,8 @@ Before packaging, stage reviewed source and run:
 python scripts/check_source_control.py
 git diff --cached --check
 python -m pytest -q
-python scripts/release.py build /external/SKS-UtilityOS-0.3.0.zip
-python scripts/release.py verify /external/SKS-UtilityOS-0.3.0.zip
+python scripts/release.py build /external/SKS-UtilityOS-0.4.0.zip
+python scripts/release.py verify /external/SKS-UtilityOS-0.4.0.zip
 ```
 
 Copy the generated source manifest into the repository, verify each indexed blob
@@ -48,3 +48,21 @@ installation/browser/migration checks pass. Check the source-only membership of
 a Git archive as well as the working folder; checkout normalization must not
 invalidate the manifest. Source manifests exclude themselves to avoid a
 self-referential hash. A clean Git index is not a substitute for content review.
+
+## Immutable 0.3 baseline and 0.4 release
+
+The 0.4 work began with a clean tree at `v0.3.0`, commit
+`e61facf6c07079add53be46bf6e2f319b085f6df`. All 83 manifested source files and the
+archive hash `41423c847f659132a9309c5c9cfd5ebf92501bf4641c5ed0743ae62f262e4f7b`
+were verified before behavior changed. `docs/INTAKE_DESIGN.md` records that
+baseline and the acceptance sequence in a separate local commit. Do not move
+`v0.3.0` or rewrite its history.
+
+The 0.4 source build uses `--source-date-epoch 1788652800`; reproduce it twice and
+compare archive bytes with the tested toolchain. Preserve the generated manifest
+inside Git and check every blob, including the deterministic 28-PDF corpus,
+against it. Run the old regression/readiness checks plus `native_intake_smoke.py`
+and `benchmark_extraction.py` from a separately unpacked wheelhouse installation.
+Use the actual retained 0.3 code to create a synthetic upgrade/rollback fixture.
+No school data, real model-training examples or non-development artifacts belong
+in these checks. All release operations remain local; no remote is contacted.

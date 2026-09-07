@@ -9,3 +9,17 @@
 @media(max-width:700px){.trend .chart-label{font-size:16px}.trend .chart-axis{font-size:16px}}
 
 .source-hash{overflow-wrap:anywhere;font-family:monospace;font-size:.85rem}
+
+/* Evidence-based intake keeps the established local application shell. */
+.evidence-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;align-items:start;margin:20px 0}
+.evidence-entry{min-width:0}.evidence-entry .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.source-evidence{position:sticky;top:16px;min-width:0}.source-scroll{overflow:auto;max-height:55vh;background:#e8ecec;border:1px solid var(--border);margin:12px 0}
+.source-scroll canvas{display:block;width:100%;max-width:none;height:auto}.source-evidence .action-row{gap:10px;flex-wrap:wrap}
+.source-evidence select{padding:6px;max-width:110px}.evidence-raw{font-size:12px;overflow-wrap:anywhere}
+.evidence-link{font-size:11px;text-align:left;line-height:1.5;white-space:normal;padding:4px 0;color:#44605b}
+.evidence-link[data-state=missing],.evidence-link[data-state=conflict]{color:#9c3927}.evidence-link[data-state=corrected]{color:#735010}
+.evidence-entry .field input,.evidence-entry .field select{min-width:0;width:100%}.intake-details .form-grid{margin-top:18px}
+.coverage-counts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:20px 0}.coverage-counts strong{display:block;font-size:28px;margin-top:8px}
+.dropzone.dragging{outline:3px solid #347768;background:#e8f1ed}
+@media(max-width:1050px){.evidence-workspace{grid-template-columns:1fr}.source-evidence{position:static}.source-scroll{max-height:45vh}.coverage-counts{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.evidence-entry .form-grid{grid-template-columns:1fr}.coverage-counts{grid-template-columns:repeat(2,minmax(0,1fr))}.source-evidence{padding:14px}}
