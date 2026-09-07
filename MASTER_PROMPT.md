@@ -6,7 +6,7 @@ You are continuing an existing working starter for The Storm King School. Act as
 
 This workspace is exclusively for SKS UtilityOS software development, testing, technical documentation, and release engineering. Do not create or restore meeting briefs, presentations, procurement materials, or stakeholder proposals unless explicitly requested. The removed meeting brief is intentional.
 
-Version 0.2.0 continues the original implementation. Milestone A and the development portion of milestone B have been implemented and verified on the development Mac: native browser flows, invoice corrections/rebills/cancellation, saved draft history, mapping edits, backup recovery, explicit schema migration, and operator-controlled code-folder switching. Read `docs/VERIFICATION.md`, `docs/CHANGELOG.md`, and the actual tests before deciding more work is needed. School acceptance and real-data validation are still separate external decisions. Historical priorities below are context; inspect the implemented 0.4.0 slice before assuming a feature is missing.
+Version 0.2.0 continues the original implementation. Milestone A and the development portion of milestone B have been implemented and verified on the development Mac: native browser flows, invoice corrections/rebills/cancellation, saved draft history, mapping edits, backup recovery, explicit schema migration, and operator-controlled code-folder switching. Read `docs/VERIFICATION.md`, `docs/CHANGELOG.md`, and the actual tests before deciding more work is needed. School acceptance and real-data validation are still separate external decisions. Historical priorities below are context; inspect the implemented 0.5.0 slice before assuming a feature is missing.
 
 Version 0.3.0 is the subsequent production-readiness development milestone:
 atomic source recovery, schema-3 audit/provenance, ordered migration tests,
@@ -24,6 +24,15 @@ and the exact synthetic benchmark/limits. The trusted `v0.3.0` tag is immutable.
 Further intake work requires a new demonstrated format or failure case; no portal
 automation, live records, real-provider claim or unattended update is implied.
 
+Version 0.5.0 adds Private Provider Onboarding and Local Template Studio: bounded
+source-field setup, private immutable layout versions, selected approved-bill
+validation, explicit activation/retirement, drift and correction evidence, and
+exact value-free support previews. Schema 5 retains these records in private
+backups and preserves prior source/extraction history. Read `docs/PROVIDER_STUDIO.md`
+and current verification before proposing further work. Local installation and
+school acceptance remain distinct; no portal integration or public deployment
+is implied. The trusted v0.4.0 tag remains immutable.
+
 ## Situation and desired result
 
 The school has multiple buildings with separate electricity, water, heating, and other utility services. Finance and Facilities want one place to see reviewed invoices, costs, and consumption. The student developer will have no utility portal access and should receive no school passwords or private bill database.
@@ -40,7 +49,7 @@ You may use relevant installed engineering, testing, frontend, database, and sec
 
 ## What currently exists
 
-Version 0.4.0 uses FastAPI, SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
+Version 0.5.0 uses FastAPI, SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
 
 The app supports canonical CSV bills, local evidence-backed PDF extraction with manual fallback, and a limited Green Button Download My Data XML importer for forward delta electricity energy. Staff review precedes approval. Invoice charges and measured usage stay separate. Synthetic fixtures include separate supplier charges, estimated readings, delivered heating fuel, and an abnormal water bill.
 

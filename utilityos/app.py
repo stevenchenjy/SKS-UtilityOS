@@ -346,5 +346,13 @@ def create_app(config: Config):
             return JSONResponse({'error':'SAMPLE_NOT_FOUND'},status_code=404)
         return FileResponse(ROOT/'samples'/'intake'/filename,media_type='application/pdf',filename=filename)
 
+    @app.get('/api/onboarding-samples/{filename}')
+    def onboarding_sample(filename: str):
+        if filename not in {'first.pdf','second.pdf','future.pdf','layout-change.pdf','layout-change-second.pdf','scan.pdf'}:
+            return JSONResponse({'error':'SAMPLE_NOT_FOUND'},status_code=404)
+        return FileResponse(ROOT/'samples'/'onboarding'/filename,media_type='application/pdf',filename=filename)
+
+    from .provider_routes import mount as mount_providers
+    mount_providers(app, ledger, json_body)
     app.mount('/',StaticFiles(directory=ROOT/'web',html=True),name='web')
     return app

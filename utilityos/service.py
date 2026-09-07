@@ -37,6 +37,8 @@ class Ledger(BillLifecycle, InventoryEditing):
             if db.execute('SELECT 1 FROM documents WHERE sha256=?', (sha,)).fetchone():
                 raise ValidationError('DUPLICATE_SOURCE_DOCUMENT')
         extraction = None
+        local_binding = None
+        registry_snapshot = None
         if ext=='.csv':
             records = [('bill',bill) for bill in parse_csv(raw)]
         elif ext=='.xml':
@@ -46,13 +48,31 @@ class Ledger(BillLifecycle, InventoryEditing):
                 raise ValidationError('PDF_SIGNATURE_INVALID')
             from .pdf_extract import task
             from .extraction import proposed_bill
-            extraction = task(raw, model_dir=self.ocr_model_dir)
+            from .provider_storage import registry
+            from .provider_rules import select_layout
+            with self.store.connect() as db:
+                providers, layouts, registry_rows, damaged = registry(db)
+                registry_snapshot = tuple(r["hash"] for r in registry_rows if r["kind"] != "link")
+            if providers or damaged:
+                observed = task(raw, model_dir=self.ocr_model_dir, action='observe')
+                if 'adapter_version' in observed:
+                    extraction, provider_id, layout_id, classification = select_layout(observed, providers, layouts, damaged)
+                    local_binding = (provider_id, layout_id, classification)
+                else:
+                    extraction = observed
+            else:
+                extraction = task(raw, model_dir=self.ocr_model_dir)
             records = [('bill', proposed_bill(extraction))]
         target = self.store.sources / f'{sha}{ext}'
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             if db.execute('SELECT 1 FROM documents WHERE sha256=?',(sha,)).fetchone():
                 raise ValidationError('DUPLICATE_SOURCE_DOCUMENT')
+            if ext == '.pdf':
+                current_providers, current_layouts, current_rows, current_damaged = registry(db)
+                current_snapshot = tuple(r['hash'] for r in current_rows if r['kind'] != 'link')
+                if registry_snapshot != current_snapshot:
+                    raise ValidationError('LOCAL_LAYOUT_CHANGED_RETRY_IMPORT')
             publish_source(target, raw)
             doc_id = db.execute('INSERT INTO documents(sha256,filename,extension,size,created_at,importer_version) VALUES (?,?,?,?,?,?)',
                                 (sha,filename,ext,len(raw),now(),__version__)).lastrowid
@@ -64,6 +84,9 @@ class Ledger(BillLifecycle, InventoryEditing):
             if extraction:
                 from .intake_storage import store_extraction
                 store_extraction(db, doc_id, ids[0], extraction)
+                if local_binding:
+                    from .provider_storage import bind
+                    bind(db, doc_id, *local_binding, extraction)
             event(db, {'.csv':'IMPORT_CSV','.xml':'IMPORT_XML','.pdf':'IMPORT_PDF'}[ext])
         return {'staged_ids':ids,'count':len(ids)}
 

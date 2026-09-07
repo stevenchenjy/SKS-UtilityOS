@@ -86,7 +86,7 @@ def main():
             with server(directory,mode,work) as url:
                 context=browser.new_context(viewport={'width':1440,'height':1000},accept_downloads=True)
                 page=context.new_page();errors=[];failed=[];expected_failures=0;times=[]
-                page.on('pageerror',lambda e:errors.append(str(e)))
+                page.on('pageerror',lambda e:errors.append(e.stack or str(e)))
                 page.on('console',lambda msg:errors.append(msg.text) if msg.type in {'error','warning'} else None)
                 page.on('response',lambda r:failed.append(r.status) if r.status>=400 else None)
                 page.on('dialog',lambda d:d.accept())
@@ -97,6 +97,14 @@ def main():
                     times.append(time.perf_counter()-start)
                     assert not page.evaluate('document.documentElement.scrollWidth>innerWidth')
                 def shot(name):page.screenshot(path=str(work/(scenario+'-'+name+'.png')))
+                # Deliver an unchanged real audit response after a short delay.
+                # This exercises logout/navigation while a view is still loading;
+                # no API payload or server/authentication behavior is mocked.
+                page.add_init_script("""const localFetch=window.fetch;window.fetch=async(...args)=>{
+                  const result=await localFetch(...args);
+                  if(String(args[0]).startsWith('/api/audit'))await new Promise(resolve=>setTimeout(resolve,350));
+                  return result;
+                };""")
                 page.goto(url)
                 if mode=='staff':page.get_by_label('Local app passphrase',exact=True).fill(password)
                 page.get_by_role('button',name='Unlock local workspace' if mode=='staff' else 'Open synthetic demo',exact=True).click()
@@ -162,6 +170,7 @@ def main():
                         nav('Overview','Campus utilities');shot('overview-'+str(width))
                 page.get_by_role('button',name='Lock workspace').click()
                 page.get_by_role('button',name='Unlock local workspace' if mode=='staff' else 'Open synthetic demo',exact=True).wait_for()
+                page.wait_for_timeout(450) # Observe completion of the delayed real response after logout.
                 assert not context.cookies()
                 assert failed==[422]*expected_failures,failed
                 unexpected=[e for e in errors if not (e.startswith('Failed to load resource:') and '422' in e)]

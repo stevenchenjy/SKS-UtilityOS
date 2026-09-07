@@ -50,7 +50,7 @@ def ocr_page(raw, number, directory):
     from .provider_templates import PROVIDERS, HEADER_LABELS, SERVICE_LABELS, V2_HEADER, V2_SERVICE
     labels = set(HEADER_LABELS.values()) | set(SERVICE_LABELS.values()) | set(V2_HEADER.values()) | set(V2_SERVICE.values())
     parser_version = f'{tesserocr.tesseract_version().splitlines()[0]}/tesserocr-{version("tesserocr")}/tessdata-fast-87416418657359cb625c412a48b6e1d6d41c29bd'
-    best = (0, [], 0, (612, 792))
+    best = (-1, [], 0, (612, 792))
     # Controlled rotations handle landscape scans. No probabilistic confidence
     # is exposed: every OCR candidate always requires source comparison.
     for rotation in (0, 90, 180, 270):
@@ -72,6 +72,9 @@ def ocr_page(raw, number, directory):
                                           'method': 'ocr', 'parser_version': parser_version})
             score = sum(any(line['text'].startswith(label + ':') for label in labels) for line in lines) + sum(
                 10 for line in lines if line['text'] in PROVIDERS.values())
+            # Unknown providers still expose OCR observations to local setup.
+            # A bounded generic word score only breaks ties; it confers no confidence.
+            score += min(sum(sum(c.isalpha() for c in row['text']) for row in lines), 1000) / 10000
             if score > best[0]:
                 best = (score, lines, rotation, (image.width / 2.5, image.height / 2.5))
             if score >= 20:
@@ -81,7 +84,7 @@ def ocr_page(raw, number, directory):
     return best[1:]
 
 
-def extract(raw, model_dir=None):
+def extract(raw, model_dir=None, *, observe=False):
     import pdfplumber
     from .extraction import parse_lines
     lines, pages, codes = [], [], []
@@ -119,6 +122,9 @@ def extract(raw, model_dir=None):
                     codes.append('OCR_UNAVAILABLE_MANUAL_ENTRY')
     if len(lines) > 10000 or sum(len(row['text']) for row in lines) > 500000:
         raise ValueError('SOURCE_TEXT_LIMIT')
+    if observe:
+        from .provider_rules import Observations
+        return Observations(lines=lines, pages=pages, codes=list(dict.fromkeys(codes))).model_dump(mode="json")
     return parse_lines(lines, pages, codes)
 
 
@@ -145,7 +151,7 @@ def main():
             finally:
                 image.close()
         else:
-            result = extract(raw, request.get('model_dir'))
+            result = extract(raw, request.get('model_dir'), observe=request.get('action') == 'observe')
     except ImportError:
         result = empty_extraction('EXTRACTION_DEPENDENCY_UNAVAILABLE')
     except Exception as exc:

@@ -1,0 +1,205 @@
+{
+  "$defs": {
+    "FieldSupport": {
+      "additionalProperties": false,
+      "properties": {
+        "semantic": {
+          "title": "Semantic",
+          "type": "string"
+        },
+        "rule_type": {
+          "enum": [
+            "inline",
+            "below",
+            "right",
+            "region"
+          ],
+          "title": "Rule Type",
+          "type": "string"
+        },
+        "tested": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Tested",
+          "type": "integer"
+        },
+        "exact": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Exact",
+          "type": "integer"
+        },
+        "missing": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Missing",
+          "type": "integer"
+        },
+        "corrected": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Corrected",
+          "type": "integer"
+        },
+        "unit_conflicts": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Unit Conflicts",
+          "type": "integer"
+        },
+        "manual_entry": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Manual Entry",
+          "type": "integer"
+        },
+        "approved_corrections": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Approved Corrections",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "semantic",
+        "rule_type",
+        "tested",
+        "exact",
+        "missing",
+        "corrected",
+        "unit_conflicts",
+        "manual_entry",
+        "approved_corrections"
+      ],
+      "title": "FieldSupport",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "utilityos-provider-support-v1",
+      "default": "utilityos-provider-support-v1",
+      "title": "Format",
+      "type": "string"
+    },
+    "application_version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Application Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 5,
+      "default": 5,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "anonymous_provider": {
+      "pattern": "^[0-9a-f]{32}$",
+      "title": "Anonymous Provider",
+      "type": "string"
+    },
+    "anonymous_layout": {
+      "pattern": "^[0-9a-f]{32}$",
+      "title": "Anonymous Layout",
+      "type": "string"
+    },
+    "template_version": {
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Template Version",
+      "type": "integer"
+    },
+    "template_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Template Hash",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "draft",
+        "active",
+        "retired"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "validation_status": {
+      "enum": [
+        "passed_selected_set",
+        "needs_validation"
+      ],
+      "title": "Validation Status",
+      "type": "string"
+    },
+    "documents_tested": {
+      "maximum": 10,
+      "minimum": 0,
+      "title": "Documents Tested",
+      "type": "integer"
+    },
+    "fields": {
+      "items": {
+        "$ref": "#/$defs/FieldSupport"
+      },
+      "maxItems": 34,
+      "title": "Fields",
+      "type": "array"
+    },
+    "evidence_states": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Evidence States",
+      "type": "object"
+    },
+    "drift": {
+      "enum": [
+        "none_observed",
+        "investigate"
+      ],
+      "title": "Drift",
+      "type": "string"
+    },
+    "drift_count": {
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Drift Count",
+      "type": "integer"
+    },
+    "parser_code": {
+      "const": "BOUNDED_LITERAL_RULES_REVIEW_REQUIRED",
+      "default": "BOUNDED_LITERAL_RULES_REVIEW_REQUIRED",
+      "title": "Parser Code",
+      "type": "string"
+    },
+    "scope": {
+      "const": "provider_version_selected_approved_samples",
+      "default": "provider_version_selected_approved_samples",
+      "title": "Scope",
+      "type": "string"
+    },
+    "synthetic_guidance": {
+      "const": "Construct fictional labels and values with the same rule type, ambiguity and missing-field pattern. Never attach private source documents or local definitions.",
+      "default": "Construct fictional labels and values with the same rule type, ambiguity and missing-field pattern. Never attach private source documents or local definitions.",
+      "title": "Synthetic Guidance",
+      "type": "string"
+    }
+  },
+  "required": [
+    "application_version",
+    "anonymous_provider",
+    "anonymous_layout",
+    "template_version",
+    "template_hash",
+    "state",
+    "validation_status",
+    "documents_tested",
+    "fields",
+    "evidence_states",
+    "drift",
+    "drift_count"
+  ],
+  "title": "SupportBundle",
+  "type": "object"
+}

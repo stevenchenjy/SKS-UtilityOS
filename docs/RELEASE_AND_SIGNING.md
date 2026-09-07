@@ -2,10 +2,10 @@
 
 ## Current local release
 
-0.4.0 is an **unsigned source ZIP** containing Python, browser modules, scripts,
+0.5.0 is an **unsigned source ZIP** containing Python, browser modules, scripts,
 tests and synthetic fixtures. Its manifest verifies the exact packaged bytes;
-the local Git tags preserve reviewed source states. No remote publishing or
-automatic updater is involved. Obtain the verifier and expected release through
+the local Git tags preserve reviewed source states. The trusted v0.4.0 tag was published under explicit authorization. Publishing
+0.5.0 is a separate step; there is no automatic updater. Obtain the verifier and expected release through
 a separately trusted school channel. A modified archive accompanied by a
 modified manifest can still pass its own hashes; hashes alone do not establish
 a publisher or safe behavior.
@@ -18,7 +18,7 @@ correctly show a changed manifest until a new release is built. The check does
 not attest the installed Python interpreter, dependency environment or OS.
 
 `python scripts/check_source_control.py` checks the Git index's source paths.
-`python scripts/release.py build /external/SKS-UtilityOS-0.4.0.zip` creates a
+`python scripts/release.py build /external/SKS-UtilityOS-0.5.0.zip` creates a
 source-only archive; `verify` validates its paths, membership and hashes. Review
 contents as well as names. Generated archives, wheels, screenshots, logs,
 workspaces, backups and credentials stay outside source control.
@@ -62,7 +62,7 @@ make a demonstration run.
 Pass the fixed release timestamp when building:
 
 ```sh
-python scripts/release.py build /external/SKS-UtilityOS-0.4.0.zip \
+python scripts/release.py build /external/SKS-UtilityOS-0.5.0.zip \
   --source-date-epoch 1788652800
 ```
 

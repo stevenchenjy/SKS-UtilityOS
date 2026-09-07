@@ -21,11 +21,14 @@ MANIFEST='RELEASE-MANIFEST.json'
 ROOT_FILES={'README.md','AGENTS.md','MASTER_PROMPT.md','LICENSE','NOTICE.md','.gitignore','.gitattributes',
             'run.py','requirements-bootstrap.txt','requirements.txt','requirements-dev.txt','requirements-ocr.txt','constraints-tested.txt',
             'Launch-Demo.command','Launch-Staff.command'}
+CI_FILE='.github/workflows/synthetic-ci.yml'
 FOLDERS={'utilityos','web','samples','tests','scripts','docs','.agents'}
 SUFFIXES={'.py','.js','.css','.html','.md','.json','.csv','.xml','.pdf','.sh','.ps1','.txt','.sql'}
 SKIP={'__pycache__','.pytest_cache','.venv','.git','node_modules','backups','sources','evidence','artifacts','dist','build','venv','env'}
 
 def source_allowed(relative):
+    if relative.as_posix()==CI_FILE:
+        return True
     parts=relative.parts
     if not parts or any(part in SKIP or re.match(r'(?i)^(private(?:[-_]|$)|staff-data|demo-data|local-data|credentials|secrets|local-config|\.env(?:\.|$))',part) for part in parts):
         return False
@@ -41,7 +44,7 @@ def source_files(root:Path):
         if not path.is_file():continue
         if len(relative.parts)==1:
             if relative.name not in ROOT_FILES:continue
-        elif relative.parts[0] not in FOLDERS or path.suffix not in SUFFIXES:continue
+        elif relative.as_posix()!=CI_FILE and (relative.parts[0] not in FOLDERS or path.suffix not in SUFFIXES):continue
         if path.suffix.lower() in {'.pdf','.csv','.xml'} and relative.parts[0]!='samples':
             raise ValueError('ONLY_REVIEWED_SYNTHETIC_SAMPLE_DOCUMENTS_MAY_BE_PACKAGED')
         if source_allowed(relative):

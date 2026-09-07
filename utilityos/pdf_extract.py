@@ -30,6 +30,9 @@ def task(raw, *, action='extract', model_dir=None, page=1, rotation=0, timeout=6
         parsed = json.loads(result.stdout)
         if action == 'render' and set(parsed) == {'png'}:
             return parsed
+        if action == 'observe' and 'adapter_version' in parsed:
+            from .provider_rules import Observations
+            return Observations.model_validate(parsed).model_dump(mode='json')
         return Extraction.model_validate(parsed).model_dump(mode='json')
     except subprocess.TimeoutExpired:
         return empty_extraction('EXTRACTION_TIMED_OUT')

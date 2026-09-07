@@ -14,6 +14,7 @@ from .audit import now
 from .db import Store
 from . import audit
 from .intake_storage import verify as verify_extraction
+from .provider_storage import verify as verify_providers
 from .migrations import read_version, plan, upgrade_copy
 from .parsers import ValidationError
 from .storage import publish_source, replace_file
@@ -59,6 +60,7 @@ def check(store: Store):
         documents = db.execute('SELECT sha256,extension FROM documents').fetchall()
         audit_status = audit.verify(db)
         verify_extraction(db)
+        verify_providers(db)
     for sha, extension in documents:
         if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf'}:
             raise ValidationError('SOURCE_REFERENCE_INVALID')
@@ -74,6 +76,7 @@ def backup(store: Store) -> Path:
     with store.connect() as db:
         audit.verify(db)
         verify_extraction(db)
+        verify_providers(db)
         protected = audit.enabled(db)
         if protected:
             audit.event(db, 'BACKUP_STARTED', operation_id=operation_id)
@@ -93,6 +96,7 @@ def backup(store: Store) -> Path:
                 raise ValidationError('BACKUP_DATABASE_INVALID')
             audit.verify(db)
             verify_extraction(db)
+            verify_providers(db)
             docs = db.execute('SELECT sha256,extension FROM documents').fetchall()
             settings = dict(db.execute('SELECT key,value FROM settings'))
         db.close()
@@ -189,6 +193,7 @@ def restore(store: Store, archive_path: Path, mode: str):
                     raise ValidationError('BACKUP_FOREIGN_KEYS_INVALID')
                 audit.verify(restored)
                 verify_extraction(restored)
+                verify_providers(restored)
                 for sha,extension in restored.execute('SELECT sha256,extension FROM documents'):
                     name=f'sources/{sha}{extension}'
                     if expected.get(name)!=sha:

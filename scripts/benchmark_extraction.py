@@ -23,7 +23,7 @@ def equal(key, expected, actual):
     return expected==actual
 
 
-def benchmark(model_dir=None):
+def benchmark(model_dir=None, *, include_ocr=True):
     corpus=ROOT/'samples/intake'
     expected=json.loads((corpus/'expected.json').read_text())
     assert expected['corpus']=='fictional-utility-pdf-v1'
@@ -31,6 +31,7 @@ def benchmark(model_dir=None):
     by_field=defaultdict(lambda:{'expected':0,'exact':0,'missing':0,'incorrect':0})
     outcomes=[]
     for case in expected['documents']:
+        if not include_ocr and case['path']=='ocr':continue
         path=corpus/case['file'];raw=path.read_bytes()
         assert sha256(raw).hexdigest()==case['sha256']
         start=time.perf_counter();result=task(raw,model_dir=model_dir);elapsed=time.perf_counter()-start

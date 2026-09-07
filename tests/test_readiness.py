@@ -198,10 +198,10 @@ def previous_store(tmp_path,raw_csv,version):
         upgraded=tmp_path/'step.sqlite3'
         upgrade_copy(store,upgraded,target_version=version)
         os.replace(upgraded,store.path)
-        if version==3:
-            frozen=tmp_path/'frozen-v3.sqlite3'
+        if version in (3,4):
+            frozen=tmp_path/f'frozen-v{version}.sqlite3'
             with sqlite3.connect(frozen) as target,store.connect() as source:
-                target.executescript((ROOT/'tests/fixtures/schema_v3.sql').read_text())
+                target.executescript((ROOT/f'tests/fixtures/schema_v{version}.sql').read_text())
                 tables=[r[0] for r in target.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
                 for table in tables:
                     columns=[r[1] for r in target.execute(f'PRAGMA table_info({table})')]
@@ -212,7 +212,7 @@ def previous_store(tmp_path,raw_csv,version):
     return store
 
 
-@pytest.mark.parametrize('version',[1,2,3])
+@pytest.mark.parametrize('version',[1,2,3,4])
 def test_each_supported_previous_schema_upgrades_with_provenance(tmp_path,raw_csv,version):
     old=previous_store(tmp_path,raw_csv,version)
     saved=migrate(old.directory,'demo')
@@ -223,7 +223,7 @@ def test_each_supported_previous_schema_upgrades_with_provenance(tmp_path,raw_cs
     assert check(new)['audit']=='ok'
 
 
-@pytest.mark.parametrize('version',[1,2,3,4])
+@pytest.mark.parametrize('version',[1,2,3,4,5])
 @pytest.mark.parametrize('fail',[False,True])
 def test_future_upgrade_framework_from_every_supported_schema(tmp_path,raw_csv,version,fail):
     old=previous_store(tmp_path,raw_csv,version)

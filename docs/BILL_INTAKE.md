@@ -1,4 +1,8 @@
-# Local bill intake — 0.4.0
+# Local bill intake — preserved 0.4.0 contract in 0.5.0
+
+Version 0.5.0 adds private provider setup and versioned local layouts through
+`PROVIDER_STUDIO.md`. The source, approval and evidence rules below continue to
+apply to both built-in fictional templates and private local candidates.
 
 ## Authority and scope
 

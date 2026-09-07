@@ -66,3 +66,4 @@ Desktop.ini
 !samples/*.xml
 !samples/*.pdf
 !samples/intake/*.pdf
+!samples/onboarding/*.pdf

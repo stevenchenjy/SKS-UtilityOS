@@ -51,3 +51,13 @@ access by the developer.
 
 No real provider compatibility or general extraction accuracy is claimed from
 the synthetic corpus. School IT must validate its own layouts and distribution.
+
+## Implementation result
+
+The complete slice and measured acceptance results are recorded in
+`PROVIDER_STUDIO.md`, `CHANGELOG.md` and `VERIFICATION.md`. The registry is one
+append-only typed journal rather than several mutable configuration tables.
+Both single-service and numbered repeated-section rules are supported. No new
+application/model dependency was needed; public synthetic CI uses separately
+reviewed pinned first-party actions. All local definitions in development were
+created through authenticated application workflows using fictional PDFs.

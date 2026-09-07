@@ -1,3 +1,4 @@
+import {showProviders,showProviderSetup} from './modules/providers.js';
 import {showInbox} from './modules/inbox.js';
 import {showCompleteness} from './modules/completeness.js';
 import {api,setCsrf,message} from './modules/api.js';
@@ -9,9 +10,9 @@ import {showInventory} from './modules/inventory.js';
 import {showIntervals} from './modules/intervals.js';
 import {showSupport} from './modules/support.js';
 let meta,route='overview',renderGeneration=0,renderBusy=false;
-const views={inbox:showInbox,completeness:showCompleteness,overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
-const nav=[['overview','Overview'],['bills','Invoice ledger'],['inbox','Utility Inbox'],['completeness','Bill completeness'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
-const context={get mode(){return meta.mode;},navigate,refresh,openStage,openImport,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
+const views={providers:showProviders,inbox:showInbox,completeness:showCompleteness,overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
+const nav=[['overview','Overview'],['bills','Invoice ledger'],['inbox','Utility Inbox'],['providers','Provider Management'],['completeness','Bill completeness'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
+const context={beginView(){const token=++renderGeneration,target=$('#content');target.innerHTML='<p class="loading">Loading local records...</p>';return ()=>token===renderGeneration&&target.isConnected;},get generation(){return renderGeneration;},get mode(){return meta.mode;},navigate,refresh,openStage,openImport,openProviderSetup,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
 
 async function boot(){
   try{
@@ -49,9 +50,15 @@ async function openStage(id){
   try{await showStage(target,context,id);window.scrollTo(0,0);}
   catch(error){handleError(error,target);}
 }
+async function openProviderSetup(documentId=null,options={}){
+  const target=$('#content');
+  route='providers';$$('[data-nav]').forEach(button=>{button.classList.toggle('active',button.dataset.nav==='providers');if(button.dataset.nav==='providers')button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
+  try{await showProviderSetup(target,context,documentId,options);document.title='Provider Setup | SKS UtilityOS';window.scrollTo(0,0);}
+  catch(error){handleError(error,target);}
+}
 function handleError(error,target){if(error.status===401){toast('Local session expired.',true);login();}else{target.innerHTML=notice(message(error.message),'danger');}}
 function openImport(){
-  openDialog(`<div class="modal-heading"><div><h2>Import a source file</h2><p>The file stays in this local workspace.</p></div><button class="close-button" data-close aria-label="Close import">×</button></div><form id="import-form"><label class="dropzone" id="dropzone">${icon('upload')}<strong>Choose or drop CSV, XML, or PDF files</strong><span>Maximum 8 MB per file · Up to 25 files per batch</span><input type="file" id="import-file" accept=".csv,.xml,.pdf" multiple required aria-label="Source file"></label><div class="file-help"><p><strong>CSV:</strong> Use the supplied bill template. Each line retains its service period and unit.</p><p><strong>XML:</strong> The current parser accepts incremental electricity in the supported Green Button format.</p><p><strong>PDF:</strong> Local text extraction and optional OCR propose fields with source evidence. Staff review is always required.</p></div>${meta.mode==='demo'?'<label class="check-label"><input type="checkbox" id="synthetic-confirm" required><span>I confirm this file contains synthetic data only.</span></label>':''}<div id="import-error"></div><div class="action-row"><button class="primary" type="submit">Import for review</button><span class="muted">Totals update after approval.</span></div></form><div class="sample-links"><span>Try a synthetic source</span><a href="/api/samples/demo-import.csv">CSV invoice</a><a href="/api/samples/demo-intervals.xml">Electricity XML</a><a href="/api/samples/demo-invoice.pdf">PDF invoice</a><a href="/api/samples/blank-bill-template.csv">Blank template</a><a href="/api/intake-samples/electricity-digital.pdf">Extractable fictional PDF</a><a href="/api/intake-samples/electricity-scan.pdf">Fictional scan (optional OCR)</a><a href="/api/intake-samples/layout-v2.pdf">Fictional layout v2</a></div>`);
+  openDialog(`<div class="modal-heading"><div><h2>Import a source file</h2><p>The file stays in this local workspace.</p></div><button class="close-button" data-close aria-label="Close import">×</button></div><form id="import-form"><label class="dropzone" id="dropzone">${icon('upload')}<strong>Choose or drop CSV, XML, or PDF files</strong><span>Maximum 8 MB per file · Up to 25 files per batch</span><input type="file" id="import-file" accept=".csv,.xml,.pdf" multiple required aria-label="Source file"></label><div class="file-help"><p><strong>CSV:</strong> Use the supplied bill template. Each line retains its service period and unit.</p><p><strong>XML:</strong> The current parser accepts incremental electricity in the supported Green Button format.</p><p><strong>PDF:</strong> Local text extraction and optional OCR propose fields with source evidence. Staff review is always required.</p></div>${meta.mode==='demo'?'<label class="check-label"><input type="checkbox" id="synthetic-confirm" required><span>I confirm this file contains synthetic data only.</span></label>':''}<div id="import-error"></div><div class="action-row"><button class="primary" type="submit">Import for review</button><span class="muted">Totals update after approval.</span></div></form><div class="sample-links"><span>Try a synthetic source</span><a href="/api/samples/demo-import.csv">CSV invoice</a><a href="/api/samples/demo-intervals.xml">Electricity XML</a><a href="/api/samples/demo-invoice.pdf">PDF invoice</a><a href="/api/samples/blank-bill-template.csv">Blank template</a><a href="/api/intake-samples/electricity-digital.pdf">Extractable fictional PDF</a><a href="/api/intake-samples/electricity-scan.pdf">Fictional scan (optional OCR)</a><a href="/api/intake-samples/layout-v2.pdf">Fictional layout v2</a><a href="/api/onboarding-samples/first.pdf">New provider example 1</a><a href="/api/onboarding-samples/second.pdf">New provider example 2</a><a href="/api/onboarding-samples/future.pdf">New provider future bill</a></div>`);
   const input=$('#import-file');
   const zone=$('#dropzone');
   const picked=()=>{if(input.files.length)$('strong',zone).textContent=input.files.length===1?input.files[0].name:`${input.files.length} files selected`;};

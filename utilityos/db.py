@@ -100,6 +100,8 @@ class Store:
                 db.executescript(SCHEMA + AUDIT_TABLE + AUDIT_TRIGGERS)
                 from .intake_storage import initialize
                 initialize(db)
+                from .provider_storage import initialize as initialize_providers
+                initialize_providers(db)
                 db.executemany("INSERT INTO settings VALUES (?,?)", [('schema_version',str(SCHEMA_VERSION)),('mode',mode)])
             else:
                 raise ValueError("EXISTING_WORKSPACE_REQUIRED")

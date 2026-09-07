@@ -36,7 +36,7 @@ A redaction promise is weaker than a bounded diagnostic schema. Future logging c
 
 School IT should approve the data location, encryption, installer, dependencies, local browser behavior, patch ownership, and backup retention. Finance and Facilities should confirm bill-date conventions, account aliases, meter mapping, current-charge treatment, and what staff may share externally. The correction/supersession workflow is implemented and tested synthetically; Finance must confirm its treatment of actual supplier credits and rebills privately.
 
-Run a current dependency advisory scan with approved tooling and resolve relevant issues before staff deployment. A live Python-package advisory scan on 2026-09-06 found no known vulnerabilities in the tested application/development/optional-OCR environment. Native libraries and OS components require separate review; see `DOCUMENT_EXTRACTION_DEPENDENCIES.md`. Native macOS launch and isolated wheelhouse installation were tested. Windows installation remains unverified; repeat advisory and target-machine checks before staff deployment.
+Run a current dependency advisory scan with approved tooling and resolve relevant issues before staff deployment. A live Python-package advisory scan on 2026-09-07 found no known vulnerabilities in the tested application/development/optional-OCR environment. Native libraries and OS components require separate review; see `DOCUMENT_EXTRACTION_DEPENDENCIES.md`. Native macOS launch and isolated wheelhouse installation were tested. Windows installation remains unverified; repeat advisory and target-machine checks before staff deployment.
 
 ## Other release gaps
 
@@ -85,3 +85,31 @@ not included in utility backups. The optional native engine has dependencies
 beyond what pip-audit inspects; review the documented version/model restrictions
 and OS patch status before use with private files. No document URLs, PDF scripts,
 Tesseract network image inputs or external extraction endpoints are invoked.
+
+
+## 0.5.0 private provider setup and support
+
+Provider definitions contain private labels and locators and stay in the private
+workspace journal. They are included in private backups, excluded from source
+releases and never serialized into ordinary diagnostics. All setup, source
+observation, validation and lifecycle routes use the existing authentication,
+same-origin, CSRF and resource limits. Definitions admit bounded typed rules,
+not code, SQL, shell or unrestricted regular expressions. Ambiguous matches
+abstain; active layouts produce candidates without financial approval authority.
+
+The dedicated Provider Extraction Support Bundle is constructed through the
+positive schema in `provider-support-schema.json`. It admits anonymous IDs and
+hashes, fixed field/rule/evidence/error categories and counts. It excludes names,
+source text, coordinates, filenames, paths, invoice dates, account/meter IDs,
+quantities, demand, charges, balances and credentials. The exact downloaded JSON
+must first be previewed and acknowledged. There is no optional label-text export
+in this release: local label strings cannot reliably be classified as public.
+Synthetic sentinel tests cover both stored private values and all export fields.
+Hashes and anonymous local identifiers can correlate reports; this is a bounded
+technical report, not a guarantee of anonymity against every outside dataset.
+
+Registry integrity failures disable local templates while preserving manual
+entry. Maintenance refuses corrupt definitions. The journal and audit chain
+protect ordinary history and detect corruption; they do not establish authenticity
+against an OS owner who rewrites all records and code. No automatic rule tuning,
+private-data upload, remote support endpoint or model service is installed.

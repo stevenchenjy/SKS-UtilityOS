@@ -1,0 +1,557 @@
+{
+  "corpus": "fictional-local-onboarding-v1",
+  "documents": [
+    {
+      "name": "first",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-01",
+        "invoice_number": "SYN-LOCAL-01",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-01",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "first.pdf",
+      "sha256": "f2e6f54323529fd4ebd651f8fb466c14cb483346ec41ffdb3d4bbaf3a65c9711"
+    },
+    {
+      "name": "second",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-02",
+        "invoice_number": "SYN-LOCAL-02",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-02",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "second.pdf",
+      "sha256": "aff45ea2e0a3f1911934e30591b94d340252b7a77e4f4faa085e8a67d8e8772d"
+    },
+    {
+      "name": "future",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-03",
+        "invoice_number": "SYN-LOCAL-03",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-03",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "future.pdf",
+      "sha256": "dddf831cdeeda486ffc2c8963f8ed02265d9d1469ba6b9335eae3203efbd1954"
+    },
+    {
+      "name": "page-two",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-04",
+        "invoice_number": "SYN-LOCAL-04",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-04",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "page-two.pdf",
+      "sha256": "b0bd7ab1502fe2e40aba26e19d0b0f1b7d305ac90b77653f5e1a406b5d9804cb"
+    },
+    {
+      "name": "two-meters",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-05",
+        "invoice_number": "SYN-LOCAL-05",
+        "bill_date": "2026-09-01",
+        "current_total": "249.00",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-05",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          },
+          {
+            "meter_code": "SYN-LOCAL-SECOND-METER",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "two-meters.pdf",
+      "sha256": "5b2c266b886add0842a9e066eb76e75b36cb1ee83113960d193aa9d7e48aa63c"
+    },
+    {
+      "name": "layout-change",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-06",
+        "invoice_number": "SYN-LOCAL-06",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-06",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 2,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "layout-change.pdf",
+      "sha256": "6d6becfc7f9c75bdaebb9e8f28435d0b5aec7f5099268d490c53800824dc11da"
+    },
+    {
+      "name": "layout-change-second",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-07",
+        "invoice_number": "SYN-LOCAL-07",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-07",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 2,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "layout-change-second.pdf",
+      "sha256": "4335c703046f0dad9e3b56a066c9e1fc9b582c722c45cc658f4bdb52d05dc5e9"
+    },
+    {
+      "name": "repeated-label",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-08",
+        "invoice_number": "SYN-LOCAL-08",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-08",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "repeated-label.pdf",
+      "sha256": "d9edb555599f3ec4fb461d68eb70783123db9f3c47374f87a7878eb6298b8419"
+    },
+    {
+      "name": "relocated-account",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-09",
+        "invoice_number": "SYN-LOCAL-09",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-09",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "relocated-account.pdf",
+      "sha256": "caccc64df94fab77719fe16594e77250eed9a03161872ee2e62852410cb773fb"
+    },
+    {
+      "name": "renamed-usage",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-10",
+        "invoice_number": "SYN-LOCAL-10",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-10",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "renamed-usage.pdf",
+      "sha256": "0828fcd053cf633d064255c5a4dbeb03f998f13196f810e44ac0fa6a8fea1cb6"
+    },
+    {
+      "name": "missing-optional",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-11",
+        "invoice_number": "SYN-LOCAL-11",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-11",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": false,
+      "scan": false,
+      "single": false,
+      "file": "missing-optional.pdf",
+      "sha256": "bba42961baa2a339eeb480964934eea470e9920c7509dd99d85b86a621d33177"
+    },
+    {
+      "name": "scan",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-12",
+        "invoice_number": "SYN-LOCAL-12",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-12",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": true,
+      "single": false,
+      "file": "scan.pdf",
+      "sha256": "d5ab2b13be9372b2d7534a69faf13e4f2c4b82ba7889254eac7846471ff9cfff"
+    },
+    {
+      "name": "supply-first",
+      "bill": {
+        "provider": "Imaginary Juniper Supply",
+        "account_alias": "SYN-LOCAL-ACCOUNT-13",
+        "invoice_number": "SYN-LOCAL-13",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-13",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "0",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "charges_only",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "supply-first.pdf",
+      "sha256": "acce3856ee352ec565d6e2c5ce2f6590a3d422bd93088cac96c55f2404c8d681"
+    },
+    {
+      "name": "supply-second",
+      "bill": {
+        "provider": "Imaginary Juniper Supply",
+        "account_alias": "SYN-LOCAL-ACCOUNT-14",
+        "invoice_number": "SYN-LOCAL-14",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-14",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "0",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "charges_only",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "supply-second.pdf",
+      "sha256": "092d32b1e7c1f8d13e375d256835ce45b9a7319e3ba84cbd73e43beadcc67912"
+    },
+    {
+      "name": "fuel-first",
+      "bill": {
+        "provider": "Fictional Cedar Fuel",
+        "account_alias": "SYN-LOCAL-ACCOUNT-15",
+        "invoice_number": "SYN-LOCAL-15",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-15",
+            "building": "",
+            "commodity": "propane",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "gal",
+            "current_charge": "124.50",
+            "usage_role": "delivery",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "fuel-first.pdf",
+      "sha256": "5a7c0490531d21800f747112faaedc6dcc1968acd866a605a3ddd09074ea1486"
+    },
+    {
+      "name": "fuel-second",
+      "bill": {
+        "provider": "Fictional Cedar Fuel",
+        "account_alias": "SYN-LOCAL-ACCOUNT-16",
+        "invoice_number": "SYN-LOCAL-16",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-16",
+            "building": "",
+            "commodity": "propane",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "gal",
+            "current_charge": "124.50",
+            "usage_role": "delivery",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": false,
+      "file": "fuel-second.pdf",
+      "sha256": "10422da51f899cde43441c361fa6b8fa31c534d1c0809fa119ebefc10731f496"
+    },
+    {
+      "name": "single-first",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-17",
+        "invoice_number": "SYN-LOCAL-17",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-17",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": true,
+      "file": "single-first.pdf",
+      "sha256": "96933c4402be8b35939748df001cacfcc65a9da109dc7ac93436f700102dab35"
+    },
+    {
+      "name": "single-second",
+      "bill": {
+        "provider": "Fictional Northstar Utility",
+        "account_alias": "SYN-LOCAL-ACCOUNT-18",
+        "invoice_number": "SYN-LOCAL-18",
+        "bill_date": "2026-09-01",
+        "current_total": "124.50",
+        "lines": [
+          {
+            "meter_code": "SYN-LOCAL-METER-18",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-01",
+            "period_end": "2026-09-01",
+            "usage": "250.75",
+            "unit": "kWh",
+            "current_charge": "124.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "layout": 1,
+      "optional": true,
+      "scan": false,
+      "single": true,
+      "file": "single-second.pdf",
+      "sha256": "c0ba1eef7d7c7bac552cd395e6fdd6cb85ef9d6c8b932bd9d20537f70849b5e5"
+    }
+  ]
+}

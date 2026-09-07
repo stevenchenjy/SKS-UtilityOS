@@ -1,0 +1,241 @@
+{
+  "$defs": {
+    "Anchor": {
+      "additionalProperties": false,
+      "properties": {
+        "literal": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Literal",
+          "type": "string"
+        },
+        "page": {
+          "default": 1,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "region": {
+          "default": [
+            0,
+            0,
+            4000,
+            4000
+          ],
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Region",
+          "type": "array"
+        }
+      },
+      "required": [
+        "literal"
+      ],
+      "title": "Anchor",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "maxLength": 60,
+          "title": "Field",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Label",
+          "type": "string"
+        },
+        "mode": {
+          "default": "inline",
+          "enum": [
+            "inline",
+            "below",
+            "right",
+            "region"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Region"
+        },
+        "distance": {
+          "default": 60,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Distance",
+          "type": "integer"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "date_format": {
+          "default": "iso",
+          "enum": [
+            "iso",
+            "mdy",
+            "dmy"
+          ],
+          "title": "Date Format",
+          "type": "string"
+        },
+        "expected_unit": {
+          "anyOf": [
+            {
+              "maxLength": 12,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Unit"
+        }
+      },
+      "required": [
+        "field"
+      ],
+      "title": "Rule",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": 1,
+      "default": 1,
+      "title": "Format",
+      "type": "integer"
+    },
+    "provider_anchor": {
+      "$ref": "#/$defs/Anchor"
+    },
+    "layout_anchor": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Anchor"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "section_prefix": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "Service point ",
+      "title": "Section Prefix"
+    },
+    "document_kind": {
+      "default": "invoice",
+      "enum": [
+        "invoice",
+        "credit",
+        "corrected_invoice",
+        "rebill",
+        "supporting_document"
+      ],
+      "title": "Document Kind",
+      "type": "string"
+    },
+    "quantity_treatment": {
+      "default": "consumption",
+      "enum": [
+        "consumption",
+        "charges_only",
+        "delivery"
+      ],
+      "title": "Quantity Treatment",
+      "type": "string"
+    },
+    "end_date_inclusive": {
+      "default": false,
+      "title": "End Date Inclusive",
+      "type": "boolean"
+    },
+    "rules": {
+      "items": {
+        "$ref": "#/$defs/Rule"
+      },
+      "maxItems": 34,
+      "minItems": 9,
+      "title": "Rules",
+      "type": "array"
+    }
+  },
+  "required": [
+    "provider_anchor",
+    "rules"
+  ],
+  "title": "Definition",
+  "type": "object"
+}

@@ -1,6 +1,6 @@
 # SKS UtilityOS
 
-**Version 0.4.0 · staff-local utility ledger · synthetic demonstration**
+**Version 0.5.0 · staff-local utility ledger · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
@@ -46,6 +46,23 @@ Open **Utility Inbox** to import files by picker or drag/drop, review a batch re
 
 The shipped providers and layouts are fictional. Unknown layouts, missing fields and conflicts require completion; no general real-provider compatibility is claimed. Saved corrections preserve machine evidence and prior approved values. **Bill completeness** starts with explicitly configured account/meter cadence and remains experimental. Read [the intake guide](docs/BILL_INTAKE.md), [the dependency/model decision](docs/DOCUMENT_EXTRACTION_DEPENDENCIES.md), and [offline OCR setup](docs/STAFF_INSTALL_AND_UPDATES.md).
 
+## Private Provider Onboarding and Local Template Studio
+
+Open **Provider Management** or **Set up or inspect provider layout** beside a
+PDF review. Create a private local provider, select source candidates, assign
+bounded field rules, and preview an immutable draft layout. Validate it against
+at least two locally approved bills before explicitly activating it for future
+candidate extraction. All invoices still require ordinary review and approval.
+
+Local definitions, selected validation sets, correction counts and retained
+versions live in the external workspace database and its private backups. Changed
+layouts receive new versions; historical extraction is unchanged. The dedicated
+support bundle downloads exactly its value-free preview. Start with the new
+provider example PDFs in the import dialog. Read [the provider studio guide](docs/PROVIDER_STUDIO.md)
+for the initial manual review, activation gate, supported rule vocabulary and
+privacy/recovery boundaries. No real-provider compatibility is claimed from the
+fictional onboarding corpus.
+
 ## Data and accounting boundaries
 
 Amounts use integer cents and quantities use decimal arithmetic. Supply-only invoices add charges with zero repeated consumption. Oil/propane deliveries are purchased volume. Shared meters remain unallocated. Charts group active charges by invoice month, preserve negative credits, and do not claim complete campus coverage or calendarized consumption.
@@ -64,7 +81,7 @@ This remains a single-operator local pilot. [Role enforcement is explicitly defe
 
 ## Upgrade and recovery
 
-Version 0.4.0 uses **schema 4**. Starting the app never upgrades an existing schema-1, schema-2 or schema-3 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 4; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
+Version 0.5.0 uses **schema 5**. Starting the app never upgrades an existing schema-1, schema-2, schema-3 or schema-4 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 5; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
 
 Useful maintenance commands, with the selected mode and external data directory supplied consistently:
 

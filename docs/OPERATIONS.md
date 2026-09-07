@@ -1,6 +1,6 @@
 # Local operation and recovery contracts
 
-Version 0.4.0 remains a single-operator, loopback-only application. Use explicit
+Version 0.5.0 remains a single-operator, loopback-only application. Use explicit
 external data directories for every command. See `STAFF_INSTALL_AND_UPDATES.md`
 for installation, backups, and the stopped-app migration procedure.
 
@@ -113,3 +113,34 @@ a model automatically. Reconfirm the visible location and use the installed
 release's explicit `--ocr-model-dir` when launching. Source hash/audit checks
 cover retained extraction snapshots as well as original bytes. Legacy schema-3
 PDFs retain their original manual workflow after migration.
+
+
+## Private provider recovery in schema 5
+
+Private backups retain every provider, immutable layout, validation, activation,
+retirement and original-extraction link. Restore checks the entire journal and
+its audit bindings before switching the database. A same-schema code-folder
+switch preserves it without copying configuration into the new code folder.
+The explicit schema-4 → 5 step starts an empty journal and leaves historical
+source/extraction bytes untouched. Frozen old-schema and populated synthetic
+future-step tests exercise preservation; a future step is not a released schema.
+
+If a provider journal record, binding or guard is corrupt, local parsers are
+quarantined and management reports an integrity problem. Ordinary manual bill
+review and approval remain available. Do not repair or delete journal rows to
+reactivate an older decision. Preserve the workspace and use authorized local
+IT or restore a verified private backup into a new recovery directory. `check`,
+backup and restore reject the damaged journal rather than certify it as healthy.
+
+A killed layout save or activation rolls back both its record and audit event;
+reopening shows the prior complete state. If the response was lost after commit,
+inspect the retained version/state before retrying. An import whose registry
+changed during extraction returns a fixed retry error before document staging.
+Rules do not learn from corrections, and retiring a layout does not reprocess
+old invoices. See `PROVIDER_STUDIO.md` for the explicit replacement workflow.
+
+Provider support downloads are distinct from private backups. Staff previews
+exactly the fixed-schema JSON that the browser downloads. No local definition,
+label text or source values enter that report. Late audit, backup and provider
+responses are discarded after navigation or logout so they cannot alter the
+next view or raise a stale DOM callback error.

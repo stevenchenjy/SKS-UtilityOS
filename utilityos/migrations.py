@@ -55,7 +55,13 @@ def to_v4(db):
     event(db, 'MIGRATE_SCHEMA')
 
 
-STEPS = {1: to_v2, 2: to_v3, 3: to_v4}
+def to_v5(db):
+    from .provider_storage import initialize
+    initialize(db)
+    event(db, 'MIGRATE_SCHEMA')
+
+
+STEPS = {1: to_v2, 2: to_v3, 3: to_v4, 4: to_v5}
 
 
 def plan(start, target=SCHEMA_VERSION, steps=None):
@@ -100,6 +106,9 @@ def upgrade_copy(store, target: Path, target_version=SCHEMA_VERSION, steps=None)
             if version >= 4:
                 from .intake_storage import verify as verify_extraction
                 verify_extraction(db)
+            if version >= 5:
+                from .provider_storage import verify as verify_providers
+                verify_providers(db)
         db.commit()
     except BaseException:
         db.rollback()

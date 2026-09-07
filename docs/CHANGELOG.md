@@ -1,5 +1,36 @@
 # Release notes
 
+## 0.5.0 — 2026-09-07
+
+- Added private Provider Management and source-based setup using the existing PDF
+  viewer: typed literal/region/relative locators, single-service or repeated
+  sections, preview, immutable versions and retained provenance.
+- Added selected approved-bill validation with exact field, missing, correction,
+  unit and drift counts. Two distinct reviewed sources and explicit confirmation
+  gate activation; every future bill still requires ordinary approval.
+- Added explicit version replacement/retirement and local correction warnings.
+  Historical source bytes, extractions, reviewed revisions and financial versions
+  remain unchanged. Corrupt provider configuration falls back to manual review.
+- Added the exact-preview Provider Extraction Support Bundle with a positive
+  value-free schema and synthetic privacy-sentinel tests. Private definitions
+  stay outside Git/source releases and remain inside private backups.
+- Added schema 5, journal/audit integrity, killed-save/activation recovery,
+  populated future-migration tests, and actual 0.4 upgrade/rollback rehearsals.
+- Added 18 independent fictional onboarding PDFs, public-API acceptance tests and
+  native Chrome provider workflows. Preserved all 0.4 accounting/intake tests.
+- Fixed stale provider/audit/backup UI callbacks after navigation or logout and
+  retained useful OCR observations when a provider is initially unknown.
+- Added minimal synthetic-only CI with reviewed pinned first-party actions;
+  hosted execution remains separate from local and native release verification.
+  No new runtime, model service or package dependency was introduced.
+
+Compatibility: 0.5.0 reads/writes schema 5. Schema 1–4 requires a backed-up,
+explicit stopped-app migration. Old code refuses schema 5. Cross-schema rollback
+uses the old release and its pre-upgrade backup in a separate recovery directory.
+The source release is unsigned and does not authorize school production use.
+See `PROVIDER_STUDIO.md` and `VERIFICATION.md` for scope and measured evidence.
+
+
 ## 0.4.0 — 2026-09-06
 
 Intelligent Bill Intake, preserving the immutable 0.3.0 ledger and audit baseline.

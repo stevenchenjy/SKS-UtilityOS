@@ -3,7 +3,7 @@ from hashlib import sha256
 import json
 from decimal import Decimal
 from .audit import event
-from .extraction_schema import Extraction, allowed_path, MONEY_FIELDS, NUMBER_FIELDS
+from .extraction_schema import Extraction, EvidenceField, HEADER_FIELDS, SERVICE_FIELDS, allowed_path, MONEY_FIELDS, NUMBER_FIELDS
 from .extraction import HEADER_TO_BILL, SERVICE_TO_BILL, normalize
 from .parsers import ValidationError
 
@@ -69,8 +69,9 @@ def verify(db):
         get_extraction(db, row[0])
 
 
-def detail_keys(extraction):
-    return {key for key in extraction['fields'] if key not in HEADER_TO_BILL and (
+def detail_keys(extraction, service_count=0):
+    keys = set(extraction['fields']) | set(HEADER_FIELDS) | {f'services.{i}.{key}' for i in range(service_count) for key in SERVICE_FIELDS}
+    return {key for key in keys if key not in HEADER_TO_BILL and (
         not key.startswith('services.') or key.split('.')[-1] not in SERVICE_TO_BILL)}
 
 
@@ -91,7 +92,7 @@ def current_values(db, row, extraction):
 def reviewed_values(db, row, extraction, bill, details=None):
     values = current_values(db, row, extraction)
     if details is not None:
-        if not isinstance(details, dict) or set(details) - detail_keys(extraction):
+        if not isinstance(details, dict) or set(details) - detail_keys(extraction, len(bill['lines'])):
             raise ValidationError('EXTRACTION_REVIEW_FIELDS_INVALID')
         for key, raw in details.items():
             if not isinstance(raw, str) or len(raw) > 120:
@@ -114,7 +115,8 @@ def reviewed_values(db, row, extraction, bill, details=None):
 
 def differences(extraction, values):
     result = []
-    for key, field in extraction['fields'].items():
+    for key in sorted(set(extraction['fields']) | set(values)):
+        field = extraction['fields'].get(key, {'value':None, 'template_version':extraction['template_version'], 'method':'unavailable'})
         before, after = field['value'], values.get(key)
         equal = before == after
         if before is not None and after is not None and key.split('.')[-1] in MONEY_FIELDS | NUMBER_FIELDS:
@@ -141,8 +143,11 @@ def review_info(db, row, bill):
     if not extraction:
         return None
     values = reviewed_values(db, row, extraction, bill)
+    keys = detail_keys(extraction, len(bill['lines']))
+    for key in keys:
+        extraction['fields'].setdefault(key, EvidenceField(parser_version=extraction['parser_version']).model_dump(mode='json'))
     return {'extraction':extraction, 'reviewed_values':values,
-            'detail_keys':sorted(detail_keys(extraction)), 'differences':differences(extraction, values)}
+            'detail_keys':sorted(keys), 'differences':differences(extraction, values)}
 
 
 def validation_flags(db, row, bill, details=None):

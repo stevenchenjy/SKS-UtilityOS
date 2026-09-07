@@ -52,7 +52,7 @@ Each service line has a quantity treatment. `consumption` contributes to billed 
 
 Service periods use an inclusive start and exclusive end. Overlapping approved consumption for one meter is blocked in this version. Staff must interpret a supplier's printed end-date convention correctly. A reviewed rebill excludes only its active original while checking overlaps, then supersedes that original and inserts the replacement atomically. Reporting includes only active versions. See `INVOICE_LIFECYCLE.md`.
 
-Costs are grouped by invoice issue month. Full service-period quantities appear with the invoices issued in the selected month. There is no pro-rata calendarization, weather normalization, completeness-adjusted comparison, savings verification, or carbon calculation in v0.4.0.
+Costs are grouped by invoice issue month. Full service-period quantities appear with the invoices issued in the selected month. There is no pro-rata calendarization, weather normalization, completeness-adjusted comparison, savings verification, or carbon calculation in v0.5.0.
 
 ## Import flow
 
@@ -135,3 +135,40 @@ changing old payloads or fabricating extraction evidence. Backup/restore carries
 the private extraction/review snapshots and verifies their source/audit integrity.
 Model weights remain separately installed software assets outside both code and
 private backups. No OCR cache, trained model or document log is generated.
+
+
+## 0.5.0 private provider boundaries
+
+Schema 5 adds an append-only `local_provider_records` journal for private
+providers, immutable layout definitions, validations, state decisions and
+original extraction links. Each record has canonical JSON, a SHA-256 digest and
+an audit binding committed in the same transaction. Database guards reject
+ordinary updates and deletes. The journal is private workspace data; no local
+registry is written into the source tree.
+
+`provider_rules.py` validates a small declarative grammar and compiles observations
+into the existing Extraction v1 contract. Locators use literal labels, bounded
+page/region/distance constraints and typed parsers. Single-service documents and
+numbered repeated sections are explicit alternatives. There is no executable
+plugin or operator-supplied regex. `pdf_worker.py` supplies bounded Observations
+v1 through the existing isolated worker; PDF/OCR library details remain behind
+this adapter. Historical extraction JSON is never recompiled by template edits.
+
+`provider_storage.py` owns the journal and integrity checks;
+`provider_studio.py` owns private validation, activation, retirement, quality and
+preview; `provider_routes.py` exposes authenticated operations; and
+`provider_support.py` constructs a separate positive-schema support export.
+`web/modules/providers.js` reuses the existing evidence viewer for setup.
+Validation compares selected retained PDFs with their final approved revisions.
+Activation rechecks that corpus snapshot and requires a deliberate operator
+acknowledgement. Active layouts still stage candidates for ordinary approval.
+
+Import captures the registry before extraction and checks it again in the
+publication transaction. A concurrent state change requests a retry without
+publishing a stale candidate. Damaged registry state quarantines local parsers;
+manual intake remains available. Backup, restore, migration and `check` require
+journal integrity and fail closed. These hashes detect corruption, not an OS
+owner rewriting the complete database, audit chain and application.
+
+See `PROVIDER_STUDIO.md` for the full grammar, gates, privacy contract and future
+school-side extraction-engine A/B evaluation boundary.

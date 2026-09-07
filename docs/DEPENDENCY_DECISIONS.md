@@ -53,3 +53,27 @@ adds pdfplumber; `requirements-ocr.txt` adds optional tesserocr/cysignals; the
 development corpus generator adds ReportLab. `constraints-tested.txt` and
 `DEPENDENCY_INVENTORY.json` include the active closure and optional scope. No
 AGPL code, cloud model, automatic weight download or vendor template was copied.
+
+
+## 0.5.0 decision — 2026-09-07
+
+No application, development or optional-OCR package was added or repinned for
+Provider Studio. The existing PDF text/OCR worker exposes bounded observations;
+project-owned declarative rules resolve them locally. Independent fictional
+onboarding cases and the preserved 28-document benchmark exercise this boundary.
+They did not demonstrate a need for Docling, Granite-Docling, Torch, MLX, a GPU,
+a cloud extraction service or another model runtime. A future engine must first
+satisfy the adapter and private A/B conditions in `PROVIDER_STUDIO.md`.
+
+The installed base, development, bootstrap and optional-OCR distribution set was
+scanned again with pip-audit 2.10.1 on 2026-09-07: no known vulnerabilities and no
+ignored advisory IDs. Package metadata is public; no runtime records were sent.
+This does not cover all bundled native libraries. Tesseract 5.5.1 remains older
+than upstream 5.5.3; the strict pinned public English-model restriction and
+school-side native engine review in `DOCUMENT_EXTRACTION_DEPENDENCIES.md` remain.
+
+The only new external components referenced are first-party GitHub Actions for
+public synthetic CI. Both are maintained MIT-licensed actions pinned to reviewed
+full commit hashes. Their Node runtime is hosted-runner tooling, not an installed
+application dependency. See `SYNTHETIC_CI.md` for exact reviewed releases,
+permissions, install behavior and the distinction between local and hosted checks.

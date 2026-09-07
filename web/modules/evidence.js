@@ -21,7 +21,7 @@ export function collectDetails(item){
   return Object.fromEntries($$('[data-detail]').map(node=>[node.dataset.detail,$('input',node).value]));
 }
 
-export function bindEvidence(item){
+export function bindEvidence(item,options={}){
   if(!item.intake)return;
   const extraction=item.intake.extraction,info=item.intake;
   let selected=null,image=null,serial=0;
@@ -60,9 +60,10 @@ export function bindEvidence(item){
       scroll.hidden=false;toggle.textContent='Hide source preview';
       if(pageSelect.value!==String(selected.page)){pageSelect.value=String(selected.page);loadPage();}else draw();
     }
+    if(!selected.page)draw();
     if(window.innerWidth<900)description.scrollIntoView({block:'start',behavior:'instant'});
   }
-  for(const input of $$('input,select',$('#bill-editor'))){
+  for(const input of ($('#bill-editor')?$$('input,select',$('#bill-editor')):[])){
     const line=input.closest('[data-line]');
     let key=line?`services.${line.dataset.line}.${service[input.name]}`:headers[input.name];
     if(line&&input.name==='usage'&&$('[name=usage_role]',line)?.value==='delivery')key=`services.${line.dataset.line}.delivery_quantity`;
@@ -79,5 +80,17 @@ export function bindEvidence(item){
   }));
   pageSelect.onchange=()=>{selected=null;loadPage();};zoom.onchange=draw;
   toggle.onclick=()=>{scroll.hidden=!scroll.hidden;toggle.textContent=scroll.hidden?'Show source preview':'Hide source preview';};
+  function showObservation(line,label='Selected source region'){
+    selected={...line,raw:line.text??line.raw,state:line.state||'needs_review',value:line.value??null};
+    description.innerHTML=`<p><strong>${esc(label)}</strong></p><p class="evidence-raw">${esc(selected.raw||'No source value')}<br>${esc(title(selected.method))}${selected.page?' · page '+selected.page:''}</p>`;
+    if(selected.page){scroll.hidden=false;toggle.textContent='Hide source preview';if(pageSelect.value!==String(selected.page)){pageSelect.value=String(selected.page);loadPage();}else draw();}else draw();
+  }
+  if(options.onObservation)canvas.onclick=e=>{
+    const page=extraction.pages.find(p=>p.number===Number(pageSelect.value));if(!page)return;
+    const box=canvas.getBoundingClientRect(),x=(e.clientX-box.left)/box.width*page.width,y=(e.clientY-box.top)/box.height*page.height;
+    const matches=options.observations.filter(line=>line.page===page.number&&line.bbox[0]<=x&&x<=line.bbox[2]&&line.bbox[1]-3<=y&&y<=line.bbox[3]+3);
+    if(matches.length===1)options.onObservation(matches[0]);
+  };
   loadPage();select('invoice_total');
+  return {showObservation};
 }

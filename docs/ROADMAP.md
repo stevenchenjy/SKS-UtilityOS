@@ -2,7 +2,7 @@
 
 ## Current implementation
 
-The existing local service now includes reviewed CSV/evidence-backed PDF/limited electricity XML entry, saved drafts, full-invoice correction and rebill history, cancellation, independent credits, current mapping edits, active-only reporting/exports, fixed diagnostics, browser backup download, stopped-app restore, explicit schema-1/2/3 upgrades, and source-only release verification. Native desktop/mobile browser verification runs directly on the development Mac.
+The existing local service now includes reviewed CSV/evidence-backed PDF/limited electricity XML entry, saved drafts, full-invoice correction and rebill history, cancellation, independent credits, current mapping edits, active-only reporting/exports, fixed diagnostics, browser backup download, stopped-app restore, explicit schema-1/2/3/4 upgrades, and source-only release verification. Native desktop/mobile browser verification runs directly on the development Mac.
 
 The 0.3.0 readiness milestone adds interruption-safe source publication, an
 append-oriented audit view, schema-3 provenance and migration coverage,
@@ -24,11 +24,26 @@ Completed and tested corrections/supersession, same-number supplier rebills, neg
 
 The 0.4.0 slice includes picker/drop/batch and explicit folder scanning, digital PDF extraction, two versioned layouts for each of five fictional providers, optional local English OCR, field evidence, drift handling and retained correction differences. A deterministic 28-document corpus and exact benchmark exercise those paths. Explicit monthly/delivery/irregular cadence powers a labelled experimental completeness view. Manual entry remains usable without OCR.
 
-Actual provider templates, richer table layouts, multilingual OCR and CSV mappings need a demonstrated use case and new independent synthetic cases. Measure saved time and real correction rates privately with school authorization before claiming broad automation. See `BILL_INTAKE.md` and `VERIFICATION.md`.
+Private provider onboarding is implemented in 0.5.0 below. Richer table layouts, multilingual OCR and CSV mappings need a demonstrated use case and new independent synthetic cases. Measure saved time and real correction rates privately with school authorization before claiming broad automation. See `BILL_INTAKE.md` and `VERIFICATION.md`.
 
 No utility connector, portal automation, paid service, CMD/OAuth, email integration, or cloud extraction is enabled. A future external integration requires school authorization and confirmed coverage, security, fees, and maintenance. File-only operation remains supported.
 
-## Milestone D: shared access and reporting — conditional
+## Milestone D: Private Provider Onboarding — implemented in 0.5.0
+
+Local staff can author bounded layouts from retained source candidates, validate
+multiple approved PDFs, activate or retire immutable versions, and inspect drift
+and correction counts. The dedicated support export previews exactly the
+value-free JSON downloaded. Private journals survive backup/restore and checked
+code-folder updates; corrupt templates fail closed while manual entry remains.
+The independent 18-document fictional corpus and native desktop/mobile checks
+are described in `VERIFICATION.md`. No real provider has been privately validated
+by the developer, and these results are not general extraction accuracy.
+
+Further local extraction work should start from a demonstrated independent
+synthetic failure or a school-side summary under `PROVIDER_STUDIO.md`. Do not
+repeat completed roadmaps as a presumed missing-feature checklist.
+
+## Milestone E: shared access and reporting — conditional
 
 Only pursue concurrent users after a school request and a design for identity, roles, HTTPS, concurrency, backups, and person-attributed audits. Current installations are independent and local.
 
