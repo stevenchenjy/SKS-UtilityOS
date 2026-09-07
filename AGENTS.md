@@ -1,6 +1,17 @@
 # SKS UtilityOS development instructions
 
-Read `README.md`, `MASTER_PROMPT.md`, and the relevant documentation before editing. Use `.agents/skills/local-utility-engineering/SKILL.md` for utility accounting, import, support, or release work. The primary outcome is a maintainable staff-local utility ledger with a truthful demonstration.
+`AGENTS.md` is the persistent project-level instruction source and always governs work in this repository. The primary outcome is a maintainable staff-local utility ledger with a truthful demonstration.
+
+## Instruction loading
+
+- Read `README.md` when current product capabilities, setup, or release state are relevant.
+- Read `MASTER_PROMPT.md` when starting a new milestone, choosing the next major development direction, or resolving ambiguous scope.
+- Read only the relevant files under `docs/` for the subsystem being changed, rather than every project document on every task.
+- Read `.agents/skills/local-utility-engineering/SKILL.md` for utility accounting, bill intake/import, extraction, data semantics, support/privacy, migration, or release work.
+- Inspect current code and tests before assuming a roadmap item remains unimplemented. Treat completed historical milestones as context, not a checklist to re-audit on every small task.
+- For focused maintenance, bug fixes, tests, documentation corrections, or narrow UI changes, load only the instructions and documentation needed for that work.
+
+Scoped loading does not waive verification requirements. Perform full baseline and release verification when preparing a tagged release, migration, recovery change, accounting-semantic change, security-sensitive change, or other high-risk milestone; load the applicable verification and release guidance explicitly.
 
 ## Data and permissions
 
