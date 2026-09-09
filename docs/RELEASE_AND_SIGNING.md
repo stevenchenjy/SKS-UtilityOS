@@ -1,5 +1,14 @@
 # Source releases and macOS signing
 
+The current working candidate is **0.6.0-rc1**, unsigned and untagged.
+The source push authorized on 2026-09-09 does not create a GitHub Release or
+establish school deployment acceptance. The September 8 verification and local
+archive receipts retain their original pre-publication status.
+Retain the trusted `v0.5.0` source/manifest and use a distinct candidate archive
+name. [UPDATE_REHEARSAL.md](UPDATE_REHEARSAL.md) describes the reproducible
+synthetic code-folder switch and rollback. The 0.5.0 notes below describe the
+retained baseline; no remote publication or unattended updater is implied.
+
 ## Current local release
 
 0.5.0 is an **unsigned source ZIP** containing Python, browser modules, scripts,
@@ -71,5 +80,5 @@ fixed. Two builds with unchanged inputs and the tested Python/zlib toolchain mus
 be byte-identical; changing the source timestamp changes the manifest. A standard
 Git ZIP need not have identical container bytes, but its file contents must match
 the same manifest. The source contains only reviewed code/docs/tests/fictional
-fixtures, never OCR weights, wheels, logs or workspace data. `v0.3.0` remains
-immutable; create `v0.4.0` only after the final install and workflow checks pass.
+fixtures, never OCR weights, wheels, logs or workspace data. Existing release tags remain immutable. A new trusted tag requires completed
+release verification; an untagged candidate is not a completed release.

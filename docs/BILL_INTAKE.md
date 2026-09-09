@@ -164,6 +164,10 @@ arguments, document logs, HTTP downloads, prompts or persisted page-image caches
 The parent allows one worker at a time, a 60-second deadline, 20 PDF pages, 4,000
 point dimensions, 12 million render pixels and bounded text/response sizes.
 The child also sets a 45-second CPU and 1 GiB address-space limit where supported.
+In 0.6.0-rc1, one extraction may wait behind a running preview. Waiting and
+execution share the same 60-second parent deadline; a second queued extraction
+is refused. Temporary capacity failures leave a retryable intake attempt and no
+empty retained PDF draft. Page rendering still has a short admission wait.
 These limits reduce risk; this is not an independently sandboxed OS process or
 a promise against every hostile document. Memory/page-limit failures remain
 manual drafts. IT may enforce network egress restrictions for the installation.

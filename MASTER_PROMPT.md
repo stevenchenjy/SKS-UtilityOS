@@ -1,112 +1,77 @@
-# Codex master prompt: complete the staff-local SKS UtilityOS pilot
+# Codex master prompt: develop the staff-local SKS UtilityOS ledger
 
-You are continuing an existing working starter for The Storm King School. Act as the lead engineer and product builder. Inspect what is already implemented, plan the most useful next work, then execute it through tests and a usable local demonstration. Proceed on tasks that can be completed with synthetic data; reserve questions for genuine school decisions or unavailable capabilities.
+Continue the working UtilityOS implementation for The Storm King School. Inspect current code and tests, choose useful work within the requested scope, and deliver complete, user-visible slices with synthetic data. Reserve questions for school decisions or unavailable capabilities.
 
-## Workspace scope and current engineering status
+## Instruction loading and development behavior
 
-This workspace is exclusively for SKS UtilityOS software development, testing, technical documentation, and release engineering. Do not create or restore meeting briefs, presentations, procurement materials, or stakeholder proposals unless explicitly requested. The removed meeting brief is intentional.
+`AGENTS.md` is the persistent project-level instruction source and always governs repository work. Follow its scoped-loading rules: use `README.md` for current capabilities, setup and release state; this document for major milestones, development direction or ambiguous scope; and only relevant subsystem files under `docs/` for focused work. Read `.agents/skills/local-utility-engineering/SKILL.md` for accounting, bill intake/import, extraction, data semantics, support/privacy, migration or release work.
 
-Version 0.2.0 continues the original implementation. Milestone A and the development portion of milestone B have been implemented and verified on the development Mac: native browser flows, invoice corrections/rebills/cancellation, saved draft history, mapping edits, backup recovery, explicit schema migration, and operator-controlled code-folder switching. Read `docs/VERIFICATION.md`, `docs/CHANGELOG.md`, and the actual tests before deciding more work is needed. School acceptance and real-data validation are still separate external decisions. Historical priorities below are context; inspect the implemented 0.5.0 slice before assuming a feature is missing.
+Inspect actual implementation and tests before assuming a roadmap capability is absent or choosing a rewrite. Completed milestones are context, not a checklist to rebuild or re-audit on every maintenance task, bug fix, test, documentation correction or narrow UI change. Use the full milestone context for major release planning and preserve tested accounting, privacy and operational contracts.
 
-Version 0.3.0 is the subsequent production-readiness development milestone:
-atomic source recovery, schema-3 audit/provenance, ordered migration tests,
-privacy-safe operational diagnostics, staff passphrase confirmation and a larger
-synthetic campus. The single-operator role decision remains explicit in
-`docs/ACCESS_AND_CONFIGURATION.md`. Read the current verification report and
-release notes before choosing further work. This is not production deployment
-or school acceptance, and no portal/entry automation is implied.
+This workspace is exclusively for software development, testing, technical documentation and release engineering. Do not create or restore meeting briefs, presentations, procurement materials or stakeholder proposals unless explicitly requested. The removed meeting brief is intentional.
 
-Version 0.4.0 completes the Intelligent Bill Intake development milestone:
-local picker/drop/batch and explicit inbox scans, candidate PDF/OCR extraction,
-versioned fictional layouts and drift handling, source-region review, preserved
-machine/human history, and experimental explicit cadence. Read `docs/BILL_INTAKE.md`
-and the exact synthetic benchmark/limits. The trusted `v0.3.0` tag is immutable.
-Further intake work requires a new demonstrated format or failure case; no portal
-automation, live records, real-provider claim or unattended update is implied.
+Use relevant installed skills when helpful; review additional skill instructions, dependency licenses, installation behavior, maintenance and fees before adding anything. Prefer project-local development dependencies. Do not change global Codex settings, weaken machine permissions, add accounts, purchase services or expose a server publicly.
 
-Version 0.5.0 adds Private Provider Onboarding and Local Template Studio: bounded
-source-field setup, private immutable layout versions, selected approved-bill
-validation, explicit activation/retirement, drift and correction evidence, and
-exact value-free support previews. Schema 5 retains these records in private
-backups and preserves prior source/extraction history. Read `docs/PROVIDER_STUDIO.md`
-and current verification before proposing further work. Local installation and
-school acceptance remain distinct; no portal integration or public deployment
-is implied. The trusted v0.4.0 tag remains immutable.
+## Current trusted development baseline
 
-## Situation and desired result
+The verified local **0.5.0** release at commit `0d515181714e8f1f090156e43c957735e26976b7`, identified by annotated tag `v0.5.0`, is the current trusted development baseline. Preserve this and earlier release tags and history. Versions 0.2–0.5 completed the ledger lifecycle, operational readiness, Intelligent Bill Intake, and Private Provider Onboarding / Local Template Studio development milestones:
 
-The school has multiple buildings with separate electricity, water, heating, and other utility services. Finance and Facilities want one place to see reviewed invoices, costs, and consumption. The student developer will have no utility portal access and should receive no school passwords or private bill database.
+- Invoice review and approval; corrections, replacements, rebills, credits and cancellation; account/meter mapping edits; retained original sources, draft revisions, extraction provenance and audit history.
+- Backup, restore and explicit migration; interruption-safe storage and source recovery; staff passphrase confirmation; privacy-safe operational diagnostics; synthetic large-campus testing.
+- Canonical CSV, PDF intake with manual fallback, optional local English OCR, source evidence, layout-drift detection, local inbox and batch import; experimental explicit bill cadence/completeness groundwork; limited Green Button file import.
+- School-local provider definitions, Provider Studio, immutable layout versions, local validation and explicit activation/retirement, drift and correction evidence, and privacy-safe provider support bundles. Private definitions and their history remain in the external workspace and confidential backups.
 
-The product must work on a school-controlled local computer. Staff supplies authorized files and confirms their interpretation. The student develops with synthetic examples, publishes reviewable code releases, and receives a deliberately restricted diagnostic report when staff requests help. The school chooses whether to install each update.
+These capabilities are implemented and should be inspected and extended where a demonstrated need exists. Consult `docs/VERIFICATION.md` and `docs/CHANGELOG.md` for recorded evidence and limits, `docs/BILL_INTAKE.md` and `docs/PROVIDER_STUDIO.md` for those workflows, and relevant subsystem contracts when changing them. Further extraction work needs a demonstrated format or failure case; broadening OCR requires renewed corpus, resource, installation and license evaluation.
 
-Complete a reliable local pilot before chasing automatic feeds. Aim for a workflow that a staff member can demonstrate and maintain: start the app, import a document, reconcile its fields, review warnings, approve it, inspect the updated ledger, export a private report, make a backup, and restore a test workspace.
+The stack remains FastAPI/SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR and browser ES modules, with no Node build or required cloud service. Demo and staff databases are separate external workspaces; mode mismatch is rejected. Preserve authentication, host/origin checks, CSRF protection and immutable storage. Schema 5 requires explicit migration from earlier schemas; startup never upgrades a workspace automatically.
 
-## Read first
+This is a development-tested, single-operator local pilot. School installation, private-data acceptance and real-provider compatibility remain separate external validation; fictional-corpus results do not establish general extraction accuracy. Named role enforcement remains deferred under `docs/ACCESS_AND_CONFIGURATION.md`. Distinguish implemented, experimentally tested and externally unverified behavior.
 
-Read `AGENTS.md`, `README.md`, `.agents/skills/local-utility-engineering/SKILL.md`, and `docs/ROADMAP.md`. Inspect the actual code, tests, and dependency files. Read the architecture, private-support, and free-data documentation when working in those areas. Existing documentation describes the build environment's limitations honestly; validate those claims against the running app.
+## Established staff intake workflow
 
-You may use relevant installed engineering, testing, frontend, database, and security skills. Review additional skill instructions and open-source licenses before installing anything. Prefer project-local development dependencies. Do not change global Codex settings, weaken machine permissions, add accounts, purchase services, or expose a server publicly.
+Authorized staff manually downloads a utility bill from the provider portal, then imports the file locally. UtilityOS identifies a matching active local provider layout when available and extracts candidate values locally. Staff compares the source and candidates, checks mappings and warnings, completes missing values, and explicitly approves the invoice. Only approved records become authoritative for financial reporting; every financial invoice requires staff approval.
 
-## What currently exists
+For a new provider or changed layout, staff uses Provider Studio locally to create an immutable layout version, validate it against approved local bills and explicitly activate it. Initial onboarding bills require manual review and completion; activation requires at least two distinct approved sources and the documented validation gates. Active templates are reused across future bills until a layout change or repeated correction triggers review. Drift, ambiguity and unsupported fields require investigation or manual completion; they never authorize automatic posting or silent rule changes. New versions preserve earlier definitions, source evidence and extraction history. The developer does not need the private source document or private layout text.
 
-Version 0.5.0 uses FastAPI, SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR, and native browser ES modules. There is no Node build or cloud service. Demo and staff databases live outside the project folder, and mode mismatch is rejected. Authentication, host/origin checks, CSRF checks, immutable source storage, local diagnostics, backup/restore, and source-release verification have initial tests.
+## 0.6.0 — Operational Analytics and Coverage Control
 
-The app supports canonical CSV bills, local evidence-backed PDF extraction with manual fallback, and a limited Green Button Download My Data XML importer for forward delta electricity energy. Staff review precedes approval. Invoice charges and measured usage stay separate. Synthetic fixtures include separate supplier charges, estimated readings, delivered heating fuel, and an abnormal water bill.
+The next planned milestone turns the reviewed ledger into a practical Finance and Facilities operating tool. Prioritize complete slices that can be developed and tested entirely with synthetic data. Inspect existing inventory, reporting and cadence behavior before extending it; the following are potential development areas, not claims of completed 0.6 functionality.
 
-Use this implementation as the starting point. Choose a different component when there is a clear benefit and preserve the working contracts through tests. A full rewrite, a large EMS fork, a cloud deployment, and a commercial aggregator are unnecessary prerequisites.
+- **Campus utility inventory:** Present Campus → Building → Meter / service point → Account → Provider as an operational navigation hierarchy while retaining actual relationship history. Show active/historical relationships, unmapped or incomplete links, commodity, confirmed expected cadence, first/last observed bill, current provider/account and supplier/account changes. Account identity is not physical meter identity; preserve stable service points across changes and leave shared meters unallocated without a defensible staff mapping.
+- **Cost reporting:** Report reviewed active invoices by campus, building, utility type, provider, account, meter/service point and invoice month; support fiscal or selected periods when explicitly configured. Include credits, supply-only charges and delivered fuels correctly, without double-counting replaced invoices or presenting incomplete coverage as campus totals.
+- **Effective utility rates:** Where valid, show electricity $/kWh, water cost per gallon or configured volume unit, gas cost per therm or retained billing unit, and oil/propane cost per purchased gallon. Expose the calculation, included charges, quantity and source period. Keep incompatible units separate, avoid zero-denominator rates, and separate supply-only cost from measured consumption unless a confirmed relationship and matching period support combining them.
+- **Coverage and missing-bill control:** Extend explicit cadence to distinguish expected invoices, received documents, pending review, approved invoices, missing expected invoices and irregular/delivery-based services. Never label a bill missing unless staff explicitly confirmed the service relationship and cadence. A received document is not necessarily an approved or complete bill.
+- **Comparable-period trends:** Allow month-over-month and year-over-year comparisons only with sufficiently comparable coverage and periods. Explain why a comparison is valid or incomplete; do not present percentage changes as campus-wide performance when buildings, meters or billing coverage differ materially.
+- **Building-level performance:** Use building area only when explicitly entered and confirmed. Support EUI-style calculations only when units and coverage permit, retaining original billing periods and source units. Do not silently calendarize monthly bills; any later calendarization or normalization must expose methods, conversion factors, assumptions and estimates.
+- **Transparent anomaly flags:** Start with deterministic checks for unusually high consumption relative to the same service point's history, high effective rates, unexpected zero consumption, duplicate/overlapping billed consumption, long billing periods, estimated-reading streaks or confirmed missing invoices. Explain each flag and its comparison basis. Billing data alone cannot establish causes such as HVAC failure or a leak.
+- **Finance / Facilities views:** Keep one authoritative dataset. Finance views may emphasize cost, invoices, providers, missing bills, credits/rebills and effective rates; Facilities views may emphasize buildings, meters, consumption, trends, gaps and anomaly investigation. Visual separation alone does not justify named role enforcement; retain single-operator access boundaries until school requirements justify multi-user authorization.
 
-## First execution pass
+## Permanent accounting and evidence contracts
 
-Run the existing test suite and start a fresh disposable demo on the user's actual computer. Verify native browser navigation, cookies, logout, original-file downloads, exports, and the main UI at desktop and mobile widths. The original build environment used a local HTTP bridge; native Chrome verification was subsequently completed on the development Mac for 0.2.0. Repeat affected flows against the current code and intended staff machine.
+Keep invoices and current charges separate from consumption and interval readings. Use integer cents, decimal quantities and known units; preserve invoice dates, original billing periods, exclusive-end service dates, measurement semantics and balance-due distinctions. Supply-only charges add no repeated consumption; oil/propane delivery volume represents purchases. Current charts group by invoice month. Retain negative credits and full precision; never silently edit reviewed history or count both an original and its approved replacement.
 
-Review any concrete failures, fix them, and continue implementation. Produce a short plan organized by user-visible outcomes. Prefer one complete useful release over disconnected backend stubs or a static dashboard.
+Preserve original source bytes, machine evidence, prior reviewed values, mapping history and audit bindings. Retain local-folder stability checks, duplicate protection, failure status and staff review. Detect duplicate invoices, overlapping billed consumption and revised intervals; unsupported semantics must remain visible validation failures. Local layout validation or extraction preview never approves an invoice or reparses historical evidence silently.
 
-## Highest-priority improvements
+For Green Button XML extensions, resolve the correct ReadingType for each MeterReading. Validate commodity, unit, power multiplier, direction, accumulation/aggregation behavior, duration and quality. Retain UTC starts and interval semantics, protect the XML parser, confirm mappings, and test duplicates, conflicts, revised records, overlaps, daylight-saving boundaries and unsupported data. Current support is a limited forward-delta electricity-energy file subset, not certification or universal utility compatibility.
 
-### 1. Make local installation and maintenance practical
+## Data, support and connection boundaries
 
-Confirm the user's actual operating system and available Python. Make launch, stop, first staff setup, backup, and a version update straightforward for a school IT member. Test the supplied launch scripts; improve them or create an offline-friendly packaged app where this reduces maintenance without introducing license fees. Explain any Apple/Windows signing or distribution requirement and its cost before choosing it.
+Develop and demonstrate only with synthetic fixtures and fictitious labels. Staff alone handles authorized documents inside a school-controlled installation. The developer has no authorization to access utility portals or private school records. Never request portal passwords, confidential invoices, private layouts, production databases or full staff backups through AI tools or the development repository. Do not attach AI coding tools to staff data or staff browser sessions. Keep private workspaces outside the repository and cloud-synced folders, and temporary evidence outside the repository.
 
-Keep application code and staff records physically separate. An update should stage a new code release, verify a trusted source and file integrity, create a consistent backup, check schema compatibility, run smoke tests, and allow a deliberate switch or rollback. Do not build an unattended remote updater. Test restoration using a disposable workspace and preserve any existing data.
+Support uses fixed codes and positive, schema-validated allowlists. Exclude identifiers, account/provider labels, source names/snippets, filenames/paths, quantities, charges and secrets. Staff previews the exact safe report and explicitly exports it; full backups and ledger exports remain private. Test exclusion with synthetic sentinels. When safe diagnostics are insufficient, authorized school IT inspects the private installation and supplies a synthetic reproduction.
 
-### 2. Preserve and extend trustworthy bill corrections
+Keep these outside 0.6 unless a demonstrated requirement appears: portal automation/downloads or credentials; email-account integration; paid aggregators; cloud OCR or LLM extraction; public dashboards; multi-user servers or school SSO; automatic financial approval; weather normalization requiring a live external service; automatic ENERGY STAR synchronization; and carbon calculations without reviewed emission-factor provenance. A requirement alone does not waive approval or privacy boundaries, and every financial invoice still needs staff approval.
 
-The staff-visible correction and supersession workflow is implemented in 0.2.0. Inspect and preserve its contracts before extending it. Preserve the original source and prior reviewed version. Clearly define cancellation, replacement, credits, rebills, and which version contributes to reporting. Avoid silently editing history or counting both an original invoice and its replacement.
+Keep Connect My Data/OAuth, automated utility access, email integrations, live feeds and external APIs disabled without a specific school-approved decision. Before any connector, confirm actual provider/account-class coverage, fields, granularity, lag, consent, authentication, fees, retention and failure/revocation behavior. School authorization of transfers and written fee confirmation are required. The user requires no added recurring data-access fee. Do not introduce paid connectors or cloud extraction dependencies by default. No cloud OCR or metered model API may receive school bills. Preserve staff-obtained file imports without any connector; a royalty-free standard does not guarantee free provider access.
 
-Extend tests to cover the same invoice number being rebilled, a credit-only document, overlapping corrected periods, multiple meters on an invoice, and separate supply/delivery accounts. Show useful explanations in the UI. Add metadata-editing and mapping correction where needed so staff can fix a building label or confirmed service relationship without modifying database files.
+## Verification, installation and release
 
-### 3. Reduce entry effort while keeping records local
+For focused work, run the checks needed for the affected contracts and report exact outcomes; do not repeat entire historical release audits. Use `python -m pytest -q` for backend tests and fresh external synthetic workspaces for import/browser checks. Exercise affected native browser flows, including relevant downloads, exports, cookies and logout at desktop/mobile widths; identify any mocks, transport bridges or blocked checks honestly.
 
-Improve the canonical CSV workflow with preview and reusable column mappings when a real synthetic-format use case supports it. The explicit local import folder already has stability checks, duplicate protection, failure status and staff review; preserve these before extending it. A folder watcher does not download invoices by itself.
+Perform full baseline and release verification for a tagged release, migration, recovery change, accounting-semantic change, security-sensitive change or other high-risk milestone. Load the applicable verification, installation and release guidance. Cover financial calculations, correction/rebill/credit semantics, imports and duplicates, authorization/privacy, source retention, interruption recovery, backup/restore and migration/rollback. Verify supported OS launch behavior and native browser paths; run current dependency advisories when network access is available and report unverified status. Do not weaken browser or device administration restrictions.
 
-The 0.4.0 Intelligent Bill Intake milestone implements batch picker/drop, explicit local-folder scans, digital PDF evidence extraction, versioned fictional templates, drift detection, immutable correction provenance and optional local English OCR. Preserve these contracts and their benchmark before extending them. Read `docs/BILL_INTAKE.md` and `docs/DOCUMENT_EXTRACTION_DEPENDENCIES.md`. Real provider templates still require school-controlled validation; do not request private bills here.
+Installation must leave the private data directory untouched. Stage reviewed code separately, verify trusted provenance and file integrity, stop the old app, create a consistent backup, check schema compatibility and test before a school-approved version switch. Migrations require an explicit operator action and backup; preserve old code and pre-upgrade backups for rollback into a separate recovery directory. Never build an unattended remote updater. Releases remain unsigned: hashes prove integrity, while trusted provenance needs a separately approved distribution/signing process; explain platform signing requirements and costs before choosing them.
 
-The bounded scanned-PDF fallback is implemented and measured on the fictional corpus. Evaluate corpus accuracy, installation burden, license, and resources again before broadening it. No cloud OCR or metered model API may receive school bills. Do not advertise general automatic bill extraction until varied representative test cases support the claim.
+Before staff use, school IT must review code/dependencies, supported OS behavior, disk/account protections, retention and maintenance ownership. Application access to stored records requires trust; data/code separation and safe diagnostics do not eliminate it. Respect school egress controls. Multi-user deployment needs an explicit TLS, identity, permissions, concurrency and audit-attribution design. Public GitHub publishing, school installation, external services and live data are separate authorization decisions.
 
-### 4. Improve useful reporting and support
-
-Keep invoice-month charges understandable. Add the basic filters, original-source links, exports, and selected building/meter history that Finance and Facilities need. Preserve full precision and correct negative-credit charts. Label delivered fuel as purchased volume and keep units separate.
-
-Preserve the experimental account/meter cadence view and define actual source coverage before authoritative missing-bill or campus-total claims. A missing expected invoice needs a staff-confirmed active account and expected cadence. A percentage change requires comparable coverage and periods. Any future normalization, carbon calculation, or calendarization must expose assumptions and source factors.
-
-Enhance debugging through bounded, fixed error codes and schema-validated diagnostics. Test that identifiers, source names, quantities, charges, paths, account numbers, and secrets cannot enter a shared report. Staff should preview the diagnostic JSON and explicitly export it. When private data is needed to investigate a problem, keep the inspection with authorized school IT and reproduce the issue with synthetic data.
-
-## Green Button and connection policy
-
-Green Button is an open, royalty-free implementation standard. Individual utility access and third-party services can have their own onboarding, availability, security requirements, or charges. The current guaranteed application-fee-free path is a file obtained by authorized staff and parsed locally.
-
-Keep Connect My Data/OAuth, utility portal automation, commercial aggregators, email integrations, live metering, and ENERGY STAR cloud synchronization disabled. Implement one only after the school confirms the actual provider and account class, authorizes the transfer, and confirms fees in writing. The user requires no added recurring data-access fee.
-
-For XML extensions, resolve the correct ReadingType for each MeterReading. Validate commodity, unit, power multiplier, direction, accumulation behavior, duration, and quality. Retain UTC timestamps and interval semantics, protect the XML parser, and test duplicates, revised records, overlaps, daylight-saving boundaries, and unsupported data. No certification or universal utility-compatibility claim is permitted without corresponding evidence.
-
-## Data boundary
-
-Use fictitious building and account labels until staff works inside its own installation. Never request portal passwords, full staff backups, production database copies, or confidential invoices in this conversation or the development repository. Do not attach AI coding tools to the staff data directory under the current authorization.
-
-The application process necessarily accesses its own stored records. School IT must review the source/dependencies and trust each release. Data/code separation and an allowlisted support report reduce accidental disclosure; they do not remove the trust involved in installing executable code. Document this plainly and support the school's egress and endpoint controls.
-
-## Testing and finish
-
-Test the financial calculations, record lifecycle, imports, authorization, privacy, and operational procedures. Use actual browser evidence for the interface. Keep temporary screenshots, logs, and private runtime data outside the repository. Run a current dependency vulnerability check when network access is available and state any unverified advisory status.
-
-Finish with a runnable demonstration, a concise changelog, exact test outcomes, an updated staff guide, a source-only release, and a clear list of remaining school decisions. Distinguish tests run from tests merely provided. Keep every development demonstration fully synthetic. Continue until the chosen pre-portal milestone is complete or a genuine external blocker is reached.
+For a major release, finish with a runnable synthetic demonstration, relevant changelog/staff-guide updates, exact verification outcomes, a reviewed source-only release and remaining school decisions. Complete release verification before creating a new tag. Narrow work need not produce a release or unrelated documentation changes. Continue the chosen useful slice to completion without expanding beyond the requested scope.

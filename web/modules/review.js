@@ -42,11 +42,12 @@ export async function showStage(container,ctx,id) {
   if(item.data_error)return showDamagedStage(container,ctx,item);
   const readonly=item.status!=='pending';
   if(item.kind==='intervals')return showIntervalStage(container,ctx,item);
+  const backRoute=ctx.route==='bills'?'bills':'review';
   let payload=item.payload;
   // Rendering a changed service-line list must not discard unsaved bill details.
   const retainDetails=()=>{if(item.intake)Object.assign(item.intake.reviewed_values,collectDetails(item));};
   function render(){
-    container.innerHTML=`<button class="text-button back-button" id="back-review">Back to review queue</button>`+
+    container.innerHTML=`<button class="text-button back-button" id="back-review">${backRoute==='bills'?'Back to invoice ledger':'Back to review queue'}</button>`+
       header(payload.invoice_number||'Enter the source invoice',`${item.filename} · ${title(item.bill?.status||item.status)}`,`<a class="secondary" href="/api/sources/${item.document_id}">Download original locally</a>`)+
       (item.extension==='.pdf'?notice('Local extraction proposes values for review. Compare every field with the retained original. Missing or conflicting values need staff entry; no draft is approved automatically.'):notice('Compare the imported values with the original. The source file is retained unchanged.'))+
       `<details class="panel"><summary>Source provenance</summary><p class="source-hash">SHA-256: ${esc(item.source_sha256)}</p><p>Importer release: ${esc(item.importer_version)}. Earlier releases did not record their importer version. The retained original and saved review revisions stay separate.</p></details>`+
@@ -58,7 +59,7 @@ export async function showStage(container,ctx,id) {
       ${readonly?'':`<button type="button" id="add-line" class="secondary">Add a service line</button>`}</fieldset></form>
       ${detailPanel(item,readonly)}${item.intake?'</div></div>':''}${lifecyclePanel(item)}
       ${readonly?'': `<section class="review-checks"><h2>Review checks</h2><div id="flags">${renderFlags(item.flags)}</div><label class="check-label"><input type="checkbox" id="acknowledge"> <span>I checked the source, current charges, units, and meter-to-building mapping.</span></label>${item.correction_of&&ctx.mode==='staff'?field('Confirm local app passphrase','current_passphrase','','password','autocomplete="current-password" maxlength="256"'):''}<div class="action-row"><button class="primary" id="approve" disabled>Approve into ledger</button><button class="secondary" id="validate">Check fields</button><button class="text-button danger-text" id="reject">Reject draft</button></div></section>`}`;
-    $('#back-review').onclick=()=>ctx.navigate('review');
+    $('#back-review').onclick=()=>ctx.navigate(backRoute);
     if(item.extension==='.pdf'){const button=document.createElement('button');button.type='button';button.className='secondary';button.id='open-provider-setup';button.textContent='Set up or inspect provider layout';button.onclick=async()=>{try{if(!readonly)await api(`/staged/${item.id}/draft`,{method:'POST',body:{payload:collectBill(),intake_details:collectDetails(item),revision:item.revision,correction_of:item.correction_of,reason:item.correction_reason}});await ctx.openProviderSetup(item.document_id,{provider_id:item.intake?.extraction.provider_key||''});}catch(e){toast(message(e.message),true);}};$('.page-heading').after(button);}
     if(readonly)$$('input,select',$('#bill-editor')).forEach(input=>input.disabled=true);
     bindLifecycle(item,ctx,collectBill,()=>collectDetails(item));

@@ -146,11 +146,19 @@ class BillLifecycle:
             event(db, 'CANCEL_BILL', original['staged_id'])
         return {'id': bill_id, 'status': 'cancelled'}
 
-    def bills(self):
+    def bills(self, building=None, month=None):
+        from .reporting import building_scope, reporting_month
+        reporting_month(month)
         with self.store.connect() as db:
-            return [dict(row) for row in db.execute('''SELECT b.*,a.alias account_alias,p.name provider
-                FROM bills b JOIN accounts a ON a.id=b.account_id JOIN providers p ON p.id=a.provider_id
-                ORDER BY b.bill_date DESC,b.id DESC''')]
+            _, _, where, params = building_scope(db, building)
+            if month is not None:
+                where += ' AND substr(b.bill_date,1,7)=?'
+                params = (*params, month)
+            return [dict(row) for row in db.execute(f"""SELECT b.*,a.alias account_alias,p.name provider,
+                SUM(bl.charge_cents) matched_total_cents FROM bills b
+                JOIN accounts a ON a.id=b.account_id JOIN providers p ON p.id=a.provider_id
+                JOIN bill_lines bl ON bl.bill_id=b.id JOIN meters m ON m.id=bl.meter_id
+                WHERE {where} GROUP BY b.id ORDER BY b.bill_date DESC,b.id DESC""", params)]
 
     def _bill_detail(self, db, bill_id):
         row = db.execute('SELECT * FROM bills WHERE id=?', (bill_id,)).fetchone()

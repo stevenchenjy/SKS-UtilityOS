@@ -12,7 +12,7 @@ import {showSupport} from './modules/support.js';
 let meta,route='overview',renderGeneration=0,renderBusy=false;
 const views={providers:showProviders,inbox:showInbox,completeness:showCompleteness,overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
 const nav=[['overview','Overview'],['bills','Invoice ledger'],['inbox','Utility Inbox'],['providers','Provider Management'],['completeness','Bill completeness'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
-const context={beginView(){const token=++renderGeneration,target=$('#content');target.innerHTML='<p class="loading">Loading local records...</p>';return ()=>token===renderGeneration&&target.isConnected;},get generation(){return renderGeneration;},get mode(){return meta.mode;},navigate,refresh,openStage,openImport,openProviderSetup,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
+const context={beginView(){const token=++renderGeneration,target=$('#content');target.innerHTML='<p class="loading">Loading local records...</p>';return ()=>token===renderGeneration&&target.isConnected;},get generation(){return renderGeneration;},get route(){return route;},get mode(){return meta.mode;},navigate,refresh,openStage,openImport,openProviderSetup,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
 
 async function boot(){
   try{
@@ -21,6 +21,7 @@ async function boot(){
   }catch(error){$('#app').innerHTML=notice('The local service could not be reached. Start the application from the launcher and reload.','danger');}
 }
 function login(){
+  delete context.overviewFilters;delete context.billsFilters;
   $('#app').innerHTML=`<main class="login-screen"><div class="login-card"><div class="brand-symbol">${icon('inventory')}</div><h1>SKS UtilityOS</h1><p class="login-subtitle">A local home for campus utility bills.</p>${meta.mode==='demo'?notice('Synthetic demonstration. Every building, meter, and amount in this workspace is fictional.','warning'):notice('Staff workspace. Your local app passphrase is separate from all utility portal credentials.')}
   <form id="login-form">${meta.mode==='demo'?'':`<label class="field"><span>Local app passphrase</span><input type="password" id="password" autocomplete="current-password" required minlength="12" maxlength="256"></label>`}<div id="login-error"></div><button class="primary wide" type="submit">${meta.mode==='demo'?'Open synthetic demo':'Unlock local workspace'}</button></form><p class="caption">Version ${esc(meta.version)} · Runs on this computer · No portal access</p></div></main>`;
   $('#login-form').onsubmit=async e=>{e.preventDefault();const button=$('button',e.currentTarget);button.disabled=true;try{const result=await api('/login',{method:'POST',body:{password:meta.mode==='demo'?'synthetic-demo-only':$('#password').value}});setCsrf(result.csrf);shell();navigate('overview');}catch(error){$('#login-error').innerHTML=notice(message(error.message),'danger');button.disabled=false;}};
@@ -31,7 +32,7 @@ function shell(){
   $('.brand').onclick=e=>{e.preventDefault();navigate('overview');};
   $('#logout').onclick=async()=>{await api('/logout',{method:'POST',body:{}});setCsrf('');login();};
 }
-async function navigate(next){route=next;await refresh(next);}
+async function navigate(next,arg){route=next;await refresh(next,arg);}
 async function refresh(next,arg){
   if(renderBusy)return;
   renderBusy=true;

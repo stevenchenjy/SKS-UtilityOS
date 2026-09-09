@@ -1,5 +1,38 @@
 # Release notes
 
+## 0.6.0-rc1 — local candidate (2026-09-08)
+
+- Added `scripts/rehearse_update.py`: two verified source installations, fresh
+  synthetic demo checks, refusal of maintenance while running, old-version backup,
+  same-schema switching or explicit migration, retained-record/source comparison,
+  native desktop/mobile downloads/logout and restoration with the old release
+  into a separate rollback workspace. Existing work directories are refused.
+- Added negative tests for existing/nested/symlink work paths, staff-mode refusal,
+  manifest/runtime checks and changed financial/source/configuration state.
+- Allow bounded `-rcN` versions in provider support bundles, so candidate builds
+  can export their preview. Other free-form suffixes remain rejected.
+- Correct diagnostics to show schema 4 as eligible for explicit migration to 5.
+- Prevent a slow PDF preview from causing the next file to be retained as an
+  empty extraction. One pending extraction may wait within the original total
+  deadline; excess capacity is a retryable import failure without a saved draft.
+- Documented supplier acquisition admission and the distinction between local
+  file intake, future connectors, source distribution and staff deployment.
+- Schema remains 5. The candidate is unsigned and untagged; it is not
+  the completion of every planned 0.6 analytics feature.
+
+- Added building/month scopes to Overview and Invoice ledger, including a distinct
+  unassigned/shared scope, selected service points, and invoice drill-down.
+  Multi-building invoices contribute only matching line charges to that scope.
+- Retain the chosen month for empty results, distinguish missing records from
+  zero use, preserve credits and quantity treatments, and use stable building IDs.
+- Show exact cents, years and selected-month chart highlighting, plus an accessible
+  monthly totals table. Label pending review counts as whole-ledger counts.
+- Preserve filters during navigation, return invoice detail to its ledger, and
+  link Utility inventory building labels to their reports.
+- Schema 5 and accounting/import/approval contracts are unchanged. The trusted
+  `v0.5.0` source and manifest are retained separately from this candidate.
+
+
 ## 0.5.0 — 2026-09-07
 
 - Added private Provider Management and source-based setup using the existing PDF

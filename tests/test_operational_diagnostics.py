@@ -56,6 +56,19 @@ def test_cli_can_diagnose_incompatible_or_corrupt_database_without_modifying_it(
     assert ledger.store.path.read_bytes()==b'SYNTHETIC_CORRUPT_DATABASE_9988'
 
 
+def test_schema_four_reports_available_migration_without_writing(tmp_path):
+    import sqlite3
+    database = tmp_path/'utilityos.sqlite3'
+    with sqlite3.connect(database) as db:
+        db.executescript((ROOT/'tests/fixtures/schema_v4.sql').read_text())
+        db.executemany('INSERT INTO settings VALUES (?,?)', [('schema_version','4'),('mode','demo')])
+    before = database.read_bytes()
+    result = diagnostics.report(tmp_path, 'demo')
+    assert result['schema_version'] == 4
+    assert result['checks']['migration'] == 'explicit_upgrade_available'
+    assert database.read_bytes() == before
+
+
 def test_port_and_permission_checks_are_local_and_bounded(ledger):
     with socket.socket() as sock:
         sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]

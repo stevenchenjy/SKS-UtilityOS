@@ -1,4 +1,201 @@
-# Development verification — 0.5.0
+# Development verification — 0.6.0-rc1
+
+## Local candidate acceptance — 2026-09-08
+
+This is an unsigned, untagged, unpublished local candidate. The trusted tagged
+baseline remains `v0.5.0` (`0d515181714e8f1f090156e43c957735e26976b7`).
+Existing building-reporting changes below are included and preserved. Schema
+remains 5 and dependency pins are unchanged. This is not completion of the full
+planned 0.6 analytics milestone or permission to install on a school machine.
+
+### Independent installation and regression
+
+The source candidate was extracted into a separate external directory and given
+a fresh virtual environment using the actual setup script and a target-specific
+offline wheelhouse. Both retained old releases were separately installed too;
+no virtual environment was copied. The candidate's final full suite passed
+**286 tests in 195.97 seconds**, with two existing test-client deprecation
+warnings. `pip check` passed. An isolated `pip-audit 2.10.1` scan on September 8
+checked all 37 installed runtime, development and optional OCR packages: **zero
+known advisories and zero skipped packages**. This does not audit every bundled
+native library or the operating system. No runtime dependency was introduced.
+
+Native Chrome 152.0.7977.82 checks used fresh external synthetic workspaces,
+desktop 1440×1000 and mobile 390×844, isolated contexts and actual loopback
+HTTP, cookies and downloads. The Browser plugin was unavailable; the existing
+Python Playwright development dependency was used. No staff browser profile,
+transport bridge or mocked application data was used. Passed workflows:
+
+- Core imports, review, CSV/PDF/XML originals, duplicate rejection, correction,
+  rebill, credit, cancellation, mapping, ledger/support exports, backup and logout.
+- Provider setup, two-source validation, explicit activation, future pending
+  candidates, layout drift, retirement, exact support preview/download and restore.
+- Intake batches, saved revisions, drag/drop, OCR rotation/evidence on mobile,
+  explicit folder scan, delivered fuel, cadence and restored original evidence.
+- Recovery, a 1,923-active-invoice synthetic campus, and synthetic staff-mode
+  confirmation. These are fictional records, not a school staff installation.
+
+There were zero unexpected browser/runtime failures. Intentional duplicate and
+passphrase refusals were expected. The 28-document synthetic benchmark matched
+284/284 expected fields: 215 template, 39 generic digital and 30 OCR, with no
+incorrect/missing fields, false extractions or incorrect units. These fixtures
+do not establish real-supplier accuracy or target-machine performance.
+
+### Findings fixed during acceptance
+
+Candidate versions originally failed the provider support schema. A strictly
+bounded `-rcN` suffix is now accepted without permitting free-form labels.
+Schema-4 diagnostics now correctly offer explicit migration to schema 5.
+
+Native intake uncovered an actual preview/extraction contention bug: a preview
+holding the sole worker for over one second could leave the next PDF as an
+empty draft. One extraction may now wait within the existing total deadline;
+excess queue capacity returns a retryable import failure without retaining an
+empty document. Three regression tests cover waiting, the total time budget,
+capacity refusal, absence of retained files and a successful same-file retry.
+The complete suite and native intake were rerun after this correction.
+
+The new rehearsal initially used an exact accessible name for a navigation
+button containing a pending count; its locator was corrected. PDF evidence
+checks now wait for actual local rendering before recording screenshots.
+Initial dependency-file loading on this development computer was unusually
+slow. Public installed software files were warmed in the filesystem cache;
+no product deadline or test assertion was relaxed to accommodate that behavior.
+Cold school-machine launch and install acceptance remain outstanding.
+
+### Stopped-app update and rollback evidence
+
+The final application code completed both native rehearsals:
+
+| Old release | Schema route | Result |
+|---|---|---|
+| 0.5.0 | 5 → 5, no migration | 20 existing non-audit tables and four originals retained |
+| 0.4.0 | 4 → 5, explicit migration | 19 existing non-audit tables and four originals retained |
+
+Each rehearsal first verified a separate fresh candidate demo, created its own
+old demo, refused maintenance while it was running, stopped only its own old
+process, checked and backed it up with the old release, and checked compatibility.
+The schema-4 route first verified refusal without changing database bytes, then
+ran `migrate --confirm-migrate`. Both routes verified the switched ledger and
+original downloads, desktop/mobile behavior and logout. They restored the old
+backup with the old release into a separate rollback directory and repeated the
+checks. Stable settings, pre-existing non-audit rows and original hashes matched;
+audit correctness was checked separately because backup/migration advances it.
+
+Ledger CSV SHA-256 before switch, after switch and after rollback:
+`97e110700830296f1589973b70303d04aaa55ef0655b4ff005d0afb9baf8f83f`.
+Original PDF SHA-256 at all three checkpoints:
+`f93816bec9019355cf411d1bc4471ebde862a3923cf837de3fdf07e17ade53cd`.
+Both reports confirm all rehearsal application processes were stopped.
+
+The two final rehearsal **application checks passed**, but their CLI runners
+did not exit cleanly: Playwright's auxiliary driver remained idle during browser
+shutdown after the reports had been written. Only those two owned test drivers
+were terminated, after which each runner exited 1. No application server or
+data check was interrupted. This is a remaining test-harness shutdown limitation
+on this Mac, not an unqualified unattended rehearsal pass. The retained receipt
+records the CLI failure separately from the completed data/browser checks;
+native intake and the other native runners exited successfully.
+
+Final source packaging is reproducible at a fixed source timestamp, excludes
+private workspaces and dependencies, and is verified against its manifest.
+The final package receipt, old source archives, synthetic backups, test logs,
+native screenshots and rehearsal reports are retained outside the repository
+under `~/Library/Application Support/SKS-UtilityOS-Development-Releases/`.
+Hash integrity does not provide trusted signing or distribution provenance.
+
+Native Windows execution/ACLs, Finder quarantine/Gatekeeper acceptance, signing,
+real supplier adapters, portal/API authorization, unattended acquisition,
+shared-server identity/concurrency and school deployment remain unverified.
+No existing user-run application, private workspace or external utility portal
+was opened or stopped. Earlier verification sections below are historical.
+
+---
+
+## Working-tree building reporting review — 2026-09-08 (unreleased)
+
+This focused review adds building reporting to the existing local pilot; it is
+not a tagged release or a new school-deployment acceptance. The 0.5.0 release
+verification below is historical. Schema, dependencies and approval semantics
+remain unchanged. Existing unrelated edits in `MASTER_PROMPT.md` were preserved.
+
+### Findings and disposition
+
+- Overview had only a month filter and static building totals. Building IDs now
+  scope charges, quantities, trends, service points and invoice drill-down.
+  Split-invoice matching charges are distinct from full invoice totals.
+- The chart highlighted the latest month regardless of the selected report and
+  omitted years. It now ends at the selection, labels years, retains negative
+  credits, and exposes an exact monthly values table. Cards show exact cents.
+- An empty selected month could silently fall back to a different period. Valid
+  requested months now remain selected; missing bills do not imply zero use.
+- Inventory labels were grouped as text, allowing a physical building named
+  "Unassigned / shared" to merge with the special bucket. ID-based grouping
+  separates them. Shared meters remain unallocated.
+- Invoice detail always returned to Review queue. Ledger-origin details now
+  return to the filtered ledger; inventory labels link to building data.
+- Native interaction testing caught ambiguous accessible names on the new
+  selectors. Explicit Building/Invoice month names now support label-based
+  interactions. Browser report filters reset on lock or full page reload.
+
+### Checks and current workflow assessment
+
+The full working-tree suite passes **266 tests** (110.21 s), including 18 new
+building tests. A targeted 52-test run also covered ledger corrections and the
+1,923-active-invoice campus. Tests reconcile scoped charges with the campus total,
+retain exact decimal quantities, distinguish supplier credits and fuel purchases,
+exercise empty/invalid scopes and months, authenticate the HTTP filters, and
+verify cancellation, replacement and current-mapping behavior.
+
+The first 248-test invocation encountered four failures in PDF extraction, PDF
+preview and two provider-worker startup checkpoints while installed dependency
+files were loading unusually slowly. All four passed in the complete repeat with
+`PYTHONPYCACHEPREFIX=/tmp/sks-python-cache`; no product timeout, extraction rule or
+assertion was weakened. Two pre-existing test-client deprecation warnings remain.
+This identifies a local test/startup reliability observation, not a proven
+application fix or a freshly verified cold-install experience.
+
+The existing native Chrome core smoke passed on a fresh external synthetic demo
+at `http://127.0.0.1:8878`, desktop 1440×1000 and mobile 390×844, with imports and
+`--milestone`. CSV/PDF/XML, source/sample downloads, review, duplicate rejection,
+saved drafts, corrections/rebills, cancellation, mapping changes, support/ledger
+exports, browser backup download and logout passed. It reported zero unexpected
+console/runtime errors; the duplicate-source 422 was expected.
+
+The additional building flow passed against the unchanged synthetic demo at
+`http://127.0.0.1:8765` on both viewports: table-to-building selection, exact
+$2,780.16 August total for Demo Academic, per-point quantities, the exact-values
+table, June selection/highlight without future months, scoped invoice columns,
+search and filter retention after opening a source, original CSV download byte
+comparison, inventory-to-building navigation, unassigned/empty results, explicit
+January 2000 preservation while changing buildings, clear filters and lock/relogin
+reset. There were **zero console/runtime errors and zero HTTP failures**. Rendered
+desktop, mobile, empty and invoice screenshots were inspected with no page
+overflow. Evidence is retained outside source at `/tmp/sks-building-evidence` and
+`/tmp/sks-building-core-evidence`; the focused browser script is
+`/tmp/sks-building-visual.py`. No new browser test dependency was introduced.
+
+Browser plugin was not available. Native verification used the existing Python
+Playwright dependency, installed Chrome 152.0.7977.82, isolated browser contexts
+and real loopback HTTP/cookies/downloads. No staff browser profile, transport
+bridge or mocked application API was used. Installed Playwright JavaScript files
+were read into the local filesystem cache to complete the unusually slow first
+driver launch. Test code and screenshots remain outside the repository.
+
+The current operator workflow is coherent for a single local ledger: import in
+Utility Inbox, review evidence and approve, inspect a building/month, open its
+invoices, and make an explicit correction when needed. Utility inventory handles
+confirmed mapping changes; Bill completeness requires separately configured
+expectations. Provider setup is an optional extraction aid and does not bypass
+review. Interval data remains a separate historical meter-reading view.
+
+Remaining acceptance boundaries: no calendarized building usage, floor-area or
+weather normalization, inferred shared-meter allocation, authoritative campus
+coverage, real-provider validation or live data. Native Windows, cold installation,
+new release packaging/signing, fresh dependency advisory review and school
+deployment were not rerun for this scoped reporting change.
+
+---
 
 Verified on 2026-09-07 with synthetic records on macOS 26.6.2 arm64,
 Python 3.13.2 and native Google Chrome 152.0.7977.82. This is development release

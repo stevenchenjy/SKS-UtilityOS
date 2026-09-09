@@ -1,5 +1,12 @@
 # Local installation, updates, and recovery
 
+The current working candidate is **0.6.0-rc1**, using the same schema 5 as
+0.5.0. A 0.5.0 workspace needs a compatibility check and backup, not a migration.
+The commands below retain the established 0.5 installation/maintenance contract;
+choose the separately prepared candidate folder for a candidate rehearsal.
+The reusable [synthetic update rehearsal](UPDATE_REHEARSAL.md) exercises this
+sequence and a separate rollback without accepting existing staff data.
+
 ## Ownership and operating boundary
 
 Use a school-controlled encrypted disk, approved staff-only OS account, and a named IT maintainer. The student development workspace contains synthetic data only. Private records, source files, passphrases, and backups stay with school staff. No portal credentials are used. Installing a code release grants it access to the selected local records; source/data separation does not eliminate that trust decision.

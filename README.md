@@ -1,10 +1,17 @@
 # SKS UtilityOS
 
-**Version 0.5.0 · staff-local utility ledger · synthetic demonstration**
+**Version 0.6.0-rc1 · local release candidate · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
 This workspace is for software development, testing, technical documentation, and release engineering. It does not contain meeting materials or stakeholder proposals.
+
+This candidate includes building reports and a repeatable synthetic update
+rehearsal. The trusted tagged baseline remains `v0.5.0`; this candidate is not a
+complete 0.6 analytics milestone, public release or school installation. See
+[update rehearsal](docs/UPDATE_REHEARSAL.md) for fresh-demo validation, stopped-app
+backup, schema checks, explicit migration when required, version switching and
+verification of a separate rollback workspace. Every invoice still requires review.
 
 ## Run the demo on macOS
 
@@ -39,6 +46,32 @@ Windows scripts are supplied, but native Windows execution and ACL behavior rema
 - Cancel an incorrectly posted invoice with a reason and explicit confirmation. A separate financial credit remains an independent invoice with negative charges and zero quantity on charges-only lines.
 - Use **Utility inventory** to correct a building label or confirmed meter mapping. Reporting uses the current mapping; original approved review values and mapping history remain available.
 - Use **Privacy & support** to preview safe diagnostics, export the private active ledger, or create and download a private backup. Restoration runs with the app stopped.
+
+## Building reports
+
+In **Overview**, choose a **Building** and **Invoice month**, or select a building
+in the spending table. Charges, the monthly trend, quantities and service-point
+rows use the same selection. **Unassigned / shared** is a separate scope; these
+costs are not distributed across named buildings. The selected month remains in
+place when a building has no approved invoices. Empty records do not establish
+zero consumption or complete coverage.
+
+**View matching invoices** opens the ledger with the same building and month.
+For a split invoice, **Building charges** shows only matching service lines and
+**Full invoice total** retains the whole document amount. Search and invoice
+state filters work within that selection. **Back to invoice ledger** returns
+from an invoice to the retained filters; **View building overview** returns to
+its report. **Clear filters** resets the ledger, and **All buildings** resets
+only the overview's building selection. Selections are retained while navigating
+in the current session and reset on page reload or lock.
+
+The trend shows up to eight recorded invoice months through the selection (five
+on mobile), with years and an expandable exact-values table. Pending review
+counts explicitly cover the whole ledger. Utility inventory's **View building
+data** links use the current mapping; renames preserve building identity and
+mapping changes regroup past periods. Quantities remain separate by unit and
+treatment. Use **Interval data** for imported meter readings and **Bill
+completeness** for separately confirmed cadence expectations.
 
 ## Intelligent Bill Intake
 
@@ -81,7 +114,7 @@ This remains a single-operator local pilot. [Role enforcement is explicitly defe
 
 ## Upgrade and recovery
 
-Version 0.5.0 uses **schema 5**. Starting the app never upgrades an existing schema-1, schema-2, schema-3 or schema-4 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 5; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
+Version 0.6.0-rc1 uses **schema 5**, unchanged from 0.5.0. Starting the app never upgrades an existing schema-1, schema-2, schema-3 or schema-4 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 5; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
 
 Useful maintenance commands, with the selected mode and external data directory supplied consistently:
 

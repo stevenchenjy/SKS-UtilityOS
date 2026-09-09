@@ -63,6 +63,63 @@ def test_worker_timeout_and_bad_pdf_keep_bounded_empty_candidates():
     assert 'PRIVATE_ACCOUNT_SENTINEL' not in json.dumps(result)
 
 
+def test_extraction_waits_for_preview_within_the_same_deadline(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from types import SimpleNamespace
+    import time
+    from utilityos import pdf_extract
+    from utilityos.extraction import empty_extraction
+    started, budgets = Event(), []
+    def worker(*args, **kwargs):
+        budgets.append(kwargs['timeout'])
+        return SimpleNamespace(returncode=0, stdout=json.dumps(empty_extraction('PDF_UNREADABLE_MANUAL_ENTRY')).encode())
+    monkeypatch.setattr(pdf_extract.subprocess, 'run', worker)
+    pdf_extract._WORKERS.acquire()  # A retained page is still being rendered.
+    def extract():
+        started.set()
+        return task(b'%PDF-synthetic', timeout=3)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(extract)
+        try:
+            assert started.wait(5)
+            time.sleep(1.1)  # Longer than the old one-second admission timeout.
+        finally:
+            pdf_extract._WORKERS.release()
+        result = future.result(timeout=5)
+    assert result['codes'] == ['PDF_UNREADABLE_MANUAL_ENTRY']
+    assert len(budgets) == 1 and 0 < budgets[0] < 2.3
+
+
+def test_busy_capacity_is_retryable_without_retaining_an_empty_pdf(ledger):
+    from utilityos import pdf_extract
+    from utilityos.intake import Intake
+    intake = Intake(ledger, 'demo')
+    raw = (CORPUS/'electricity-digital.pdf').read_bytes()
+    pdf_extract._EXTRACTION_QUEUE.acquire()  # One extraction is already waiting.
+    try:
+        result = intake.import_file('synthetic-busy.pdf', raw)
+    finally:
+        pdf_extract._EXTRACTION_QUEUE.release()
+    assert result['state'] == 'failed_safely'
+    assert result['code'] == 'EXTRACTION_BUSY_RETRY_IMPORT'
+    assert result['staged_ids'] == [] and result['document_id'] is None
+    assert list(ledger.store.sources.iterdir()) == []
+    retry = intake.import_file('synthetic-busy.pdf', raw)
+    assert retry['count'] == 1
+    assert ledger.stage(retry['staged_ids'][0])['payload']['current_total'] == '100.00'
+
+
+def test_worker_queue_does_not_extend_expired_budget():
+    from utilityos import pdf_extract
+    pdf_extract._WORKERS.acquire()
+    try:
+        result = task(b'%PDF-synthetic', timeout=.01)
+        assert result['codes'] == ['EXTRACTION_BUSY']
+    finally:
+        pdf_extract._WORKERS.release()
+
+
 def test_fingerprint_excludes_account_meter_and_invoice_values():
     results=[task((CORPUS/name).read_bytes()) for name in ('electricity-digital.pdf','layout-v1.pdf')]
     assert results[0]['fields']['account_identifier']['value']!=results[1]['fields']['account_identifier']['value']

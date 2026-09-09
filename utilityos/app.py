@@ -145,8 +145,8 @@ def create_app(config: Config):
         return response
 
     @app.get('/api/overview')
-    def overview(month: str|None=None):
-        return ledger.overview(month)
+    def overview(month: str|None=None, building: str|None=None):
+        return ledger.overview(month, building)
 
     @app.get('/api/inventory')
     def inventory():
@@ -166,8 +166,8 @@ def create_app(config: Config):
         return ledger.validate_draft(data.get('payload'),data.get('staged_id'),data.get('intake_details'))
 
     @app.get('/api/bills')
-    def bills():
-        return ledger.bills()
+    def bills(building: str|None=None, month: str|None=None):
+        return ledger.bills(building, month)
 
     @app.post('/api/staged/{item_id}/draft')
     async def save_draft(item_id:int,request:Request):

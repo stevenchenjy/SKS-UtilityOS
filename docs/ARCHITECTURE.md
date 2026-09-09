@@ -172,3 +172,28 @@ owner rewriting the complete database, audit chain and application.
 
 See `PROVIDER_STUDIO.md` for the full grammar, gates, privacy contract and future
 school-side extraction-engine A/B evaluation boundary.
+
+
+## Building reporting (unreleased)
+
+`reporting.py` validates the common `building` (`all`, `unassigned`, or a current
+building ID) and `month` (`YYYY-MM`) scope used by `/api/overview` and `/api/bills`.
+Invalid selections fail explicitly. An explicit valid month with no matching
+invoices stays selected instead of silently switching to another period.
+Overview month choices come from active campus invoices plus any explicit month;
+zero-count scoped months mean no approved records, not established zero use.
+
+Both endpoints join service lines to current meter mappings. Dashboard sums use
+active line charges, counting a split invoice once within each matching scope.
+The bill list retains every version and returns `matched_total_cents` alongside
+`current_total_cents`; the UI defaults to active versions. Building subtotals
+reconcile to the all-building total without allocating unassigned lines. Building
+IDs keep a physical label that happens to equal "Unassigned / shared" separate
+from the unassigned bucket. `stats` retains whole-ledger counts; `scope_stats`
+reports mapped service points and accounts/invoices with active bills across all
+months. Selected-month service points explicitly show missing bills.
+
+No migration, writes, new dependencies, interval summation, estimated allocation,
+or calendarization is part of this reporting change. Source and review payloads
+retain their original labels after an inventory mapping edit. Report selections
+live only in the browser session's in-memory navigation context.

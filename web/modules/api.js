@@ -20,6 +20,7 @@ export async function api(path, options = {}) {
 }
 export function message(code) {
   const messages = {
+    EXTRACTION_BUSY_RETRY_IMPORT: 'Another local PDF operation is finishing. Retry this file; it has not been saved as an empty draft.',
     SOURCE_EVIDENCE_REVIEW_REQUIRED: 'Confirm the extracted values against the original source before approving. Extraction alone does not verify a bill.',
     ACTIVE_ORIGINAL_INVOICE_REQUIRED: 'The original invoice is no longer active. Reopen its history and use the current version, or reject this draft.',
     PENDING_CORRECTION_ALREADY_EXISTS: 'A correction for this invoice is already awaiting review. Open it in the review queue.',

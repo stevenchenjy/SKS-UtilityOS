@@ -62,6 +62,8 @@ class Ledger(BillLifecycle, InventoryEditing):
                     extraction = observed
             else:
                 extraction = task(raw, model_dir=self.ocr_model_dir)
+            if 'EXTRACTION_BUSY' in extraction.get('codes', []):
+                raise ValidationError('EXTRACTION_BUSY_RETRY_IMPORT')
             records = [('bill', proposed_bill(extraction))]
         target = self.store.sources / f'{sha}{ext}'
         with self.store.connect() as db:
@@ -321,35 +323,67 @@ class Ledger(BillLifecycle, InventoryEditing):
                                        'total_kwh':format(sum(Decimal(r['quantity']) for r in readings),'f')})
         return item
 
-    def overview(self, month=None):
+    def overview(self, month=None, building=None):
+        from .reporting import building_scope, reporting_month
+        reporting_month(month)
         with self.store.connect() as db:
-            monthly=[dict(r) for r in db.execute("SELECT substr(bill_date,1,7) month,SUM(current_total_cents) cents,COUNT(*) bills FROM bills WHERE status='active' GROUP BY month ORDER BY month")]
-            available=[row['month'] for row in monthly]
-            selected=month if month in available else (available[-1] if available else None)
-            rows=db.execute('''SELECT bl.*,m.commodity,m.code,bld.name building,b.bill_date FROM bill_lines bl
-                     JOIN bills b ON b.id=bl.bill_id JOIN meters m ON m.id=bl.meter_id LEFT JOIN buildings bld ON bld.id=m.building_id
-                     WHERE b.status='active' AND substr(b.bill_date,1,7)=?''',(selected,)).fetchall()
-            stats={'buildings':db.execute('SELECT COUNT(*) FROM buildings').fetchone()[0],
-                   'meters':db.execute('SELECT COUNT(*) FROM meters').fetchone()[0],
-                   'accounts':db.execute('SELECT COUNT(*) FROM accounts').fetchone()[0],
-                   'pending':db.execute("SELECT COUNT(*) FROM staged WHERE status='pending'").fetchone()[0],
-                   'approved_bills':db.execute("SELECT COUNT(*) FROM bills WHERE status='active'").fetchone()[0]}
-            latest=[dict(r) for r in db.execute('''SELECT b.id,b.invoice_number,b.bill_date,b.current_total_cents,b.staged_id,p.name provider
-                       FROM bills b JOIN accounts a ON a.id=b.account_id JOIN providers p ON p.id=a.provider_id WHERE b.status='active' ORDER BY b.bill_date DESC,b.id DESC LIMIT 6''')]
-            quantities=defaultdict(Decimal)
-            cost=defaultdict(int)
-            buildings=defaultdict(int)
+            scope, options, where, params = building_scope(db, building)
+            available = [r[0] for r in db.execute("SELECT DISTINCT substr(bill_date,1,7) FROM bills WHERE status='active' ORDER BY 1")]
+            selected = month or (available[-1] if available else None)
+            # Keep a requested empty month; switching buildings must not silently
+            # substitute a different reporting period.
+            if selected and selected not in available:
+                available = sorted([*available, selected])
+            monthly_rows = {r['month']: dict(r) for r in db.execute(f"""SELECT substr(b.bill_date,1,7) month,
+                SUM(bl.charge_cents) cents,COUNT(DISTINCT b.id) bills FROM bill_lines bl
+                JOIN bills b ON b.id=bl.bill_id JOIN meters m ON m.id=bl.meter_id
+                WHERE b.status='active' AND {where} GROUP BY month""", params)}
+            monthly = [monthly_rows.get(m, {'month': m, 'cents': 0, 'bills': 0}) for m in available]
+            rows = db.execute(f"""SELECT bl.*,m.commodity,m.code,m.building_id,bld.name building,b.bill_date
+                FROM bill_lines bl JOIN bills b ON b.id=bl.bill_id JOIN meters m ON m.id=bl.meter_id
+                LEFT JOIN buildings bld ON bld.id=m.building_id
+                WHERE b.status='active' AND {where} AND substr(b.bill_date,1,7)=? ORDER BY bl.id""", (*params, selected)).fetchall()
+            stats = {'buildings': db.execute('SELECT COUNT(*) FROM buildings').fetchone()[0],
+                     'meters': db.execute('SELECT COUNT(*) FROM meters').fetchone()[0],
+                     'accounts': db.execute('SELECT COUNT(*) FROM accounts').fetchone()[0],
+                     'pending': db.execute("SELECT COUNT(*) FROM staged WHERE status='pending'").fetchone()[0],
+                     'approved_bills': db.execute("SELECT COUNT(*) FROM bills WHERE status='active'").fetchone()[0]}
+            points = [dict(r) for r in db.execute(f"""SELECT m.id,m.code,m.commodity,m.unit,m.building_id,b.name building
+                FROM meters m LEFT JOIN buildings b ON b.id=m.building_id WHERE {where} ORDER BY m.code""", params)]
+            scope_stats = dict(db.execute(f"""SELECT COUNT(DISTINCT b.id) approved_bills,COUNT(DISTINCT b.account_id) accounts
+                FROM bills b JOIN bill_lines bl ON bl.bill_id=b.id JOIN meters m ON m.id=bl.meter_id
+                WHERE b.status='active' AND {where}""", params).fetchone())
+            scope_stats['meters'] = len(points)
+            latest = [dict(r) for r in db.execute(f"""SELECT b.id,b.invoice_number,b.bill_date,b.current_total_cents,b.staged_id,
+                p.name provider,SUM(bl.charge_cents) matched_total_cents FROM bills b
+                JOIN accounts a ON a.id=b.account_id JOIN providers p ON p.id=a.provider_id
+                JOIN bill_lines bl ON bl.bill_id=b.id JOIN meters m ON m.id=bl.meter_id
+                WHERE b.status='active' AND {where} GROUP BY b.id ORDER BY b.bill_date DESC,b.id DESC LIMIT 6""", params)]
+            quantities, cost, buildings = defaultdict(Decimal), defaultdict(int), defaultdict(int)
             for row in rows:
-                cost[row['commodity']]+=row['charge_cents']
-                buildings[row['building'] or 'Unassigned / shared']+=row['charge_cents']
-                if row['usage_role']!='charges_only':
-                    quantities[(row['commodity'],row['unit'],row['usage_role'])]+=Decimal(row['usage'])
-            selected_total=next((row['cents'] for row in monthly if row['month']==selected),0)
-        return {'selected_month':selected,'months':available,'monthly':monthly,'stats':stats,'total_cents':selected_total,
-                'cost_by_commodity':[{'commodity':k,'cents':v} for k,v in sorted(cost.items())],
-                'cost_by_building':[{'building':k,'cents':v} for k,v in sorted(buildings.items(),key=lambda x:-x[1])],
-                'quantities':[{'commodity':k[0],'unit':k[1],'role':k[2],'value':format(v,'f')} for k,v in quantities.items()],
-                'latest':latest}
+                cost[row['commodity']] += row['charge_cents']
+                buildings[(str(row['building_id']) if row['building_id'] is not None else 'unassigned',
+                           row['building'] or 'Unassigned / shared')] += row['charge_cents']
+                if row['usage_role'] != 'charges_only':
+                    quantities[(row['commodity'], row['unit'], row['usage_role'])] += Decimal(row['usage'])
+            for point in points:
+                lines = [r for r in rows if r['meter_id'] == point['id']]
+                point['cents'] = sum(r['charge_cents'] for r in lines)
+                point['invoices'] = len({r['bill_id'] for r in lines})
+                totals = defaultdict(Decimal)
+                for row in lines:
+                    if row['usage_role'] != 'charges_only':
+                        totals[row['usage_role']] += Decimal(row['usage'])
+                point['quantities'] = [{'role': role, 'value': format(value, 'f')} for role, value in totals.items()]
+            selected_row = monthly_rows.get(selected, {'cents': 0, 'bills': 0})
+        return {'selected_month': selected, 'months': available, 'monthly': monthly, 'stats': stats,
+                'scope': scope, 'buildings': options, 'scope_stats': scope_stats, 'service_points': points,
+                'invoice_count': selected_row['bills'], 'total_cents': selected_row['cents'],
+                'cost_by_commodity': [{'commodity': k, 'cents': v} for k, v in sorted(cost.items())],
+                'cost_by_building': [{'building_id': k[0], 'building': k[1], 'cents': v}
+                                     for k, v in sorted(buildings.items(), key=lambda x: (-x[1], x[0][1], x[0][0]))],
+                'quantities': [{'commodity': k[0], 'unit': k[1], 'role': k[2], 'value': format(v, 'f')}
+                               for k, v in quantities.items()], 'latest': latest}
 
     def intervals(self,meter_code=None):
         with self.store.connect() as db:
