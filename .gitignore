@@ -67,3 +67,4 @@ Desktop.ini
 !samples/*.pdf
 !samples/intake/*.pdf
 !samples/onboarding/*.pdf
+!samples/provider-semantics/*.pdf

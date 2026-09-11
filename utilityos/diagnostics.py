@@ -56,9 +56,9 @@ def operational_checks(directory, port=8765, *, running=False, root=ROOT):
             with sqlite3.connect(database.resolve().as_uri() + '?mode=ro', uri=True, timeout=2) as db:
                 value = db.execute("SELECT value FROM settings WHERE key='schema_version'").fetchone()
                 version = int(value[0]) if value else -1
-                schema = version if version in {1, 2, 3, 4, SCHEMA_VERSION} else None
+                schema = version if version in {1, 2, 3, 4, 5, SCHEMA_VERSION} else None
                 result['database'] = 'accessible' if db.execute('PRAGMA quick_check').fetchone()[0] == 'ok' else 'invalid'
-                result['migration'] = 'current' if version == SCHEMA_VERSION else 'explicit_upgrade_available' if version in {1, 2, 3, 4} else 'unsupported'
+                result['migration'] = 'current' if version == SCHEMA_VERSION else 'explicit_upgrade_available' if version in {1, 2, 3, 4, 5} else 'unsupported'
                 result['audit'] = verify(db)
             db.close()
     except (OSError, sqlite3.Error, ValueError, TypeError):

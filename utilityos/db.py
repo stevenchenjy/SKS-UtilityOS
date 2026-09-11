@@ -96,12 +96,21 @@ class Store:
                 if expected_schema >= 4:
                     from .intake_storage import verify
                     verify(db)
+                if expected_schema >= 6:
+                    from .billing_schedules import verify as verify_schedules
+                    from .usage_storage import verify as verify_usage
+                    verify_schedules(db)
+                    verify_usage(db)
             elif initialize and expected_schema == SCHEMA_VERSION:
                 db.executescript(SCHEMA + AUDIT_TABLE + AUDIT_TRIGGERS)
                 from .intake_storage import initialize
                 initialize(db)
                 from .provider_storage import initialize as initialize_providers
                 initialize_providers(db)
+                from .billing_schedules import initialize as initialize_schedules
+                from .usage_storage import initialize as initialize_usage
+                initialize_schedules(db)
+                initialize_usage(db)
                 db.executemany("INSERT INTO settings VALUES (?,?)", [('schema_version',str(SCHEMA_VERSION)),('mode',mode)])
             else:
                 raise ValueError("EXISTING_WORKSPACE_REQUIRED")

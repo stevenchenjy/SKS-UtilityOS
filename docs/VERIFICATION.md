@@ -1,3 +1,147 @@
+# Development verification — 0.6.0-rc2
+
+## Provider-informed file slice — 2026-09-10
+
+Execution started from clean commit `f61656d6d406fcf62e8cf7712297d81c289198de`,
+version 0.6.0-rc1/schema 5. This candidate is **0.6.0-rc2/schema 6**, unsigned,
+untagged and unpublished. The trusted `v0.5.0` commit remains
+`0d515181714e8f1f090156e43c957735e26976b7`. Existing tags and historical receipts
+are preserved. This completes the bounded provider-informed development slice;
+it does not complete the planned 0.6 analytics milestone or authorize school use.
+
+### Delivered scope
+
+- **Approval controls:** every financial approval requires literal Boolean
+  acknowledgement at the authoritative service boundary. HTTP approval requires
+  an explicit nonnegative integer revision. Missing, null, Boolean, string,
+  negative and stale revision requests fail without changing saved review or
+  financial state. Existing correction, warning, reconciliation and passphrase
+  controls remain in force. Native approval checks observe the submitted revision
+  and acknowledgement.
+- **Rehearsal completion:** each browser checkpoint owns a short-lived driver.
+  The supervisor publishes success only after completed checks, runner exit zero,
+  shutdown confirmation and, on POSIX, no remaining owned process-group members.
+  Timeout/nonzero-exit tests retain unsuccessful status.
+- **Account schedules:** every-two-month anchors, issue day, inclusive grace and
+  effective dates, skip/reschedule exceptions, immutable review versions and
+  account-level statement counting. Existing monthly/delivery/irregular choices
+  remain. Quiet/unconfigured periods establish neither missing bills nor zero
+  usage. Manual retrieval intent, expected invoices and measurement sampling
+  remain distinct. See [billing schedules](BILLING_SCHEDULES.md).
+- **Mapped operational CSV:** retained originals, transparent revisioned mapping,
+  source units, meter identity, UTC boundaries/timezone assumptions, delta/raw
+  counter semantics and quality. Explicit approval, deduplication, conflicting
+  source withdrawal and same-original reattempt preserve all prior evidence.
+  Operational imports do not change invoice charges or quantities. See
+  [mapped usage](MAPPED_USAGE.md).
+- **Provider semantics:** seven original fictional PDFs, deterministic generation,
+  Provider Studio validation and twelve tests cover balances versus current
+  charges, water-only/combined statements, supplier-only charges, kW versus kWh,
+  gas ambiguity, shared meters and variable service periods. Public source
+  evidence and its unknowns are recorded in
+  [provider file workflows](PROVIDER_FILE_WORKFLOWS.md).
+
+### Regression, native workflows and extraction
+
+The working-tree full suite passed **414 tests in 73.38 seconds**, with two
+existing Starlette/httpx and AnyIO test-client deprecation warnings. The starting
+baseline passed 286 tests. After the packaging-test correction described below,
+a new source archive was extracted and installed with a fresh environment through
+the actual setup script. Its full suite passed **414 tests in 70.31 seconds**,
+with the same two warnings and command exit **0**; `pip check` passed too.
+
+Native Chrome **152.0.7977.83** on macOS arm64/Python 3.13.2 used fresh external
+synthetic workspaces, real loopback HTTP/cookies/downloads, desktop 1440×1000 and
+mobile 390×844. The Browser plugin was unavailable; the existing Python Playwright
+development dependency was used with isolated contexts. No staff browser profile
+or transport bridge was used. Successful checks covered:
+
+- Core CSV/PDF/XML intake, saved review/approval, source downloads, duplicate
+  refusal, correction/rebill/credit/cancellation, inventory, ledger/support
+  downloads, backup and logout.
+- Provider Studio source selection, independent two-source validation, explicit
+  activation, future pending drafts, layout drift/retirement, exact support
+  preview/download and restored provider history.
+- Batch isolation, picker/drop, rotated local OCR/evidence, stable-folder explicit
+  scan, delivered fuel, account completeness and restored source evidence.
+- New schedules on desktop/mobile, issue/grace dates, quiet months, mobile
+  exception saves, unchanged charges, logout and backup/restore.
+- New mapped usage upload/preview/approval, exact source download, duplicate
+  evidence, withdrawal, same-byte reattempt, correction reconciliation, unchanged
+  invoice totals and logout. Its receipt also confirms driver shutdown and
+  demo-server exit zero.
+- Backup recovery, a 1,923-active-invoice fictional campus, and synthetic staff
+  confirmation. This is local development evidence, not a school installation.
+
+Final native runs reported **zero unexpected console/runtime errors**. Deliberate
+duplicate and staff reauthentication refusals were expected. Desktop/mobile
+screenshots were visually inspected. The 28-document synthetic extraction
+benchmark matched **284/284 fields**: 215 template, 39 generic digital and 30 OCR,
+with zero missing/incorrect fields, false extractions or incorrect units. The
+seven new provider PDFs were separately rendered and inspected. These are bounded
+fixture results, not real-provider accuracy estimates.
+
+### Fresh installation, migration and rollback
+
+Old `v0.5.0` and the candidate were extracted into separate external code folders
+and each installed using its actual `scripts/setup.sh` with a target-specific
+offline wheelhouse. No virtual environment was copied. Runtime/development/OCR
+dependency pins are unchanged; no new dependency was introduced. `pip check`
+passed. September 10 checks of PyPI release advisory metadata covered all
+**37 installed packages**, with no reported advisories and no skipped packages.
+This was a direct PyPI metadata check, not a new pip-audit run, and does not audit
+all bundled native libraries or the operating system. The optional English OCR
+model and license were explicitly staged and hash-verified outside the source;
+there is no runtime model download.
+
+The complete native `v0.5.0` → rc2 rehearsal **exited 0**. Its final receipt says
+`status: passed`, `runner_exit_code: 0`, `all_rehearsal_servers_stopped: true` and
+`all_browser_checkpoints_closed: true`. It exercised incompatible-start refusal,
+backup, explicit schema **5 → 6** migration, preserved 20 prior non-audit tables
+and four source originals, and matched pre/post-switch ledger and PDF downloads.
+The old release separately restored the original backup into a different
+rollback directory and passed the same browser checks. The upgraded data was
+retained. No private workspace was migrated.
+
+The rehearsal archive was retained as a snapshot. Later corrections were limited
+to current documentation and the package test's assumption about Git metadata;
+application files, fixtures, dependency pins and native verification scripts
+remained byte-identical. The final package is compared to the independently
+tested source and recorded separately with its hash; only this verification
+report differs from that source snapshot. Two fixed-timestamp builds contain
+**204 verified source files** and are byte-identical. The refreshed local release
+manifest matches the final source. The package contains source and synthetic
+fixtures only, with no environments, databases, logs, wheels or models.
+
+### Failures retained and limitations
+
+An initial account-schedule native check raced a pending save; the form now
+disables submission/filtering while saving and the harness waits for the saved
+state. A later harness check treated its deliberately unauthorized post-logout
+fetch as an unexpected console failure; that assertion now uses the native
+request context. Subsequent schedule runs passed. Neither failed run was
+rewritten as successful.
+
+The first independent full source-installation suite reported **413 passed and
+one failed** in 74.16 seconds: its new packaging test assumed a `.git` directory,
+which a source-only release correctly excludes. The test now checks the shipped
+ignore rules in an isolated temporary repository and keeps exact archive-byte
+assertions. Its focused tests passed both in the checkout and a Git-free archive.
+The subsequent independent full run is the acceptance result. Historical rc1
+rehearsals below that required cleanup and exited nonzero remain unsuccessful.
+
+Combined municipal water/sewer/garbage statements remain unposted until a reviewed
+accounting extension supports every charge and full reconciliation. This slice
+does not certify provider exports, directly parse Excel, turn raw counters into
+consumption, model physical counter resets, reconstruct historic schedule versions
+automatically, or provide operational usage analytics. The explicit folder scan
+remains; automatic polling was evaluated and deferred. Portal/email/API/EPA
+connections remain disabled. Actual school meters/exports, provider eligibility
+and fees, native Windows behavior, downloaded-app signing/Gatekeeper acceptance
+and school installation remain externally unverified.
+
+---
+
 # Development verification — 0.6.0-rc1
 
 ## Local candidate acceptance — 2026-09-08

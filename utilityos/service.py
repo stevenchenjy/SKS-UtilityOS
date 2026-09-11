@@ -149,6 +149,10 @@ class Ledger(BillLifecycle, InventoryEditing):
             return {'payload':bill,'flags':flags}
 
     def approve_bill(self, staged_id: int, payload, acknowledge=False, revision=None, intake_details=None):
+        # Trusted synthetic seeding may omit revision. HTTP callers must provide
+        # a current integer revision at the route boundary before reaching here.
+        if acknowledge is not True:
+            raise ValidationError('REVIEW_WARNINGS_AND_ACKNOWLEDGE')
         bill=validate_bill(payload)
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -157,12 +161,8 @@ class Ledger(BillLifecycle, InventoryEditing):
             flags=self._bill_flags(db,bill,correction_of)
             from .intake_storage import validation_flags
             flags += validation_flags(db,row,bill,intake_details)
-            if correction_of is not None and acknowledge is not True:
-                raise ValidationError('REVIEW_WARNINGS_AND_ACKNOWLEDGE')
             if any(flag['blocking'] for flag in flags):
                 raise ValidationError(next(flag['code'] for flag in flags if flag['blocking']))
-            if flags and not acknowledge:
-                raise ValidationError('REVIEW_WARNINGS_AND_ACKNOWLEDGE')
             db.execute('INSERT OR IGNORE INTO providers(name) VALUES (?)',(bill['provider'],))
             provider=db.execute('SELECT id FROM providers WHERE name=?',(bill['provider'],)).fetchone()[0]
             db.execute('INSERT OR IGNORE INTO accounts(provider_id,alias) VALUES (?,?)',(provider,bill['account_alias']))
@@ -233,6 +233,10 @@ class Ledger(BillLifecycle, InventoryEditing):
                 raise ValidationError('INTERVAL_METADATA_CHANGED_REQUIRES_REVIEW')
             skipped=0
             for item in payload['readings']:
+                from .usage_storage import ACTIVE_READINGS
+                if db.execute(f"SELECT 1 FROM ({ACTIVE_READINGS}) r WHERE r.meter_id=? AND r.semantics='delta' AND r.start_utc<? AND r.end_utc>?",
+                              (meter['id'], item['start_utc'] + item['duration_s'], item['start_utc'])).fetchone():
+                    raise ValidationError('INTERVAL_OVERLAPS_MAPPED_USAGE_RECONCILE_FIRST')
                 prior=db.execute('SELECT * FROM interval_readings WHERE channel_id=? AND start_utc=?',(channel['id'],item['start_utc'])).fetchone()
                 if prior:
                     if prior['duration_s']!=item['duration_s'] or Decimal(prior['quantity'])!=Decimal(item['quantity']) or prior['quality']!=item['quality']:

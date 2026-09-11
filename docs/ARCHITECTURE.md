@@ -197,3 +197,26 @@ No migration, writes, new dependencies, interval summation, estimated allocation
 or calendarization is part of this reporting change. Source and review payloads
 retain their original labels after an inventory mapping edit. Report selections
 live only in the browser session's in-memory navigation context.
+
+
+## Schema-6 file workflow additions
+
+`billing_schedules.py` stores immutable account schedule versions and audit-bound
+decisions, while `completeness.py` retains the legacy expectation API and combines
+its current account view with explicitly configured schedules. No invoice period
+is generated from issue dates. The latest schedule is the current decision;
+retained earlier versions do not imply an automatically reconstructed calendar.
+
+`usage.py`, `usage_storage.py` and `usage_routes.py` provide a separate mapped
+CSV workflow using the existing original-document store, strict HTTP boundary
+and audit codes. Reading evidence and source decisions are retained separately
+from bill lines and Green Button channels. Duplicate source evidence shares
+readings; conflicts require explicit reconciliation. No operational reading is
+summed into financial reporting. The browser module adds Mapped usage files to
+the existing navigation rather than replacing invoice review.
+
+The frozen schema-5 fixture verifies refusal before an explicit upgrade. Schema
+5→6 creates the new journals, preserving older tables, files and extraction.
+Store initialization, maintenance and migration validation verify the new history.
+The supervisor in `rehearse_update.py` accepts success only after the isolated
+runner exits zero with completed application and browser/driver checks.

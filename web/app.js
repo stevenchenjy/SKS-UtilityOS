@@ -1,3 +1,4 @@
+import {showUsage} from './modules/usage.js';
 import {showProviders,showProviderSetup} from './modules/providers.js';
 import {showInbox} from './modules/inbox.js';
 import {showCompleteness} from './modules/completeness.js';
@@ -10,8 +11,8 @@ import {showInventory} from './modules/inventory.js';
 import {showIntervals} from './modules/intervals.js';
 import {showSupport} from './modules/support.js';
 let meta,route='overview',renderGeneration=0,renderBusy=false;
-const views={providers:showProviders,inbox:showInbox,completeness:showCompleteness,overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
-const nav=[['overview','Overview'],['bills','Invoice ledger'],['inbox','Utility Inbox'],['providers','Provider Management'],['completeness','Bill completeness'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['support','Privacy & support']];
+const views={usage:showUsage,providers:showProviders,inbox:showInbox,completeness:showCompleteness,overview:showOverview,bills:showBills,review:showReview,inventory:showInventory,intervals:showIntervals,support:showSupport};
+const nav=[['overview','Overview'],['bills','Invoice ledger'],['inbox','Utility Inbox'],['providers','Provider Management'],['completeness','Bill completeness'],['review','Review queue'],['inventory','Utility inventory'],['intervals','Interval data'],['usage','Mapped usage files'],['support','Privacy & support']];
 const context={beginView(){const token=++renderGeneration,target=$('#content');target.innerHTML='<p class="loading">Loading local records...</p>';return ()=>token===renderGeneration&&target.isConnected;},get generation(){return renderGeneration;},get route(){return route;},get mode(){return meta.mode;},navigate,refresh,openStage,openImport,openProviderSetup,updatePending(count){const n=$('#pending-count');if(n)n.textContent=count;}};
 
 async function boot(){
@@ -39,7 +40,7 @@ async function refresh(next,arg){
   route=next;
   $$('[data-nav]').forEach(button=>{button.classList.toggle('active',button.dataset.nav===next);if(button.dataset.nav===next)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
   const target=$('#content'),generation=++renderGeneration;
-  if(!target)return;
+  if(!target){renderBusy=false;return;}
   target.innerHTML='<p class="loading">Loading local records...</p>';
   $$('[data-nav]').forEach(button=>button.disabled=true);
   try{await views[next](target,context,arg);if(generation===renderGeneration)document.title=`${nav.find(n=>n[0]===next)?.[1]||'Ledger'} | SKS UtilityOS`;}

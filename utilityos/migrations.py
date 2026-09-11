@@ -61,7 +61,15 @@ def to_v5(db):
     event(db, 'MIGRATE_SCHEMA')
 
 
-STEPS = {1: to_v2, 2: to_v3, 3: to_v4, 4: to_v5}
+def to_v6(db):
+    from .billing_schedules import initialize as initialize_schedules
+    from .usage_storage import initialize as initialize_usage
+    initialize_schedules(db)
+    initialize_usage(db)
+    event(db, 'MIGRATE_SCHEMA')
+
+
+STEPS = {1: to_v2, 2: to_v3, 3: to_v4, 4: to_v5, 5: to_v6}
 
 
 def plan(start, target=SCHEMA_VERSION, steps=None):
@@ -109,6 +117,11 @@ def upgrade_copy(store, target: Path, target_version=SCHEMA_VERSION, steps=None)
             if version >= 5:
                 from .provider_storage import verify as verify_providers
                 verify_providers(db)
+            if version >= 6:
+                from .billing_schedules import verify as verify_schedules
+                from .usage_storage import verify as verify_usage
+                verify_schedules(db)
+                verify_usage(db)
         db.commit()
     except BaseException:
         db.rollback()

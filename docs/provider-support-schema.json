@@ -89,8 +89,8 @@
       "type": "string"
     },
     "schema_version": {
-      "const": 5,
-      "default": 5,
+      "const": 6,
+      "default": 6,
       "title": "Schema Version",
       "type": "integer"
     },

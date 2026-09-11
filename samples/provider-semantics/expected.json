@@ -1,0 +1,234 @@
+{
+  "corpus": "original-fictional-provider-semantics-v1",
+  "note": "Combined/ambiguous cases are refusal fixtures, not approved bill truth.",
+  "documents": [
+    {
+      "name": "water-first",
+      "bill": {
+        "provider": "Fictional Alder Municipal Water",
+        "account_alias": "SYN-MUNICIPAL-ACCOUNT",
+        "invoice_number": "SYN-WATER-01",
+        "bill_date": "2026-07-15",
+        "current_total": "58.40",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-WATER",
+            "building": "",
+            "commodity": "water",
+            "period_start": "2026-05-11",
+            "period_end": "2026-07-12",
+            "usage": "4250",
+            "unit": "gal",
+            "current_charge": "58.40",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {},
+      "prior_balance": "210.15",
+      "amount_due": "268.55",
+      "printed_unit": "gal",
+      "demand": null,
+      "expected": "reviewable",
+      "file": "water-first.pdf",
+      "sha256": "c7c272265d3cec60772d2672d2e30dbc63ea6cf65e237bceb91cd2e61c922116"
+    },
+    {
+      "name": "water-second",
+      "bill": {
+        "provider": "Fictional Alder Municipal Water",
+        "account_alias": "SYN-MUNICIPAL-ACCOUNT",
+        "invoice_number": "SYN-WATER-02",
+        "bill_date": "2026-09-15",
+        "current_total": "58.40",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-WATER",
+            "building": "",
+            "commodity": "water",
+            "period_start": "2026-07-12",
+            "period_end": "2026-09-10",
+            "usage": "4250",
+            "unit": "gal",
+            "current_charge": "58.40",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {},
+      "prior_balance": "210.15",
+      "amount_due": "268.55",
+      "printed_unit": "gal",
+      "demand": null,
+      "expected": "reviewable",
+      "file": "water-second.pdf",
+      "sha256": "3da8fa9847a61f207de4bfd5ab20d571fd6129c765b76e07d4fb066adb3c39c6"
+    },
+    {
+      "name": "water-future",
+      "bill": {
+        "provider": "Fictional Alder Municipal Water",
+        "account_alias": "SYN-MUNICIPAL-ACCOUNT",
+        "invoice_number": "SYN-WATER-03",
+        "bill_date": "2026-11-15",
+        "current_total": "58.40",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-WATER",
+            "building": "",
+            "commodity": "water",
+            "period_start": "2026-09-10",
+            "period_end": "2026-11-11",
+            "usage": "4250",
+            "unit": "gal",
+            "current_charge": "58.40",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {},
+      "prior_balance": "210.15",
+      "amount_due": "268.55",
+      "printed_unit": "gal",
+      "demand": null,
+      "expected": "reviewable",
+      "file": "water-future.pdf",
+      "sha256": "e207006ccb8b588fa2f5ccae8a6a2712ba1f4ed214e4d49cbf9823c6e2544232"
+    },
+    {
+      "name": "municipal-combined",
+      "bill": {
+        "provider": "Fictional Alder Municipal Water",
+        "account_alias": "SYN-MUNICIPAL-ACCOUNT",
+        "invoice_number": "SYN-WATER-04",
+        "bill_date": "2027-01-15",
+        "current_total": "219.35",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-WATER",
+            "building": "",
+            "commodity": "water",
+            "period_start": "2026-11-11",
+            "period_end": "2027-01-09",
+            "usage": "4250",
+            "unit": "gal",
+            "current_charge": "58.40",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {
+        "sewer": "41.25",
+        "garbage": "88.70",
+        "sewer_capital": "31.00"
+      },
+      "prior_balance": "210.15",
+      "amount_due": "429.50",
+      "printed_unit": "gal",
+      "demand": null,
+      "expected": "hold_combined_services",
+      "file": "municipal-combined.pdf",
+      "sha256": "93c10fdd92a24ec4713b4129174d82edd2cd420c85369c963f5d0492b4fc6bf7"
+    },
+    {
+      "name": "electricity-demand",
+      "bill": {
+        "provider": "Fictional Aspen Electric",
+        "account_alias": "SYN-ELECTRIC-ACCOUNT",
+        "invoice_number": "SYN-ELECTRIC-DELIVERY",
+        "bill_date": "2026-09-15",
+        "current_total": "173.25",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-ELECTRIC",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-09",
+            "period_end": "2026-09-12",
+            "usage": "876.5",
+            "unit": "kWh",
+            "current_charge": "173.25",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {},
+      "prior_balance": "92.10",
+      "amount_due": "265.35",
+      "printed_unit": "kWh",
+      "demand": "18.75",
+      "expected": "reviewable",
+      "file": "electricity-demand.pdf",
+      "sha256": "da9f5447562018a7be8fbbabb427e256f90bf6345485869770fd2af6b17342a6"
+    },
+    {
+      "name": "electricity-supply",
+      "bill": {
+        "provider": "Imaginary Birch Supply",
+        "account_alias": "SYN-SUPPLY-ACCOUNT",
+        "invoice_number": "SYN-ELECTRIC-SUPPLY",
+        "bill_date": "2026-09-15",
+        "current_total": "64.80",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-ELECTRIC",
+            "building": "",
+            "commodity": "electricity",
+            "period_start": "2026-08-09",
+            "period_end": "2026-09-12",
+            "usage": "0",
+            "unit": "kWh",
+            "current_charge": "64.80",
+            "usage_role": "charges_only",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {},
+      "prior_balance": "92.10",
+      "amount_due": "156.90",
+      "printed_unit": "kWh",
+      "demand": null,
+      "expected": "reviewable",
+      "file": "electricity-supply.pdf",
+      "sha256": "9a68bc9659cb0fede96dc99a040750e404fc0d94fc7d8e0866c064dff21cf822"
+    },
+    {
+      "name": "gas-ambiguous",
+      "bill": {
+        "provider": "Fictional Larch Gas",
+        "account_alias": "SYN-GAS-ACCOUNT",
+        "invoice_number": "SYN-GAS-AMBIGUOUS",
+        "bill_date": "2026-09-15",
+        "current_total": "87.50",
+        "lines": [
+          {
+            "meter_code": "SYN-MASTER-GAS",
+            "building": "",
+            "commodity": "natural_gas",
+            "period_start": "2026-05-11",
+            "period_end": "2026-07-12",
+            "usage": "120",
+            "unit": "units",
+            "current_charge": "87.50",
+            "usage_role": "consumption",
+            "read_type": "unknown"
+          }
+        ]
+      },
+      "extra_charges": {},
+      "prior_balance": "0.00",
+      "amount_due": "87.50",
+      "printed_unit": "units",
+      "demand": null,
+      "expected": "hold_ambiguous_unit",
+      "file": "gas-ambiguous.pdf",
+      "sha256": "0e9443b5fb8acf1d9cae21bab7373ceba29c9e14ecfa946a26fb6bae8d12b5e1"
+    }
+  ]
+}

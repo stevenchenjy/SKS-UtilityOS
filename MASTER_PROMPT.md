@@ -23,9 +23,16 @@ The verified local **0.5.0** release at commit `0d515181714e8f1f090156e43c957735
 
 These capabilities are implemented and should be inspected and extended where a demonstrated need exists. Consult `docs/VERIFICATION.md` and `docs/CHANGELOG.md` for recorded evidence and limits, `docs/BILL_INTAKE.md` and `docs/PROVIDER_STUDIO.md` for those workflows, and relevant subsystem contracts when changing them. Further extraction work needs a demonstrated format or failure case; broadening OCR requires renewed corpus, resource, installation and license evaluation.
 
-The stack remains FastAPI/SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR and browser ES modules, with no Node build or required cloud service. Demo and staff databases are separate external workspaces; mode mismatch is rejected. Preserve authentication, host/origin checks, CSRF protection and immutable storage. Schema 5 requires explicit migration from earlier schemas; startup never upgrades a workspace automatically.
+The stack remains FastAPI/SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR and browser ES modules, with no Node build or required cloud service. Demo and staff databases are separate external workspaces; mode mismatch is rejected. Preserve authentication, host/origin checks, CSRF protection and immutable storage. The current 0.6.0-rc2 candidate uses schema 6 and requires explicit migration from earlier schemas; startup never upgrades a workspace automatically.
 
 This is a development-tested, single-operator local pilot. School installation, private-data acceptance and real-provider compatibility remain separate external validation; fictional-corpus results do not establish general extraction accuracy. Named role enforcement remains deferred under `docs/ACCESS_AND_CONFIGURATION.md`. Distinguish implemented, experimentally tested and externally unverified behavior.
+
+The current unsigned, untagged **0.6.0-rc2** candidate also implements building
+reports, account-level alternate-month billing schedules, generic mapped usage
+CSV evidence and a supervised update rehearsal. These extend the trusted v0.5.0
+baseline without completing the full 0.6 milestone. Inspect the code and current
+verification before rebuilding them. Real-provider export compatibility remains
+unverified; combined municipal-service financial posting remains unsupported.
 
 ## Established staff intake workflow
 

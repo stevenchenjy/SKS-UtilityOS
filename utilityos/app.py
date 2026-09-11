@@ -220,8 +220,11 @@ def create_app(config: Config):
         data=await json_body(request)
         item=ledger.stage(item_id)
         if item['kind']=='bill':
+            revision=data.get('revision')
+            if type(revision) is not int or revision < 0:
+                raise ValidationError('DRAFT_REVISION_REQUIRED')
             with acting_as(reauthenticate(data) if item.get('correction_of') is not None else 'local_operator'):
-                return ledger.approve_bill(item_id,data.get('payload'),data.get('acknowledge') is True,revision=data.get('revision',0),intake_details=data.get('intake_details'))
+                return ledger.approve_bill(item_id,data.get('payload'),data.get('acknowledge'),revision=revision,intake_details=data.get('intake_details'))
         if data.get('acknowledge') is not True:
             raise ValidationError('CONFIRM_INTERVAL_MAPPING_AND_SOURCE_REVIEW')
         return ledger.approve_intervals(item_id,data.get('meter_code',''))
@@ -334,7 +337,7 @@ def create_app(config: Config):
 
     @app.get('/api/samples/{filename}')
     def sample(filename:str):
-        allowed={'demo-import.csv','demo-intervals.xml','blank-bill-template.csv','demo-invoice.pdf'}
+        allowed={'generic-water-usage.csv','demo-import.csv','demo-intervals.xml','blank-bill-template.csv','demo-invoice.pdf'}
         if filename not in allowed:
             return JSONResponse({'error':'SAMPLE_NOT_FOUND'},status_code=404)
         return FileResponse(ROOT/'samples'/filename,media_type='application/octet-stream',filename=filename)
@@ -354,5 +357,7 @@ def create_app(config: Config):
 
     from .provider_routes import mount as mount_providers
     mount_providers(app, ledger, json_body)
+    from .usage_routes import mount as mount_usage
+    mount_usage(app, ledger, json_body, body, config)
     app.mount('/',StaticFiles(directory=ROOT/'web',html=True),name='web')
     return app

@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.6.0-rc2 — provider-informed local file slice (2026-09-10)
+
+- Require literal review acknowledgement for every invoice and an explicit current integer revision for HTTP approval. Invalid or stale requests leave financial and draft state unchanged.
+- Add account-level monthly/every-two-month billing schedules, issue/grace dates, effective dates and reasoned exceptions. Retain legacy expectations, count multi-meter statements once, and separate manual retrieval plans from usage sampling.
+- Add generic mapped usage CSV originals, explicit source/meter/unit/time/semantics preview, approval, duplicate evidence and reasoned reconciliation. Operational readings never add invoice charges or billed quantities. No provider connector or Excel dependency is added.
+- Add original synthetic public-format-inspired provider cases, including current charges versus balances, safe refusal of combined municipal statements, demand/supply/gas distinctions and shared meters.
+- Make update-rehearsal receipts provisional until the owned runner and browser/driver shutdown complete with zero exit. Preserve earlier failed receipts as historical evidence.
+- Advance to schema 6 through explicit backup-first migration; retain old source, invoices, provider rules and audit history. This candidate remains unsigned and untagged; full 0.6 analytics and school deployment are not complete.
+
 ## 0.6.0-rc1 — local candidate (2026-09-08)
 
 - Added `scripts/rehearse_update.py`: two verified source installations, fresh

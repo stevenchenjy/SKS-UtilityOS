@@ -26,7 +26,7 @@ class FieldSupport(StrictModel):
 class SupportBundle(StrictModel):
     format: Literal['utilityos-provider-support-v1'] = 'utilityos-provider-support-v1'
     application_version: str = Field(pattern=r'^[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}(?:-rc[1-9][0-9]{0,2})?$')
-    schema_version: Literal[5] = 5
+    schema_version: Literal[6] = 6
     anonymous_provider: str = Field(pattern=r'^[0-9a-f]{32}$')
     anonymous_layout: str = Field(pattern=r'^[0-9a-f]{32}$')
     template_version: int = Field(ge=1, le=1000)

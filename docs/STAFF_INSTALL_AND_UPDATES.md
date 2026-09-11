@@ -1,11 +1,11 @@
 # Local installation, updates, and recovery
 
-The current working candidate is **0.6.0-rc1**, using the same schema 5 as
-0.5.0. A 0.5.0 workspace needs a compatibility check and backup, not a migration.
-The commands below retain the established 0.5 installation/maintenance contract;
-choose the separately prepared candidate folder for a candidate rehearsal.
-The reusable [synthetic update rehearsal](UPDATE_REHEARSAL.md) exercises this
-sequence and a separate rollback without accepting existing staff data.
+The working candidate **0.6.0-rc2 uses schema 6**. It requires an explicit
+backup-first migration from schema 5; startup refuses to upgrade automatically.
+Trusted v0.5.0 and prior source/data backups remain preserved. This development
+slice does not authorize a school installation or complete the 0.6 milestone.
+The [synthetic update rehearsal](UPDATE_REHEARSAL.md) exercises a separate code
+folder, confirmed migration and rollback using newly generated fictional data.
 
 ## Ownership and operating boundary
 
@@ -18,7 +18,7 @@ Version 0.5.0 uses schema 5. macOS arm64 launch/setup, native Chrome, synthetic 
 ## Install into a separate code folder
 
 1. Obtain the source ZIP through the school's approved distribution process. Verify who supplied it separately from its integrity manifest. The release is unsigned; no Apple/Windows certificate or paid distribution mechanism has been chosen.
-2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/SKS-UtilityOS-0.5.0.zip` using a trusted copy of the verifier. A matching hash alone does not establish trusted authorship.
+2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/approved-release.zip`, substituting the selected release archive and using a trusted copy of the verifier. The local candidate is `SKS-UtilityOS-0.6.0-rc2.zip`; it still needs separate school approval. A matching hash alone does not establish trusted authorship.
 3. Unpack into a new code folder. Keep every private data directory and backup outside it and outside cloud-synchronized folders. Do not overwrite the previous release.
 4. Use an approved Python 3.11+. Run `bash scripts/setup.sh` on macOS, or the supplied PowerShell setup through normal school policy. Setup writes only the new folder's `.venv`. It never selects or opens a staff workspace.
 5. Run a fresh synthetic demo and verify the browser. Supply the same explicit `--data-dir` and `--port` when repeating maintenance or launch commands.
@@ -116,14 +116,14 @@ Use `--data-dir /approved/local/workspace` to choose another approved location. 
 
 Maintenance commands require the workspace to be stopped. The browser can create a consistent backup while its app is running. No scheduled download, silent migration, or unattended switch is implemented.
 
-## Upgrade schema 1, 2, 3 or 4 to schema 5
+## Upgrade schemas 1–5 to schema 6
 
-0.5.0 implements ordered migrations from schemas 1, 2, 3 and 4 through schema 5. Startup never migrates.
+The candidate implements ordered migrations from schemas 1–5 through schema 6. Startup never migrates.
 After source/dependency review, synthetic rehearsal and school approval:
 
 1. Stop the old app. Back it up with its own version and retain the old code and
-   environment. Older code cannot open schema 5.
-2. From the separately prepared 0.5.0 folder, run:
+   environment. Older code cannot open schema 6.
+2. From the separately prepared candidate folder, run:
 
    ```sh
    .venv/bin/python run.py migrate --mode staff \
@@ -134,13 +134,13 @@ After source/dependency review, synthetic rehearsal and school approval:
    and creates another backup in the original schema. It applies every registered
    step in one transaction on a copy, checks integrity/foreign keys/audit history,
    then atomically switches the database. Original source bytes are unchanged.
-4. Run `check`, launch 0.5.0 and verify totals, versions, original downloads, audit,
+4. Run `check`, launch the candidate and verify totals, versions, original downloads, audit,
    exports and backup before accepting the switch. Historical importer versions
    and actor identities are explicitly marked unrecorded/unknown.
 
 Schema 3 adds the append-oriented audit chain and document importer version; it
 was not introduced just to test migrations. Schema 4 adds immutable extraction/review snapshots, intake attempts and expected cadence/history without reparsing old PDFs. Schema 5 adds the private provider journal without changing historical extractions. Frozen schema-1/schema-2/schema-3/schema-4 fixtures
-and synthetic future-step tests exercise the migration runner. Unregistered
+and schema-5 fixtures plus synthetic future-step tests exercise the migration runner. Schema 6 adds account schedule and operational usage evidence journals without rewriting old invoices or extractions. Unregistered
 paths fail before switching any data.
 
 Rollback requires the retained old release and its compatible pre-upgrade backup

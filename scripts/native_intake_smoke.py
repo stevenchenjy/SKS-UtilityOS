@@ -144,12 +144,13 @@ def main():
             results.append('explicit configured folder scan and delivered-fuel approval')
 
             nav('Bill completeness');page.locator('summary').filter(has_text='Confirm an expected').click()
-            page.locator('[name=coverage-link]').select_option('0');page.locator('[name=first_month]').fill('2026-09')
+            page.locator('[name=coverage-account]').select_option(index=1);page.locator('[name=effective_from]').fill('2026-01-01')
             page.locator('[name=coverage-reason]').fill('Synthetic monthly expectation');page.locator('#coverage-ack').check()
             page.get_by_role('button',name='Save expectation',exact=True).click()
-            page.locator('[name=coverage-month]').fill('2026-10');page.get_by_role('button',name='Show month',exact=True).click()
+            expect(page.locator('#coverage-config')).not_to_be_visible()
+            page.locator('[name=coverage-month]').fill('2026-02');page.get_by_role('button',name='Show month',exact=True).click()
             expect(page.locator('.coverage-counts')).to_contain_text('Missing')
-            assert get('/completeness?month=2026-10')['counts']['missing']==1
+            assert get('/completeness?month=2026-02')['counts']['missing']==1
             shot('mobile-completeness');results.append('explicit cadence and experimental missing-bill view')
 
             page.set_viewport_size({'width':1440,'height':1000});nav('Utility Inbox')

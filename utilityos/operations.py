@@ -15,6 +15,8 @@ from .db import Store
 from . import audit
 from .intake_storage import verify as verify_extraction
 from .provider_storage import verify as verify_providers
+from .billing_schedules import verify as verify_schedules
+from .usage_storage import verify as verify_usage
 from .migrations import read_version, plan, upgrade_copy
 from .parsers import ValidationError
 from .storage import publish_source, replace_file
@@ -61,6 +63,8 @@ def check(store: Store):
         audit_status = audit.verify(db)
         verify_extraction(db)
         verify_providers(db)
+        verify_schedules(db)
+        verify_usage(db)
     for sha, extension in documents:
         if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf'}:
             raise ValidationError('SOURCE_REFERENCE_INVALID')
@@ -77,6 +81,8 @@ def backup(store: Store) -> Path:
         audit.verify(db)
         verify_extraction(db)
         verify_providers(db)
+        verify_schedules(db)
+        verify_usage(db)
         protected = audit.enabled(db)
         if protected:
             audit.event(db, 'BACKUP_STARTED', operation_id=operation_id)
@@ -97,6 +103,8 @@ def backup(store: Store) -> Path:
             audit.verify(db)
             verify_extraction(db)
             verify_providers(db)
+            verify_schedules(db)
+            verify_usage(db)
             docs = db.execute('SELECT sha256,extension FROM documents').fetchall()
             settings = dict(db.execute('SELECT key,value FROM settings'))
         db.close()
@@ -194,6 +202,8 @@ def restore(store: Store, archive_path: Path, mode: str):
                 audit.verify(restored)
                 verify_extraction(restored)
                 verify_providers(restored)
+                verify_schedules(restored)
+                verify_usage(restored)
                 for sha,extension in restored.execute('SELECT sha256,extension FROM documents'):
                     name=f'sources/{sha}{extension}'
                     if expected.get(name)!=sha:

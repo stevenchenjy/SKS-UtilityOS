@@ -1,6 +1,6 @@
 # Local operation and recovery contracts
 
-Version 0.5.0 remains a single-operator, loopback-only application. Use explicit
+The 0.6.0-rc2 candidate remains a single-operator, loopback-only application. Use explicit
 external data directories for every command. See `STAFF_INSTALL_AND_UPDATES.md`
 for installation, backups, and the stopped-app migration procedure.
 
@@ -144,3 +144,18 @@ exactly the fixed-schema JSON that the browser downloads. No local definition,
 label text or source values enter that report. Late audit, backup and provider
 responses are discarded after navigation or logout so they cannot alter the
 next view or raise a stale DOM callback error.
+
+
+## Schema-6 schedules and mapped usage
+
+Account schedules and generic usage imports add separate immutable, audit-bound
+history. Startup, backup, restore, explicit migration and `check` validate both
+journals. Migration from schema 5 preserves old tables and originals and creates
+empty new journals; no schedule or usage mapping is inferred. The old release
+and its original-schema backup are required for rollback into a separate folder.
+
+[Billing schedules](BILLING_SCHEDULES.md) count account statements and distinguish
+issue/grace dates from retrieval and sampling. [Mapped usage](MAPPED_USAGE.md)
+retains operational readings separately from invoices. Explicit withdrawal and
+mapping review resolve source conflicts while preserving prior evidence. Neither
+workflow creates automatic financial posting or unattended acquisition.

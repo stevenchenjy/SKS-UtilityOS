@@ -202,10 +202,10 @@ def test_private_backup_restore_and_future_migration_preserve_definitions(authen
     target=Store(tmp_path/'restored','demo');restore(target,saved,'demo')
     restored=ProviderStudio(Ledger(target)).inspect(built['layout']['id'])
     assert restored==c.app.state.provider_studio.inspect(built['layout']['id'])
-    assert check(target)['schema_version']==5
+    assert check(target)['schema_version']==SCHEMA_VERSION
     from utilityos.migrations import upgrade_copy,STEPS
     future=tmp_path/'future.sqlite3'
-    upgrade_copy(target,future,6,{**STEPS,5:lambda db:db.execute('CREATE TABLE synthetic_future(id INTEGER)')})
+    upgrade_copy(target,future,SCHEMA_VERSION+1,{**STEPS,SCHEMA_VERSION:lambda db:db.execute('CREATE TABLE synthetic_future(id INTEGER)')})
     with target.connect() as before, sqlite3.connect(future) as after:
         assert [tuple(r) for r in before.execute('SELECT * FROM local_provider_records')]==after.execute('SELECT * FROM local_provider_records').fetchall()
     with pytest.raises(ValueError,match='SCHEMA_VERSION_UNSUPPORTED'):

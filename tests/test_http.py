@@ -36,7 +36,7 @@ def test_import_approve_export_http_flow(authenticated,raw_csv):
     identifier=result.json()['staged_ids'][0]
     draft=authenticated.get(f'/api/staged/{identifier}').json()
     assert authenticated.get('/api/overview').json()['total_cents']==0
-    approved=authenticated.post(f'/api/staged/{identifier}/approve',json={'payload':draft['payload'],'acknowledge':True})
+    approved=authenticated.post(f'/api/staged/{identifier}/approve',json={'payload':draft['payload'],'acknowledge':True,'revision':draft['revision']})
     assert approved.status_code==200,approved.text
     assert authenticated.get('/api/overview').json()['total_cents']==57980
     assert 'attachment' in authenticated.get('/api/ledger/export').headers['content-disposition']
@@ -66,7 +66,7 @@ def test_unsupported_upload_extension(authenticated):
 def test_correction_and_saved_draft_http(authenticated,raw_csv):
     item=authenticated.post('/api/import',content=raw_csv,headers={'content-type':'application/octet-stream','x-filename':'synthetic.csv','x-synthetic-data':'true'}).json()['staged_ids'][0]
     payload=authenticated.get(f'/api/staged/{item}').json()['payload']
-    bill=authenticated.post(f'/api/staged/{item}/approve',json={'payload':payload,'acknowledge':True}).json()['id']
+    bill=authenticated.post(f'/api/staged/{item}/approve',json={'payload':payload,'acknowledge':True,'revision':0}).json()['id']
     correction=authenticated.post(f'/api/bills/{bill}/correct',json={'reason':'Synthetic corrected amount'}).json()['staged_id']
     payload['current_total']=payload['lines'][0]['current_charge']='50.00'
     save=authenticated.post(f'/api/staged/{correction}/draft',json={'payload':payload,'revision':0,'correction_of':bill,'reason':'Synthetic corrected amount'})

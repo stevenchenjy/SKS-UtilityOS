@@ -1,13 +1,14 @@
 # SKS UtilityOS
 
-**Version 0.6.0-rc1 · local release candidate · synthetic demonstration**
+**Version 0.6.0-rc2 · local release candidate · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
 This workspace is for software development, testing, technical documentation, and release engineering. It does not contain meeting materials or stakeholder proposals.
 
-This candidate includes building reports and a repeatable synthetic update
-rehearsal. The trusted tagged baseline remains `v0.5.0`; this candidate is not a
+This candidate includes building reports, strict financial approval controls,
+account billing schedules, generic mapped usage CSVs and a supervised synthetic
+update rehearsal. The trusted tagged baseline remains `v0.5.0`; this candidate is not a
 complete 0.6 analytics milestone, public release or school installation. See
 [update rehearsal](docs/UPDATE_REHEARSAL.md) for fresh-demo validation, stopped-app
 backup, schema checks, explicit migration when required, version switching and
@@ -73,6 +74,22 @@ mapping changes regroup past periods. Quantities remain separate by unit and
 treatment. Use **Interval data** for imported meter readings and **Bill
 completeness** for separately confirmed cadence expectations.
 
+## Provider-informed files and schedules
+
+**Bill completeness** now supports one expected statement per account, including
+multiple service points, every-two-month anchors, issue days, grace periods and
+explicit exceptions. See [billing schedules](docs/BILLING_SCHEDULES.md).
+**Mapped usage files** retains generic CSV originals, previews explicit meter,
+unit and time mappings, and requires approval before storing separate operational
+readings. Duplicate evidence is not counted twice; corrections require explicit
+reconciliation. See [mapped usage](docs/MAPPED_USAGE.md).
+
+These are synthetic-tested local file workflows, not certified Central Hudson
+or My360 connectors. No API, email or portal retrieval is enabled. Combined
+water/sewer/garbage statements remain pending until all charge categories can
+be supported; do not post their full total as water. Read [provider evidence and
+limits](docs/PROVIDER_FILE_WORKFLOWS.md). This is not completion of 0.6 analytics.
+
 ## Intelligent Bill Intake
 
 Open **Utility Inbox** to import files by picker or drag/drop, review a batch result, or explicitly scan a configured external local folder. The import dialog offers extractable fictional PDFs and a scanned example. Text/template extraction proposes fields beside a rendered original; optional English OCR supports the scanned corpus. Every draft still needs human review and approval.
@@ -114,7 +131,7 @@ This remains a single-operator local pilot. [Role enforcement is explicitly defe
 
 ## Upgrade and recovery
 
-Version 0.6.0-rc1 uses **schema 5**, unchanged from 0.5.0. Starting the app never upgrades an existing schema-1, schema-2, schema-3 or schema-4 workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 5; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
+Version 0.6.0-rc2 uses **schema 6** and requires explicit migration from schemas 1–5. Starting the app never upgrades an existing workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 6; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
 
 Useful maintenance commands, with the selected mode and external data directory supplied consistently:
 

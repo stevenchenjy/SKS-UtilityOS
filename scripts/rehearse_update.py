@@ -12,6 +12,7 @@ from pathlib import Path
 import argparse
 import ast
 import json
+import multiprocessing
 import os
 import signal
 import socket
@@ -246,23 +247,41 @@ def browser_checkpoint(browser, url, release, work, label, *, import_pdf=False, 
         context.close()
 
 
-def rehearse(old, new, work, browser):
+def native_checkpoint(executable, url, release, work, label, **options):
+    # Keep the driver lifetime inside a browser checkpoint. A driver must not sit
+    # idle while synchronous maintenance subprocesses switch code or schemas.
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=str(executable), headless=True)
+        try:
+            return browser_checkpoint(browser, url, release, work, label, **options)
+        finally:
+            browser.close()
+
+
+def write_report(work, report):
+    temporary = work / 'result.json.tmp'
+    temporary.write_text(json.dumps(report, indent=2) + '\n')
+    temporary.replace(work / 'result.json')
+
+
+def rehearse(old, new, work, browser_executable):
     workspace, rollback = work / 'synthetic-workspace', work / 'rollback-workspace'
     report = {'classification': 'synthetic update rehearsal; not a staff support bundle',
               'old_version': old.version, 'new_version': new.version, 'steps': [], 'status': 'running'}
 
     def record(step):
         report['steps'].append(step)
-        (work / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
+        write_report(work, report)
 
     try:
         record('verified_separately_installed_release_manifests')
         # Candidate starts with separate, fresh data before it ever opens old data.
         with server(new, work / 'candidate-demo', work, 'candidate-demo') as url:
-            browser_checkpoint(browser, url, new, work, 'candidate-demo', import_pdf=True)
+            native_checkpoint(browser_executable, url, new, work, 'candidate-demo', import_pdf=True)
         record('candidate_fresh_demo_verified_and_stopped')
         with server(old, workspace, work, 'old') as url:
-            expected = browser_checkpoint(browser, url, old, work, 'old', import_pdf=True)
+            expected = native_checkpoint(browser_executable, url, old, work, 'old', import_pdf=True)
             old.maintenance('backup', workspace, expected_error='WORKSPACE_ALREADY_RUNNING_STOP_APP_FIRST')
             require(not (workspace / 'backups').exists(), 'REHEARSAL_RUNNING_BACKUP_WROTE_FILES')
         record('old_demo_verified_running_maintenance_refused_and_stopped')
@@ -291,7 +310,7 @@ def rehearse(old, new, work, browser):
         require(after['schema'] == new.schema, 'REHEARSAL_TARGET_SCHEMA_MISMATCH')
         record('candidate_schema_records_configuration_and_originals_verified')
         with server(new, workspace, work, 'switched') as url:
-            browser_checkpoint(browser, url, new, work, 'switched', expected=expected)
+            native_checkpoint(browser_executable, url, new, work, 'switched', expected=expected)
         preserved(before, snapshot(workspace))
         record('switched_version_ledger_download_original_desktop_mobile_logout_verified')
         old.maintenance('restore', rollback, '--archive', backup, '--confirm-restore', '--restore-to-new-workspace')
@@ -300,21 +319,93 @@ def rehearse(old, new, work, browser):
         preserved(before, restored)
         require(restored['schema'] == old.schema, 'REHEARSAL_ROLLBACK_SCHEMA_MISMATCH')
         with server(old, rollback, work, 'rollback') as url:
-            browser_checkpoint(browser, url, old, work, 'rollback', expected=expected)
+            native_checkpoint(browser_executable, url, old, work, 'rollback', expected=expected)
         require(digest(backup.read_bytes()) == report['pre_switch_backup_sha256'],
                 'REHEARSAL_BACKUP_CHANGED')
         # A failed/abandoned source edit cannot silently become the next release.
         Release.inspect(old.code)
         Release.inspect(new.code)
-        report.update(status='passed', schema_before=old.schema, schema_after=new.schema,
+        report.update(status='checks_passed_awaiting_runner_exit', schema_before=old.schema, schema_after=new.schema,
                       retained_tables=len(before['tables']), retained_sources=len(before['sources']),
-                      browser=expected, all_rehearsal_servers_stopped=True)
+                      browser=expected, all_rehearsal_servers_stopped=True,
+                      all_browser_checkpoints_closed=True)
         record('old_code_backup_and_separate_rollback_retained_and_verified')
         return report
     except Exception:
         report['status'] = 'failed_preserved_for_local_inspection'
         record('stopped_at_failed_check_no_automatic_overwrite_or_cleanup')
         raise
+
+
+def run_worker(old, new, work, browser_executable):
+    # This new session contains only this invocation's worker and descendants.
+    # Never enumerate or stop existing user browser/application processes.
+    if os.name != 'nt':
+        os.setsid()
+    rehearse(old, new, work, browser_executable)
+
+
+def stop_owned_worker(process):
+    if os.name == 'nt':
+        if process.is_alive():
+            subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
+                           capture_output=True, timeout=15)
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            if process.is_alive():
+                process.terminate()
+    process.join(5)
+    if os.name != 'nt':
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    elif process.is_alive():
+        process.kill()
+    process.join(5)
+    require(not process.is_alive(), 'REHEARSAL_OWNED_WORKER_STOP_FAILED')
+
+
+def supervise(old, new, work, browser_executable, *, timeout=900, worker=run_worker):
+    """Only the supervisor can publish success, after the owned runner exits 0."""
+    process = multiprocessing.get_context('spawn').Process(
+        target=worker, args=(old, new, work, browser_executable))
+    process.start()
+    try:
+        process.join(timeout)
+        require(not process.is_alive(), 'REHEARSAL_RUNNER_TIMEOUT')
+        require(process.exitcode == 0, 'REHEARSAL_RUNNER_EXIT_NONZERO')
+        report = json.loads((work / 'result.json').read_text())
+        require(report['status'] == 'checks_passed_awaiting_runner_exit'
+                and report.get('all_rehearsal_servers_stopped') is True
+                and report.get('all_browser_checkpoints_closed') is True,
+                'REHEARSAL_COMPLETED_CHECKS_RECEIPT_REQUIRED')
+        if os.name != 'nt':
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                pass
+            else:
+                raise ValueError('REHEARSAL_OWNED_PROCESSES_REMAIN')
+        report.update(status='passed', runner_exit_code=process.exitcode)
+        report['steps'].append('owned_runner_and_browser_drivers_exited_zero')
+        write_report(work, report)
+        return report
+    except BaseException as exc:
+        stop_owned_worker(process)
+        try:
+            report = json.loads((work / 'result.json').read_text())
+        except (OSError, ValueError):
+            report = {'classification': 'synthetic update rehearsal; not a staff support bundle', 'steps': []}
+        code = str(exc) if isinstance(exc, ValueError) and str(exc).startswith('REHEARSAL_') else 'REHEARSAL_INTERRUPTED_OR_FAILED'
+        report.update(status='failed_preserved_for_local_inspection', failure_code=code,
+                      runner_exit_code=process.exitcode)
+        write_report(work, report)
+        raise
+    finally:
+        process.close()
 
 
 def main():
@@ -328,13 +419,7 @@ def main():
     require(old.code != new.code, 'REHEARSAL_REQUIRES_TWO_CODE_FOLDERS')
     require(args.browser_executable.is_file(), 'REHEARSAL_BROWSER_REQUIRED')
     work = prepare_work(args.work_dir, [old, new])
-    from playwright.sync_api import sync_playwright
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(executable_path=str(args.browser_executable), headless=True)
-        try:
-            result = rehearse(old, new, work, browser)
-        finally:
-            browser.close()
+    result = supervise(old, new, work, args.browser_executable)
     print(json.dumps(result, indent=2))
 
 

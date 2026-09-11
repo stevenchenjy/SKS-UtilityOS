@@ -1,9 +1,11 @@
 """The developer rehearsal must never select existing operator data."""
 from copy import deepcopy
 from pathlib import Path
+import json
 import os
+import time
 import pytest
-from scripts.rehearse_update import Release, prepare_work, snapshot, preserved
+from scripts.rehearse_update import Release, prepare_work, snapshot, preserved, supervise, write_report
 from scripts.release import build
 from utilityos.operations import backup
 
@@ -115,3 +117,79 @@ def test_candidate_support_version_remains_a_bounded_category(version, valid):
     else:
         with pytest.raises(ValidationError):
             SupportBundle(**data)
+
+
+def synthetic_receipt_worker(behavior, _new, work, _browser):
+    """A real owned process reproduces a pass-looking receipt before shutdown."""
+    if os.name != 'nt':
+        os.setsid()
+    write_report(work, {
+        'status': 'passed' if behavior == 'premature_pass' else 'checks_passed_awaiting_runner_exit',
+        'steps': ['synthetic_application_checks'],
+        'all_rehearsal_servers_stopped': True,
+        'all_browser_checkpoints_closed': True,
+    })
+    if behavior == 'nonzero':
+        raise SystemExit(3)
+    if behavior == 'timeout':
+        time.sleep(60)
+
+
+def test_rehearsal_success_is_published_only_after_owned_runner_exits_zero(tmp_path):
+    result = supervise('zero', None, tmp_path, None, worker=synthetic_receipt_worker, timeout=10)
+    assert result['status'] == 'passed'
+    assert result['runner_exit_code'] == 0
+    assert result['steps'][-1] == 'owned_runner_and_browser_drivers_exited_zero'
+    assert json.loads((tmp_path / 'result.json').read_text()) == result
+
+
+@pytest.mark.parametrize('behavior,code', [
+    ('nonzero', 'REHEARSAL_RUNNER_EXIT_NONZERO'),
+    ('premature_pass', 'REHEARSAL_COMPLETED_CHECKS_RECEIPT_REQUIRED'),
+    ('timeout', 'REHEARSAL_RUNNER_TIMEOUT'),
+])
+def test_success_looking_receipt_cannot_hide_runner_failure(tmp_path, behavior, code):
+    with pytest.raises(ValueError, match=code):
+        supervise(behavior, None, tmp_path, None, worker=synthetic_receipt_worker,
+                  timeout=1 if behavior == 'timeout' else 10)
+    report = json.loads((tmp_path / 'result.json').read_text())
+    assert report['status'] == 'failed_preserved_for_local_inspection'
+    assert report['failure_code'] == code
+    assert 'owned_runner_and_browser_drivers_exited_zero' not in report['steps']
+    if behavior != 'premature_pass':
+        assert report['runner_exit_code'] != 0
+
+
+@pytest.mark.parametrize('failure', [None, 'checkpoint', 'browser_close'])
+def test_browser_and_driver_close_on_checkpoint_success_or_failure(monkeypatch, tmp_path, failure):
+    from types import SimpleNamespace
+    from scripts import rehearse_update
+    events = []
+
+    class Browser:
+        def close(self):
+            events.append('browser_closed')
+            if failure == 'browser_close':
+                raise ValueError('SYNTHETIC_CLOSE_FAILURE')
+
+    class Driver:
+        def __enter__(self):
+            return SimpleNamespace(chromium=SimpleNamespace(launch=lambda **_: Browser()))
+
+        def __exit__(self, *_):
+            events.append('driver_stopped')
+
+    def checkpoint(*_, **__):
+        events.append('checkpoint')
+        if failure == 'checkpoint':
+            raise ValueError('SYNTHETIC_CHECKPOINT_FAILURE')
+        return {'synthetic': True}
+
+    monkeypatch.setattr('playwright.sync_api.sync_playwright', Driver)
+    monkeypatch.setattr(rehearse_update, 'browser_checkpoint', checkpoint)
+    if failure:
+        with pytest.raises(ValueError, match='SYNTHETIC_'):
+            rehearse_update.native_checkpoint('synthetic-browser', 'unused', None, tmp_path, 'synthetic')
+    else:
+        assert rehearse_update.native_checkpoint('synthetic-browser', 'unused', None, tmp_path, 'synthetic') == {'synthetic': True}
+    assert events == ['checkpoint', 'browser_closed', 'driver_stopped']

@@ -18,6 +18,9 @@ class Completeness:
         self.store=store
 
     def configure(self,data):
+        if data.get('scope') == 'account':
+            from .billing_schedules import configure
+            return configure(self.store, data)
         if data.get('acknowledge') is not True:
             raise ValidationError('CONFIRM_EXPECTED_BILL_CADENCE')
         if any(type(data.get(key)) is not int for key in ('account_id','meter_id','revision')):
@@ -45,7 +48,7 @@ class Completeness:
             event(db,'CONFIGURE_EXPECTATION')
         return {'ok':True}
 
-    def report(self,selected=None):
+    def report(self,selected=None,*,as_of=None):
         selected=month(selected or date.today().strftime('%Y-%m'))
         with self.store.connect() as db:
             expectations=[dict(row) for row in db.execute('''SELECT e.*,a.alias account_alias,p.name provider,m.code meter_code
@@ -75,4 +78,7 @@ class Completeness:
                 counts['expected']+=1
                 counts[state]+=1
                 if state in {'approved','under_review'}:counts['received']+=1
-        return {'month':selected,'basis':'invoice_month','authoritative':False,'counts':counts,'rows':rows,'configuration':expectations}
+        result = {'month':selected,'basis':'invoice_month','authoritative':False,'counts':counts,'rows':rows,'configuration':expectations}
+        from .billing_schedules import apply
+        with self.store.connect() as db:
+            return apply(db, result, selected, as_of)

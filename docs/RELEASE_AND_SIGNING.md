@@ -1,9 +1,10 @@
 # Source releases and macOS signing
 
-The current working candidate is **0.6.0-rc1**, unsigned and untagged.
+The current working candidate is **0.6.0-rc2**, unsigned and untagged.
 The source push authorized on 2026-09-09 does not create a GitHub Release or
 establish school deployment acceptance. The September 8 verification and local
 archive receipts retain their original pre-publication status.
+The schema-6 file slice requires explicit migration from the schema-5 baseline.
 Retain the trusted `v0.5.0` source/manifest and use a distinct candidate archive
 name. [UPDATE_REHEARSAL.md](UPDATE_REHEARSAL.md) describes the reproducible
 synthetic code-folder switch and rollback. The 0.5.0 notes below describe the

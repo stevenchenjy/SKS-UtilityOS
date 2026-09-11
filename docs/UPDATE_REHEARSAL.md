@@ -63,12 +63,19 @@ not evidence of Windows acceptance.
    directory. The old schema, retained rows, settings, originals and browser
    downloads are verified. The upgraded workspace and its later history remain.
 
-`result.json` records completed application checks and their status. It is
-written before the browser driver finishes shutting down; inspect the command
-exit status as well. The final Mac acceptance runs completed those checks but
-required cleanup of their own idle Playwright drivers and exited 1. Unattended
-runner shutdown remains unverified; see `VERIFICATION.md`. Screenshots,
-synthetic ledger/source downloads and synthetic server logs remain beside it.
+`result.json` records completed application checks and their status. Each native
+checkpoint closes its own browser and Playwright driver before maintenance or
+the next checkpoint begins. The owned rehearsal runner records only a
+provisional `checks_passed_awaiting_runner_exit` status. Its supervisor publishes
+`passed` only after that runner exits zero, confirms the completed shutdown
+checks, and, on POSIX, checks that its process group has no remaining members.
+Timeouts, nonzero exits and incomplete receipts remain failed runs; cleanup is
+restricted to processes owned by that invocation. Check the command's exit
+status as well as the receipt. Historical Mac runs that required driver cleanup
+and exited 1 remain recorded as unsuccessful in `VERIFICATION.md`; the new
+receipt rules do not change those results. Windows native shutdown remains an
+external acceptance check. Screenshots, synthetic ledger/source downloads and
+synthetic server logs remain beside the receipt.
 On a failure, inspect this disposable local evidence; the script does not retry
 by overwriting data, automatically roll back, or delete the failed workspace.
 The result is development evidence, not the application's support-bundle schema.
@@ -110,8 +117,10 @@ The existing admission requirements in `FREE_DATA_AND_SOURCES.md` still apply.
 
 Prefer approved original-file or structured-data delivery that can feed the
 retained-source/review boundary. PDF files and canonical CSV already use that
-boundary. Supplier CSV mappings, API/EDI adapters, credentials, scheduling and
-automatic folder intake are future work. Green Button usage coverage does not
+boundary. Generic mapped operational CSV import and account billing schedules
+are implemented; they do not obtain files or post invoice charges. Provider-specific
+billing adapters, API/EDI adapters, credentials, automatic acquisition scheduling
+and automatic folder intake remain future work. Green Button usage coverage does not
 establish complete financial-invoice coverage. Browser download automation is
 supplier-specific and needs explicit permission and a reauthentication strategy.
 

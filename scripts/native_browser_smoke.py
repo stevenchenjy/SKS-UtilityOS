@@ -72,7 +72,13 @@ def main():
             page.get_by_role('button', name='Import for review', exact=True).click()
         def approve():
             page.locator('#acknowledge').check()
-            page.get_by_role('button', name='Approve into ledger', exact=True).click()
+            with page.expect_response(lambda response: '/api/staged/' in response.url and response.url.endswith('/approve')) as pending:
+                page.get_by_role('button', name='Approve into ledger', exact=True).click()
+            response = pending.value
+            posted = response.request.post_data_json
+            assert posted['acknowledge'] is True
+            assert type(posted['revision']) is int and posted['revision'] >= 0
+            assert response.status == 200
             page.get_by_role('heading', name='Review queue', exact=True).wait_for()
         page.goto(a.url, wait_until='networkidle')
         page.get_by_role('button', name='Open synthetic demo').click()
