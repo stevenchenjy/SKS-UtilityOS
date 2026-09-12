@@ -1,8 +1,10 @@
 export const $ = (selector, scope = document) => scope.querySelector(selector);
 export const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
 export const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-export const dollars = cents => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format((cents || 0) / 100);
-export const exactDollars = cents => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' }).format((cents || 0) / 100);
+const wholeCurrency = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+const exactCurrency = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' });
+export const dollars = cents => wholeCurrency.format((cents || 0) / 100);
+export const exactDollars = cents => exactCurrency.format((cents || 0) / 100);
 // Group a decimal string without passing stored quantities through binary floats.
 export function quantity(value) {
   let raw=String(value ?? '0');
@@ -35,7 +37,19 @@ export function notice(text, tone='info') { return `<div class="notice ${tone}">
 export function toast(text, error=false) { const node=$('#toast'); node.textContent=text; node.className=`visible${error?' error':''}`; clearTimeout(node._timer); node._timer=setTimeout(()=>node.className='',6000); }
 export function header(heading, description, action='') { return `<div class="page-heading"><div><h1>${esc(heading)}</h1><p>${esc(description)}</p></div>${action}</div>`; }
 export function empty(heading, description, action='') { return `<div class="empty-state">${icon('inventory')}<h2>${esc(heading)}</h2><p>${esc(description)}</p>${action}</div>`; }
-export function field(label,name,value='',type='text',extra='') { return `<label class="field"><span>${esc(label)}</span><input name="${esc(name)}" type="${type}" value="${esc(value)}" ${extra}></label>`; }
+export function field(label,name,value='',type='text',extra='') { return `<label class="field"><span>${esc(label)}</span><input name="${esc(name)}" type="${type}" value="${esc(value)}" ${type==='password'||/\bautocomplete\s*=/.test(extra)?'':'autocomplete="off"'} ${extra}></label>`; }
 export function selectField(label,name,options,value) { return `<label class="field"><span>${esc(label)}</span><select name="${esc(name)}">${options.map(([v,label])=>`<option value="${esc(v)}" ${v===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`; }
-export function openDialog(html) { $('#modal-root').innerHTML=`<dialog class="modal">${html}</dialog>`; const dialog=$('dialog'); dialog.addEventListener('click', e=>{if(e.target===dialog)closeDialog();}); dialog.addEventListener('close',()=>$('#modal-root').innerHTML=''); dialog.showModal(); $('[data-close]',dialog)?.addEventListener('click', closeDialog); }
+export function openDialog(html) {
+  $('#modal-root').innerHTML=`<dialog class="modal">${html}</dialog>`;
+  const dialog=$('dialog'),heading=$('h2',dialog);
+  if(heading){heading.id=heading.id||'dialog-title';dialog.setAttribute('aria-labelledby',heading.id);}
+  dialog.addEventListener('click',e=>{
+    if(e.target!==dialog)return;
+    const rect=dialog.getBoundingClientRect();
+    if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)dialog.close();
+  });
+  dialog.addEventListener('close',()=>dialog.remove());
+  dialog.showModal();
+  $('[data-close]',dialog)?.addEventListener('click',closeDialog);
+}
 export function closeDialog() { $('dialog')?.close(); }

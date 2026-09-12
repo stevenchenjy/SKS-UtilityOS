@@ -7,7 +7,7 @@ const states={high_evidence:'High evidence · verify',needs_review:'Requires rev
 export function evidencePanel(item){
   if(!item.intake)return '';
   const extraction=item.intake.extraction;
-  return `<aside class="source-evidence panel" aria-label="Original document evidence"><h2>Original document</h2><p class="caption">${esc(title(extraction.pdf_kind))} · ${esc(title(extraction.layout_state))}</p>${extraction.template_version?`<p class="caption">Template: ${esc(extraction.template_version)}</p>`:''}<p class="caption">Select a field’s evidence button to see its source region. OCR and unknown layouts always require review.</p><div class="action-row"><label>Page <select id="evidence-page" aria-label="Source page">${extraction.pages.map(p=>`<option value="${p.number}">${p.number}</option>`).join('')}</select></label><label>Zoom <select id="evidence-zoom" aria-label="Source zoom"><option value="1">Fit width</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select></label><button class="secondary compact" id="toggle-evidence">Hide source preview</button></div><div id="evidence-description" aria-live="polite"></div><div class="source-scroll" id="source-scroll"><canvas id="source-canvas" role="img" aria-label="Retained PDF page with selected evidence highlight"></canvas></div><p id="evidence-error" class="caption"></p><a href="/api/sources/${item.document_id}">Download unchanged original</a></aside>`;
+  return `<aside class="source-evidence panel" aria-label="Original document evidence"><h2>Original document</h2><p class="caption">${esc(title(extraction.pdf_kind))} · ${esc(title(extraction.layout_state))}</p>${extraction.template_version?`<p class="caption">Template: ${esc(extraction.template_version)}</p>`:''}<p class="caption">Select a field’s evidence button to see its source region. OCR and unknown layouts always require review.</p><div class="action-row"><label>Page <select id="evidence-page" name="evidence-page" aria-label="Source page">${extraction.pages.map(p=>`<option value="${p.number}">${p.number}</option>`).join('')}</select></label><label>Zoom <select id="evidence-zoom" name="evidence-zoom" aria-label="Source zoom"><option value="1">Fit width</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select></label><button class="secondary compact" id="toggle-evidence" aria-controls="source-scroll" aria-expanded="true">Hide source preview</button></div><div id="evidence-description" aria-live="polite"></div><div class="source-scroll" id="source-scroll" tabindex="0" role="region" aria-label="Source document preview"><canvas id="source-canvas" width="${Math.round(extraction.pages[0]?.width||612)}" height="${Math.round(extraction.pages[0]?.height||792)}" role="img" aria-label="Retained PDF page with selected evidence highlight"></canvas></div><p id="evidence-error" class="caption" aria-live="polite"></p><a href="/api/sources/${item.document_id}">Download unchanged original</a></aside>`;
 }
 
 export function detailPanel(item,readonly){
@@ -57,7 +57,7 @@ export function bindEvidence(item,options={}){
     if(!selected)return;
     description.innerHTML=`<p><strong>${esc(title(label(path)))}</strong><br>${esc(states[selected.state])}</p><p class="evidence-raw">Source: ${esc(selected.raw??'No source value found')}<br>Proposed: ${esc(selected.value??'Missing')}</p><details><summary class="caption">${esc(selected.method)}${selected.page?` · Page ${selected.page}`:''} · extraction provenance</summary><p class="caption">${esc(selected.parser_version)}</p></details>`;
     if(selected.page){
-      scroll.hidden=false;toggle.textContent='Hide source preview';
+      scroll.hidden=false;toggle.textContent='Hide source preview';toggle.setAttribute('aria-expanded','true');
       if(pageSelect.value!==String(selected.page)){pageSelect.value=String(selected.page);loadPage();}else draw();
     }
     if(!selected.page)draw();
@@ -71,19 +71,22 @@ export function bindEvidence(item,options={}){
     const button=document.createElement('button');button.type='button';button.className='text-button evidence-link';button.dataset.evidence=key;
     const corrected=info.differences.some(d=>d.field===key);
     button.textContent=corrected?'Manually corrected · show original':states[evidence.state];
-    button.dataset.state=corrected?'corrected':evidence.state;input.parentElement.append(button);
-    if(!input.disabled)input.addEventListener('input',()=>{button.textContent='Edited · show original';button.dataset.state='corrected';});
+    button.dataset.state=corrected?'corrected':evidence.state;
+    // A label may contain its input, but must not also wrap an evidence button.
+    const inputLabel=input.closest('label'),group=document.createElement('div');group.className='field';
+    inputLabel.replaceWith(group);group.append(inputLabel,button);
+    if(!input.disabled)input.addEventListener('input',()=>{button.textContent='Edited · show original';button.dataset.state='corrected';button.setAttribute('aria-label',`${button.textContent} for ${label(key)}`);});
   }
-  $$('[data-evidence]').forEach(button=>button.onclick=e=>{e.preventDefault();select(button.dataset.evidence);});
+  $$('[data-evidence]').forEach(button=>{button.setAttribute('aria-label',`${button.textContent} for ${label(button.dataset.evidence)}`);button.onclick=e=>{e.preventDefault();select(button.dataset.evidence);};});
   $$('[data-detail] input:not(:disabled)').forEach(input=>input.addEventListener('input',()=>{
-    $('[data-evidence]',input.closest('[data-detail]')).textContent='Edited · show original';
+    const button=$('[data-evidence]',input.closest('[data-detail]'));button.textContent='Edited · show original';button.setAttribute('aria-label',`${button.textContent} for ${label(button.dataset.evidence)}`);
   }));
   pageSelect.onchange=()=>{selected=null;loadPage();};zoom.onchange=draw;
-  toggle.onclick=()=>{scroll.hidden=!scroll.hidden;toggle.textContent=scroll.hidden?'Show source preview':'Hide source preview';};
+  toggle.onclick=()=>{scroll.hidden=!scroll.hidden;toggle.textContent=scroll.hidden?'Show source preview':'Hide source preview';toggle.setAttribute('aria-expanded',String(!scroll.hidden));};
   function showObservation(line,label='Selected source region'){
     selected={...line,raw:line.text??line.raw,state:line.state||'needs_review',value:line.value??null};
     description.innerHTML=`<p><strong>${esc(label)}</strong></p><p class="evidence-raw">${esc(selected.raw||'No source value')}<br>${esc(title(selected.method))}${selected.page?' · page '+selected.page:''}</p>`;
-    if(selected.page){scroll.hidden=false;toggle.textContent='Hide source preview';if(pageSelect.value!==String(selected.page)){pageSelect.value=String(selected.page);loadPage();}else draw();}else draw();
+    if(selected.page){scroll.hidden=false;toggle.textContent='Hide source preview';toggle.setAttribute('aria-expanded','true');if(pageSelect.value!==String(selected.page)){pageSelect.value=String(selected.page);loadPage();}else draw();}else draw();
   }
   if(options.onObservation)canvas.onclick=e=>{
     const page=extraction.pages.find(p=>p.number===Number(pageSelect.value));if(!page)return;

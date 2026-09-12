@@ -1,5 +1,21 @@
 # Release notes
 
+## Unreleased — frontend accessibility maintenance
+
+- Add a skip link, preserve focus after view and filter changes, name native
+  dialogs, and retain their built-in keyboard behavior. Clicking dialog padding
+  no longer dismisses a form.
+- Separate source-evidence actions from input labels, expose review filter and
+  preview states, and announce asynchronous validation and result updates.
+- Retain focus when editing repeated service lines, provider rules and schedule
+  exceptions. Prevent repeated submissions while local save requests run.
+- Improve text/focus contrast within the existing palette, support long retained
+  labels and narrow forms, and keep sidebar controls reachable in short windows.
+  Reserve PDF canvas dimensions and reuse currency formatters across table rows.
+- Extend native browser regression checks for skip links, main-content focus,
+  named dialogs, native Tab/Escape behavior and polite validation regions.
+  Accounting, schema and local-only data boundaries are unchanged.
+
 ## 0.6.0-rc2 — provider-informed local file slice (2026-09-10)
 
 - Require literal review acknowledgement for every invoice and an explicit current integer revision for HTTP approval. Invalid or stale requests leave financial and draft state unchanged.

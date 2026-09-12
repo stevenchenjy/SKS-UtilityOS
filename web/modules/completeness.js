@@ -21,16 +21,16 @@ export async function showCompleteness(container,ctx,selected){
       <details><summary>Account-specific month exceptions</summary><p>Add up to 24 exceptions. A skipped month is not missing. An extra or rescheduled issue stays in its chosen invoice month.</p><div id="schedule-exceptions"></div><button type="button" class="secondary" id="add-exception">Add month exception</button></details>
       ${field('Reason for coverage decision','coverage-reason','','text','required maxlength="500"')}
       <label class="check-label"><input type="checkbox" id="coverage-ack" required><span>I confirmed this account’s statement cadence and dates. This does not establish complete campus coverage.</span></label>
-      <button class="primary" type="submit">Save expectation</button><div id="coverage-error"></div></form>
+      <button class="primary" type="submit">Save expectation</button><div id="coverage-error" aria-live="polite"></div></form>
       <details><summary>Retained legacy meter expectations</summary><p>${data.configuration.length} legacy decisions retained. Existing monthly, delivery and irregular expectations remain in use until an account schedule replaces them.</p></details>
     </details>`;
   let exceptions=[];
   function renderExceptions(){
-    $('#schedule-exceptions').innerHTML=exceptions.map((item,i)=>`<div class="panel" data-exception="${i}"><div class="form-grid two">${field('Exception month',`exception-month-${i}`,item.month,'month','required')}${selectField('Exception action',`exception-action-${i}`,[['yes','Expect a statement'],['no','Skip this month']],item.expected?'yes':'no')}${field('Exception issue date',`exception-date-${i}`,item.issue_date||'','date')}${field('Exception reason',`exception-reason-${i}`,item.reason,'text','required maxlength="500"')}</div><button type="button" class="text-button" data-remove-exception="${i}">Remove exception</button></div>`).join('');
-    container.querySelectorAll('[data-remove-exception]').forEach(b=>b.onclick=()=>{exceptions=collectExceptions();exceptions.splice(Number(b.dataset.removeException),1);renderExceptions();});
+    $('#schedule-exceptions').innerHTML=exceptions.map((item,i)=>`<div class="panel" data-exception="${i}"><div class="form-grid two">${field('Exception month',`exception-month-${i}`,item.month,'month','required')}${selectField('Exception action',`exception-action-${i}`,[['yes','Expect a statement'],['no','Skip this month']],item.expected?'yes':'no')}${field('Exception issue date',`exception-date-${i}`,item.issue_date||'','date')}${field('Exception reason',`exception-reason-${i}`,item.reason,'text','required maxlength="500"')}</div><button type="button" class="text-button" data-remove-exception="${i}" aria-label="Remove exception ${i+1}">Remove exception</button></div>`).join('');
+    container.querySelectorAll('[data-remove-exception]').forEach(b=>b.onclick=()=>{exceptions=collectExceptions();const index=Number(b.dataset.removeException);exceptions.splice(index,1);renderExceptions();($(`[data-remove-exception="${Math.min(index,exceptions.length-1)}"]`)||$('#add-exception')).focus();});
   }
   function collectExceptions(){return exceptions.map((_,i)=>({month:$(`[name=exception-month-${i}]`).value,expected:$(`[name=exception-action-${i}]`).value==='yes',issue_date:$(`[name=exception-date-${i}]`).value||null,reason:$(`[name=exception-reason-${i}]`).value}));}
-  $('#add-exception').onclick=()=>{if(exceptions.length>=24)return;exceptions=collectExceptions();exceptions.push({month:data.month,expected:false,issue_date:null,reason:''});renderExceptions();};
+  $('#add-exception').onclick=()=>{if(exceptions.length>=24)return;exceptions=collectExceptions();exceptions.push({month:data.month,expected:false,issue_date:null,reason:''});renderExceptions();$(`[name=exception-month-${exceptions.length-1}]`).focus();};
   $('#coverage-update').onclick=()=>ctx.refresh('completeness',$('[name=coverage-month]').value);
   $('[name=coverage-account]').onchange=e=>{
     const before=data.schedules.find(x=>x.account_id===Number(e.target.value));
@@ -39,6 +39,7 @@ export async function showCompleteness(container,ctx,selected){
     $('[name=coverage-reason]').value='';$('#coverage-ack').checked=false;
     exceptions=structuredClone(before?.exceptions||[]);renderExceptions();
   };
+  $('[name=coverage-account]').required=true;
   $('#coverage-config').onsubmit=async e=>{
     e.preventDefault();
     const submit=$('button[type=submit]',e.currentTarget);submit.disabled=true;

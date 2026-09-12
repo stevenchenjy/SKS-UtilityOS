@@ -204,7 +204,7 @@ def browser_checkpoint(browser, url, release, work, label, *, import_pdf=False, 
             staged = page.evaluate('fetch("/api/staged").then(r=>r.json())')
             pdf = next(s for s in staged if s['extension'] == '.pdf' and s['status'] == 'pending')
             nav('Review queue')
-            page.get_by_role('row').filter(has_text=pdf['label']).get_by_role('button', name='Review', exact=True).click()
+            page.get_by_role('row').filter(has_text=pdf['label']).get_by_role('button', name='Review').click()
             page.locator('#bill-editor').wait_for()
         expect(page.locator('#source-canvas')).to_be_visible()
         # A new HTML canvas already has a default width; wait for actual pixels.

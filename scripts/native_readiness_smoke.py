@@ -111,7 +111,7 @@ def main():
                 page.get_by_role('heading',name='Campus utilities',exact=True).wait_for()
                 if scenario=='recovery':
                     nav('Review queue','Review queue')
-                    page.get_by_role('row').filter(has_text='Damaged review data').get_by_role('button',name='Review',exact=True).click()
+                    page.get_by_role('row').filter(has_text='Damaged review data').get_by_role('button',name='Review').click()
                     page.get_by_role('heading',name='Review data needs recovery',exact=True).wait_for();shot('damaged')
                     expect(page.get_by_role('button',name='Recover saved draft')).to_be_disabled()
                     page.locator('#recover-ack').check();page.get_by_role('button',name='Recover saved draft').click()

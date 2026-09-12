@@ -54,6 +54,40 @@ def main():
         def nav(label, heading):
             page.locator('nav').get_by_role('button', name=label).click()
             page.get_by_role('heading', name=heading, exact=True).wait_for()
+            expect(page.locator('#content')).to_be_focused()
+        def check_skip_link():
+            # Navigation intentionally focuses main. Check the first available
+            # keyboard target, then exercise the skip link's native activation.
+            first = page.locator('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]').first
+            expect(first).to_have_attribute('href', '#content')
+            first.focus()
+            expect(first).to_be_in_viewport()
+            page.keyboard.press('Enter')
+            expect(page.locator('#content')).to_be_focused()
+        def check_import_dialog_keyboard():
+            opener = page.get_by_role('button', name='Import a bill', exact=True)
+            opener.click()
+            dialog = page.get_by_role('dialog', name='Import a source file', exact=True)
+            expect(dialog).to_be_visible()
+            expect(dialog.locator('#import-error')).to_have_attribute('aria-live', 'polite')
+            close = dialog.get_by_role('button', name='Close import', exact=True)
+            last = dialog.get_by_role('link', name='New provider future bill', exact=True)
+            # Let showModal provide the focus boundary and Escape behavior.
+            # Do not require redundant application-level keyboard handlers.
+            last.focus()
+            page.keyboard.press('Tab')
+            # Chrome may offer browser chrome before re-entering the modal.
+            # The background page must never receive document focus.
+            if not page.evaluate('document.hasFocus()'):
+                page.keyboard.press('Tab')
+            expect(close).to_be_focused()
+            page.keyboard.press('Shift+Tab')
+            if not page.evaluate('document.hasFocus()'):
+                page.keyboard.press('Shift+Tab')
+            expect(last).to_be_focused()
+            page.keyboard.press('Escape')
+            expect(dialog).to_have_count(0)
+            expect(opener).to_be_focused()
         def download(label):
             with page.expect_download() as event:
                 page.get_by_role('link', name=label, exact=True).click()
@@ -65,9 +99,9 @@ def main():
                 for label,sample in [('CSV invoice','demo-import.csv'),('Electricity XML','demo-intervals.xml'),('PDF invoice','demo-invoice.pdf'),('Blank template','blank-bill-template.csv')]:
                     assert download(label)==(ROOT/'samples'/sample).read_bytes()
             if raw is None:
-                page.get_by_label('Source file').set_input_files(ROOT / 'samples' / name)
+                page.get_by_label('Source file', exact=True).set_input_files(ROOT / 'samples' / name)
             else:
-                page.get_by_label('Source file').set_input_files({'name': name, 'mimeType': 'application/octet-stream', 'buffer': raw})
+                page.get_by_label('Source file', exact=True).set_input_files({'name': name, 'mimeType': 'application/octet-stream', 'buffer': raw})
             page.locator('#synthetic-confirm').check()
             page.get_by_role('button', name='Import for review', exact=True).click()
         def approve():
@@ -85,6 +119,9 @@ def main():
         page.get_by_role('heading', name='Campus utilities').wait_for()
         expect(page).to_have_title('Overview | SKS UtilityOS')
         assert page.url.rstrip('/') == a.url.rstrip('/')
+        expect(page.locator('#content')).to_be_focused()
+        check_skip_link()
+        check_import_dialog_keyboard()
         assert all(c['httpOnly'] and c['sameSite'] == 'Strict' for c in context.cookies() if c['name'] == 'utilityos_session')
         assert page.evaluate("async () => {const {quantity}=await import('/modules/ui.js'); return [quantity('0.000000001'),quantity('1234.123456789'),quantity('1E-9')];}") == ['0.000000001','1,234.123456789','0.000000001']
         screenshot('desktop')
@@ -92,6 +129,7 @@ def main():
             upload('demo-import.csv')
             page.get_by_role('heading', name='SYN-NEW-WORKSHOP').wait_for()
             assert download('Download original locally') == (ROOT / 'samples/demo-import.csv').read_bytes()
+            expect(page.locator('#flags')).to_have_attribute('aria-live', 'polite')
             page.get_by_role('button', name='Check fields', exact=True).click()
             expect(page.locator('#flags')).not_to_contain_text('must equal')
             approve()
@@ -238,6 +276,9 @@ def main():
         page.set_viewport_size({'width': 390, 'height': 844})
         for label, heading in [('Overview', 'Campus utilities'), ('Review queue', 'Review queue'), ('Invoice ledger','Invoice ledger'), ('Utility inventory', 'Utility inventory'), ('Interval data', 'Interval data'), ('Privacy & support', 'Privacy & support')]:
             nav(label, heading)
+            if label == 'Overview':
+                check_skip_link()
+                check_import_dialog_keyboard()
             screenshot('mobile-' + label.split()[0].lower())
         assert len(download('Export approved ledger CSV')) > 0
         if a.exercise_imports and a.milestone:
