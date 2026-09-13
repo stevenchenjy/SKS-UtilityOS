@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import stat
 import subprocess
 import sys
 import zipfile
@@ -145,6 +146,40 @@ def test_backup_write_failure_does_not_leave_downloadable_archive(ledger,monkeyp
     monkeypatch.setattr(zipfile.ZipFile,'writestr',fail)
     with pytest.raises(OSError):backup(ledger.store)
     assert not list((ledger.store.directory/'backups').glob('*.zip'))
+
+
+def test_backup_restore_flushes_writable_files_without_changing_source_bytes(ledger,raw_csv,tmp_path,monkeypatch):
+    item=ledger.import_file('synthetic.csv',raw_csv)['staged_ids'][0]
+    ledger.approve_bill(item,ledger.stage(item)['payload'],True)
+    recovered=Store(tmp_path/'recovered','demo')
+    real_fsync=os.fsync
+    def require_write_access(fd):
+        if stat.S_ISREG(os.fstat(fd).st_mode):
+            # A zero-byte write checks the real descriptor access without
+            # changing bytes. Windows FlushFileBuffers requires write access;
+            # POSIX fsync alone can conceal a read-only publication handle.
+            os.write(fd,b'')
+        return real_fsync(fd)
+    monkeypatch.setattr(os,'fsync',require_write_access)
+    saved=backup(ledger.store)
+    with zipfile.ZipFile(saved) as archive:
+        manifest=json.loads(archive.read('MANIFEST.json'))
+        assert all(hashlib.sha256(archive.read(name)).hexdigest()==sha for name,sha in manifest['files'].items())
+    with instance_lock(recovered.directory):restore(recovered,saved,'demo')
+    assert Ledger(recovered).overview()['total_cents']==ledger.overview()['total_cents']
+    assert next(recovered.sources.iterdir()).read_bytes()==raw_csv
+    assert next(ledger.store.sources.iterdir()).read_bytes()==raw_csv
+    assert check(recovered)['sources']=='ok'
+
+
+def test_backup_sync_failure_does_not_publish_archive(ledger,raw_csv,monkeypatch):
+    ledger.import_file('synthetic.csv',raw_csv)
+    def fail(fd):raise OSError('SYNTHETIC_SYNC_FAILURE')
+    monkeypatch.setattr(os,'fsync',fail)
+    with pytest.raises(OSError,match='SYNTHETIC_SYNC_FAILURE'):backup(ledger.store)
+    assert not list((ledger.store.directory/'backups').glob('*.zip'))
+    assert next(ledger.store.sources.iterdir()).read_bytes()==raw_csv
+    assert check(ledger.store)['sources']=='ok'
 
 
 def test_cli_requires_stopped_workspace_and_explicit_migration(store,tmp_path):

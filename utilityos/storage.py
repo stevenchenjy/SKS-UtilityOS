@@ -18,7 +18,9 @@ def sync_directory(path):
 
 def replace_file(source, target):
     """Both paths must be on the workspace filesystem. Caller validates content."""
-    with Path(source).open('rb') as handle:
+    # Windows _commit/FlushFileBuffers requires a writable handle. Reopen the
+    # completed file without truncating it, then close before atomic replacement.
+    with Path(source).open('r+b') as handle:
         os.fsync(handle.fileno())
     os.replace(source, target)
     sync_directory(Path(target).parent)
