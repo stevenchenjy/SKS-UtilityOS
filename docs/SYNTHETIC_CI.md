@@ -1,11 +1,11 @@
-# Public synthetic CI and dependency decision — 2026-09-07
+# Public synthetic CI and dependency decision — updated 2026-09-13
 
 `.github/workflows/synthetic-ci.yml` now has a matrix of Ubuntu 24.04 x64,
 macOS 15 arm64 and Windows Server 2025 x64 for source and fictional fixtures.
 It selects CPython 3.13.15, fetches exact target wheel artifacts using checked-in
 SHA-256 receipts, verifies and installs a fresh runtime offline, then runs the
 portable code-folder handoff rehearsal. It separately installs the pinned
-development test packages, runs `pip check` and `python -m pytest -q`, checks the Git source allowlist,
+development test packages, runs `pip check` and `python -m pytest -q -ra`, checks the Git source allowlist,
 builds/verifies two identical source archives, and runs the 25-document digital
 extraction benchmark. A changed working-tree manifest is not assumed to be a
 release: CI builds and verifies its own source-only candidate archive.
@@ -36,10 +36,11 @@ school installation; no new local Python package or model was added. Sources:
 [GitHub secure-use guidance](https://docs.github.com/en/actions/reference/security/secure-use).
 
 Hosted runner execution is separate from local reproduction of the CI commands.
-The workflow is prepared for the public synthetic repository and has not been
-pushed or dispatched as part of the 0.5.0 release work. Only the explicitly
-authorized, previously absent `v0.4.0` tag was published. Running/publishing new
-source on GitHub remains a separate deliberate release step.
+The original 0.5.0 work did not dispatch this workflow; that historical statement
+does not describe the current candidate. On September 13 the user explicitly
+authorized publishing `codex/portable-acquisition-rc3` and running ordinary hosted
+CI. Those runs and their failures/results are recorded in
+[current acceptance](RC3_ACCEPTANCE.md). No main merge or tag follows from a push.
 
 Native Mac Chrome workflows, optional OCR/model checks, real launcher operation,
 fresh installation and recovery rehearsals remain separate acceptance checks.
@@ -49,13 +50,14 @@ checks still run; the full reference-byte test runs on the development Mac.
 This distinction is not a claim of native Linux, Windows or staff-machine
 acceptance. Repeat relevant native tests on the actual approved workstation.
 
-The rc3 matrix is prepared and has not been pushed or dispatched during the
-current local milestone. Windows wheel hashes/target metadata are verified on
-the Mac staging host, which does not establish Windows execution. The local
-fresh-install rehearsal used macOS 26.6.2 arm64/Python 3.13.2. Python 3.13.15
-installer artifacts were hash-checked but not installed locally. The portable
-rehearsal uses real HTTP and cookies; native browser/mobile/download tests remain
-separate. Windows Server CI is not Windows 11 staff-device acceptance.
+The rc3 matrix now has actual hosted execution on all three targets; initial
+Windows shutdown, backup, file-identity and test-fixture failures are retained
+rather than counted as passes.
+The local fresh-install/native follow-up used macOS 26.6.2 arm64/Python 3.13.15
+through the disclosed external runtime harness. Standard runtime-installer
+acceptance remains separate. The portable rehearsal uses real HTTP and cookies;
+native browser/mobile/download tests remain separate. Windows Server CI is not
+Windows 11 staff-device acceptance.
 
 The Windows artifact-tampering test's symlink-creation case explicitly skips
 because creating symlinks can require device privileges; the remaining corruption,

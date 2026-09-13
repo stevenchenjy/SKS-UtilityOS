@@ -1,9 +1,11 @@
 # Development verification
 
 The current candidate is **0.6.0-rc3 / schema 7**. See
+[current portability acceptance](RC3_ACCEPTANCE.md) for branch publication,
+actual hosted CI and Python 3.13.15 qualification. See
 [portable deployment and structured acquisition verification](VERIFICATION_RC3.md)
-for the September 13, 2026 implementation, actual test receipts and remaining
-platform/provider gates. The rc2 and older evidence below is preserved as history.
+for the initial September 13 implementation and test receipts. The rc2 and older
+evidence below is preserved as history.
 
 ## Development verification — 0.6.0-rc2
 

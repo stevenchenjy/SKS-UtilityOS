@@ -1,4 +1,5 @@
 from copy import deepcopy
+from contextlib import closing
 from datetime import date
 import json
 import sqlite3
@@ -91,7 +92,7 @@ def test_schedule_backup_history_privacy_and_stale_revision(ledger,raw_csv,tmp_p
 
 def test_explicit_v5_migration_retains_old_state(tmp_path):
     directory=tmp_path/'old';directory.mkdir();(directory/'sources').mkdir()
-    with sqlite3.connect(directory/'utilityos.sqlite3') as db:db.executescript((ROOT/'tests/fixtures/schema_v5.sql').read_text())
+    with closing(sqlite3.connect(directory/'utilityos.sqlite3')) as db, db:db.executescript((ROOT/'tests/fixtures/schema_v5.sql').read_text())
     before=(directory/'utilityos.sqlite3').read_bytes()
     with pytest.raises(ValueError,match='SCHEMA_VERSION_UNSUPPORTED'):Store(directory,'demo')
     assert (directory/'utilityos.sqlite3').read_bytes()==before

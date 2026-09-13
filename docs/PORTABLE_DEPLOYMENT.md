@@ -13,7 +13,7 @@ still required before access to private records.
 | Approach | Licensing and size | Reproduction, offline behavior and maintenance | OS/security and decision |
 |---|---|---|---|
 | Source + approved Python + exact wheels | UtilityOS MIT; CPython PSF-2.0 and bundled notices; individual dependency licenses in receipts. Base wheels are about 25 MB on Apple Silicon and 27 MB on Windows, excluding Python and expanded files. | Inspectable source and explicit artifacts; no compilation on staff machines; source and environment rebuilt in a new folder. Same private workspace is selected only after backup/schema checks. Old code/runtime/backup remain available for rollback. Ordinary Python tracebacks can be reproduced using synthetic data. | Selected: smallest change to the working application. Python installation belongs to school IT; Windows supports per-user installation. Existing approved Python avoids administrator access for app setup. macOS's official package may require IT-managed installation. No execution-policy or Gatekeeper bypass. |
-| Bundle/embedded Python | CPython license and every bundled library's notices still apply. Python 3.13.15 Windows embedded archive is about 10.5 MB before dependencies; official Mac installer is about 68.7 MB. | Reduces initial runtime selection but makes the application distributor own interpreter layout, patching, native libraries and all runtime provenance. Windows embedded Python omits pip and does not support ordinary pip-managed dependencies. A cross-platform embedded layout is extra work. | Not selected: no demonstrated advantage justifies a second runtime layout now. A later bundled runtime needs its own review, Windows runtime prerequisites and complete signing strategy. |
+| Bundle/embedded Python | CPython license and every bundled library's notices still apply. Python 3.13.15 Windows embedded archive is about 10.5 MB before dependencies; official Mac installer is about 68.7 MiB. | Reduces initial runtime selection but makes the application distributor own interpreter layout, patching, native libraries and all runtime provenance. Windows embedded Python omits pip and does not support ordinary pip-managed dependencies. A cross-platform embedded layout is extra work. | Not selected: no demonstrated advantage justifies a second runtime layout now. A later bundled runtime needs its own review, Windows runtime prerequisites and complete signing strategy. |
 | Standalone PyInstaller app | PyInstaller GPL-2.0 with bundling exception, with some Apache-2.0 files; bundled dependencies retain their own licenses. Still carries interpreter and native PDF libraries; a one-file executable unpacks runtime assets. No precise UtilityOS size claim without a build. | Native builds for each OS/architecture, hook maintenance, bundled data-path handling, antivirus acceptance and debugging of frozen processes. Reproducibility requires a separate native build chain. | Not selected. Apple Silicon binaries need code signing at least ad hoc; trusted distribution/notarization is a separate school-owned process. Packing does not remove Gatekeeper or antivirus acceptance. |
 
 Sources: [pip secure installs](https://pip.pypa.io/en/stable/topics/secure-installs/),
@@ -29,9 +29,9 @@ The support-burden comparisons are engineering judgments for this application.
 
 | Target | Reviewed artifact closure | Runtime/native acceptance |
 |---|---|---|
-| macOS Apple Silicon, macOS 13+ for base PDF wheels | `dependency-receipts/macos-arm64-cp313-base.json`: 26 exact wheels, 25,099,219 bytes | Fresh local environment exercised on macOS 26.6.2 arm64 / CPython 3.13.2. This old interpreter patch is disclosed, not a current staff-runtime recommendation. |
-| Windows x64, school-supported Windows 11 | `dependency-receipts/windows-x64-cp313-base.json`: 26 exact wheels, 27,748,570 bytes | Windows-specific wheels downloaded and hashed; target-marker dependency closure checked. Native Windows/ACL/launch acceptance not performed on this Mac. Windows Server 2025 CI is configured separately. |
-| Linux x64, glibc 2.28+ | `dependency-receipts/linux-x64-cp313-base.json`: 26 exact wheels, 28,306,558 bytes | Regression target; wheels verified, native execution not performed locally. Ubuntu 24.04 CI configured. |
+| macOS Apple Silicon, macOS 13+ for base PDF wheels | `dependency-receipts/macos-arm64-cp313-base.json`: 26 exact wheels, 25,099,219 bytes | Initial 3.13.2 rehearsal followed by fresh native 3.13.15 qualification on macOS 26.6.2 arm64. The current-runtime run uses the disclosed external development launcher; normal system-installer and school-device acceptance remain separate. |
+| Windows x64, school-supported Windows 11 | `dependency-receipts/windows-x64-cp313-base.json`: 26 exact wheels, 27,748,570 bytes | Windows-specific wheels downloaded and hashed; target-marker dependency closure checked. Windows Server 2025 CI has executed the portable handoff and synthetic tests; exact results and fixes are in the acceptance report. Windows desktop/ACL/launch acceptance remains outstanding. |
+| Linux x64, glibc 2.28+ | `dependency-receipts/linux-x64-cp313-base.json`: 26 exact wheels, 28,306,558 bytes | Regression target; wheels verified and Ubuntu 24.04 hosted tests executed. Native desktop execution was not performed locally. |
 | macOS Intel | No install receipt; setup refuses | Evaluated and deferred. `cryptography==50.0.1`, required by the existing PDF dependency, has no macOS x64 wheel. Upstream removed that platform in 49.0.0. Forking an older security dependency or privately maintaining Rust/native builds would add unreasonable patch burden for this slice. |
 | Optional OCR, Apple Silicon/macOS 15+ only | `dependency-receipts/macos-arm64-cp313-ocr.json`: full base plus tesserocr/cysignals, 28 wheels, 28,935,517 bytes | Existing synthetic Mac OCR capability; optional native engine/model restrictions remain in the extraction dependency guide. No Windows OCR compatibility claim. |
 
@@ -55,10 +55,14 @@ portable receipt targets.
 `dependency-receipts/python-runtime.json` separately records official CPython
 3.13.15 macOS and Windows installer filenames, sizes, SHA-256 hashes, origins and
 signature references. Downloaded installer bytes were checked against the
-official release page; neither installer was executed. Qualifying CI pins
-3.13.15. Actual interpreter version is recorded in every new environment and
-health report. A different patch needs review/requalification; the old local
-3.13.2 rehearsal must not be confused with a verified current-runtime install.
+official release page; neither installer was executed through its normal install
+flow. The unchanged signed Mac framework payload was extracted externally and
+qualified on 3.13.15 with an explicit development-only launcher, including actual
+isolated PDF workers. Qualifying CI pins 3.13.15. Actual interpreter version is
+recorded in every new environment and health report. A different patch needs
+review/requalification; neither the old 3.13.2 run nor the external launcher
+establishes normal school-machine installer acceptance. See
+[current acceptance](RC3_ACCEPTANCE.md) for the method and retained failures.
 Python installer hashes verify bytes, not the publisher; school IT verifies the
 upstream signature and approves the runtime under its software policy.
 
@@ -210,11 +214,11 @@ workspace, integrity checks, logout and graceful process stop. Run it with a
 new external `--work-dir` and the selected `--wheelhouse`. It is a handoff
 rehearsal, never an updater or a replacement for native browser/OS acceptance.
 
-CI now prepares these checks on Windows Server 2025 x64, macOS 15 arm64 and Ubuntu
-24.04 with Python 3.13.15. Hosted runs have not been dispatched in this local
-work; a prepared workflow is not a passing CI receipt. See
-[synthetic CI](SYNTHETIC_CI.md) for the matrix and explicit platform skips, and
-[verification](VERIFICATION.md) for the actual current run results. School
+CI executes these checks on Windows Server 2025 x64, macOS 15 arm64 and Ubuntu
+24.04 with Python 3.13.15 following the authorized candidate-branch publication.
+See [synthetic CI](SYNTHETIC_CI.md) for the matrix and explicit platform skips, and
+[current acceptance](RC3_ACCEPTANCE.md) for actual run results, including the
+preserved initial Windows failures. School
 runtime installation, Windows desktop/ACL behavior, Finder quarantine/Gatekeeper,
 current dependency/native advisories and real-provider acceptance remain distinct
 release gates. No production-ready claim or final tag follows from local tests.

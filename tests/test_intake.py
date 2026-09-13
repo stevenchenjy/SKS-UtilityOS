@@ -238,7 +238,7 @@ def test_inbox_stability_symlinks_location_and_repeat_scan(ledger,tmp_path):
     old=time.time()-5;os.utime(target,(old,old))
     (directory/'unsafe.pdf').symlink_to(target)
     result=intake.scan(str(directory),True)
-    assert [item['state'] for item in result['results']]==['needs_mapping','failed_safely']
+    assert [item['state'] for item in result['results']]==['needs_mapping','failed_safely'],result
     assert intake.scan(str(directory),True)['results'][0]['state']=='duplicate'
     assert target.read_bytes()==(CORPUS/'electricity-digital.pdf').read_bytes()
     with pytest.raises(ValueError,match='CHANGED'):intake.scan(str(tmp_path),True)

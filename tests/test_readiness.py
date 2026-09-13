@@ -1,4 +1,5 @@
 """Real process interruption, audit boundaries, and deterministic local recovery."""
+from contextlib import closing
 from pathlib import Path
 from decimal import Decimal
 import errno
@@ -184,7 +185,7 @@ def previous_store(tmp_path,raw_csv,version):
     store=legacy_workspace(tmp_path/'old',raw_csv)
     if version==2:
         frozen=tmp_path/'frozen-v2.sqlite3'
-        with sqlite3.connect(frozen) as target,store.connect() as source:
+        with closing(sqlite3.connect(frozen)) as target,target,store.connect() as source:
             target.executescript((ROOT/'tests/fixtures/schema_v2.sql').read_text())
             for table in ['settings','buildings','providers','accounts','meters','account_meters','documents','staged','bills','bill_lines','interval_channels','interval_readings','audit_events']:
                 columns=[r[1] for r in source.execute(f'PRAGMA table_info({table})')]
@@ -192,7 +193,7 @@ def previous_store(tmp_path,raw_csv,version):
                 target.executemany(f"INSERT INTO {table}({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})", values)
             target.execute("UPDATE settings SET value='2' WHERE key='schema_version'")
             target.execute("INSERT INTO bill_history(bill_id,at,action) SELECT id,approved_at,'approved' FROM bills")
-        target.close();os.replace(frozen,store.path)
+        os.replace(frozen,store.path)
         return Store(store.directory,'demo',initialize=False,expected_schema=2)
     if version>1:
         upgraded=tmp_path/'step.sqlite3'
@@ -200,14 +201,14 @@ def previous_store(tmp_path,raw_csv,version):
         os.replace(upgraded,store.path)
         if version in (3,4):
             frozen=tmp_path/f'frozen-v{version}.sqlite3'
-            with sqlite3.connect(frozen) as target,store.connect() as source:
+            with closing(sqlite3.connect(frozen)) as target,target,store.connect() as source:
                 target.executescript((ROOT/f'tests/fixtures/schema_v{version}.sql').read_text())
                 tables=[r[0] for r in target.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
                 for table in tables:
                     columns=[r[1] for r in target.execute(f'PRAGMA table_info({table})')]
                     values=source.execute(f"SELECT {','.join(columns)} FROM {table}").fetchall()
                     target.executemany(f"INSERT INTO {table}({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})",values)
-            target.close();os.replace(frozen,store.path)
+            os.replace(frozen,store.path)
         store=Store(store.directory,'demo',initialize=False,expected_schema=version)
     return store
 
@@ -234,11 +235,11 @@ def test_future_upgrade_framework_from_every_supported_schema(tmp_path,raw_csv,v
     steps={**STEPS,SCHEMA_VERSION:future};target=tmp_path/'future.sqlite3'
     if fail:
         with pytest.raises(ValueError,match='SYNTHETIC_FUTURE'):upgrade_copy(old,target,SCHEMA_VERSION+1,steps)
-        with sqlite3.connect(target) as db:
+        with closing(sqlite3.connect(target)) as db,db:
             assert not db.execute("SELECT 1 FROM sqlite_master WHERE name='synthetic_future_probe'").fetchone()
     else:
         upgrade_copy(old,target,SCHEMA_VERSION+1,steps)
-        with sqlite3.connect(target) as db:
+        with closing(sqlite3.connect(target)) as db,db:
             assert db.execute("SELECT value FROM settings WHERE key='schema_version'").fetchone()[0]==str(SCHEMA_VERSION+1)
             assert db.execute('SELECT COUNT(*) FROM bills').fetchone()[0]==1
             assert audit.verify(db)=='ok'
@@ -283,7 +284,7 @@ def test_restore_boundary_links_to_head_actually_retained_in_safety_backup(ledge
     with zipfile.ZipFile(safety) as archive:
         manifest=json.loads(archive.read('MANIFEST.json'))
         snapshot=tmp_path/'safety.sqlite3';snapshot.write_bytes(archive.read('utilityos.sqlite3'))
-    with sqlite3.connect(snapshot) as db:
+    with closing(sqlite3.connect(snapshot)) as db,db:
         assert audit.head(db)==manifest['audit_head']
         assert db.execute('SELECT COUNT(*) FROM bills').fetchone()[0]==1
         assert audit.verify(db)=='ok'

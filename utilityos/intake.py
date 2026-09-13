@@ -3,6 +3,7 @@ from hashlib import sha256
 import os
 from pathlib import Path
 import stat
+from sys import platform
 import threading
 import time
 from .audit import now, event
@@ -197,7 +198,11 @@ class Intake:
 
     @staticmethod
     def identity(item):
-        return (item.st_dev,item.st_ino,item.st_size,item.st_mtime_ns,item.st_ctime_ns)
+        # CPython 3.13 Windows lstat keeps creation time in ctime, whereas
+        # fstat exposes change time. Compare explicit creation time across
+        # those APIs; descriptor change time is checked separately below.
+        stamp=item.st_birthtime_ns if platform=='win32' else item.st_ctime_ns
+        return (item.st_dev,item.st_ino,item.st_size,item.st_mtime_ns,stamp)
 
     def read_stable(self, candidate):
         before=candidate.lstat()
@@ -207,7 +212,7 @@ class Intake:
             raise ValidationError('INBOX_FILE_STILL_CHANGING_RESCAN')
         # A checked regular file can be replaced before open. Nonblocking mode
         # prevents a replacement FIFO from hanging intake/shutdown on POSIX.
-        descriptor=os.open(candidate,os.O_RDONLY | getattr(os,'O_NOFOLLOW',0) | getattr(os,'O_NONBLOCK',0))
+        descriptor=os.open(candidate,os.O_RDONLY | getattr(os,'O_BINARY',0) | getattr(os,'O_NOFOLLOW',0) | getattr(os,'O_NONBLOCK',0))
         with os.fdopen(descriptor,'rb') as stream:
             opened=os.fstat(stream.fileno())
             if not stat.S_ISREG(opened.st_mode) or self.identity(before)!=self.identity(opened):
@@ -217,7 +222,9 @@ class Intake:
             raw=stream.read(MAX_UPLOAD+1)
             after=os.fstat(stream.fileno())
         current=candidate.lstat()
-        if self.identity(before)!=self.identity(opened) or self.identity(opened)!=self.identity(after) or self.identity(after)!=self.identity(current) or len(raw)!=before.st_size:
+        if (self.identity(before)!=self.identity(opened) or self.identity(opened)!=self.identity(after)
+                or opened.st_ctime_ns!=after.st_ctime_ns or self.identity(after)!=self.identity(current)
+                or len(raw)!=before.st_size):
             raise ValidationError('INBOX_FILE_CHANGED_DURING_READ_RESCAN')
         return raw
 

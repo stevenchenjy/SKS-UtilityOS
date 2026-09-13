@@ -1,6 +1,6 @@
 # SKS UtilityOS
 
-**Version 0.6.0-rc3 · local development candidate · synthetic demonstration**
+**Version 0.6.0-rc3 · remote release candidate · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
@@ -16,17 +16,19 @@ point was rc2/schema 6. rc3 uses **schema 7**, with an explicit compatibility
 migration and pre-upgrade backup. Broad analytics remains subsequent work.
 
 Start with [portable deployment](docs/PORTABLE_DEPLOYMENT.md),
-[acquisition](docs/ACQUISITION.md) and [verification](docs/VERIFICATION.md).
+[acquisition](docs/ACQUISITION.md) and [current rc3 acceptance](docs/RC3_ACCEPTANCE.md).
 Actual provider exports, Windows school-machine behavior and school installation
-remain externally unverified. Hosted CI configuration is not evidence of a run.
+remain externally unverified. The acceptance report distinguishes actual hosted
+runs, local native execution and remaining school-device checks.
 No portal, email or external API connection is enabled.
 
 ## Run the demo on macOS
 
 Use an approved CPython 3.13 GIL installation matching the platform receipt.
-The qualification target is Python 3.13.15; local tests used Python 3.13.2 on
-macOS arm64 with Chrome 152.0.7977.84. Current-runtime and school-machine
-acceptance remain separate; see the portable deployment guide.
+Python 3.13.15 passed fresh-environment tests and native Chrome 152.0.7977.84
+workflows on macOS arm64. The signed runtime was exercised with a disclosed
+external development launcher; standard installer and school-device acceptance
+remain separate. See the portable deployment and acceptance guides.
 
 ```sh
 bash scripts/setup.sh
@@ -45,7 +47,7 @@ For repeatable import testing, use a fresh directory outside the repository:
 
 The initial demo has 45 approved invoices, eight service points, two bills awaiting review, and one day of interval readings. CSV/XML/PDF imports add to that workspace, so choose a new directory for a second complete import test.
 
-Windows scripts are supplied, but native Windows execution and ACL behavior remain unverified. Run `scripts/setup.ps1` only through an approved PowerShell session, then `.\.venv\Scripts\python.exe run.py demo --open`. Do not weaken device execution policy.
+Windows scripts are supplied; hosted Windows execution is recorded separately from outstanding Windows desktop and effective-ACL acceptance. Run `scripts/setup.ps1` only through an approved PowerShell session, then `.\.venv\Scripts\python.exe run.py demo --open`. Do not weaken device execution policy.
 
 ## Working file workflows
 

@@ -84,8 +84,10 @@ def test_gitignore_covers_runtime_export_and_secret_paths(tmp_path):
     subprocess.run(['git','init','--quiet',str(tmp_path)],check=True)
     (tmp_path/'.gitignore').write_bytes((release.ROOT/'.gitignore').read_bytes())
     names=['private-workspace-one/records.json','secrets.json','utilityos/secrets.json','new-export.csv','new-source.pdf','new-source.xml','build/release.zip','generated.zip','new.db','new.sqlite3-wal','.env.secret','key.pem','credentials.json','.venv/a.py','browser.log']
-    result=subprocess.run(['git','check-ignore','--stdin'],cwd=tmp_path,input='\n'.join(names)+'\n',capture_output=True,text=True,check=True)
-    assert set(result.stdout.splitlines())==set(names)
+    # Binary NUL framing avoids Windows text-mode CRLF translation and Git's
+    # pathname quoting, while checking every exact path against the ignore rules.
+    result=subprocess.run(['git','check-ignore','--stdin','-z'],cwd=tmp_path,input=('\0'.join(names)+'\0').encode(),capture_output=True,check=True)
+    assert set(result.stdout.decode().rstrip('\0').split('\0'))==set(names)
 
 
 def test_release_accepts_directory_entries_from_git_archives(project,tmp_path):

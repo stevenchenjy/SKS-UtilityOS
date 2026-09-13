@@ -2,6 +2,21 @@
 
 ## 0.6.0-rc3 — portable deployment and structured acquisition (2026-09-13)
 
+Acceptance follow-up: the candidate branch is published for hosted CI. Observed
+Windows failures required normal Ctrl+Break shutdown handling and a writable
+file handle for durable backup/restore publication. Further Windows execution
+exposed incompatible path/descriptor timestamps in watched-file identity checks;
+identity now compares explicit creation time and retains descriptor change-time
+checks, with binary-mode reads preserving exact source bytes. Migration fixtures
+close SQLite handles before replacement and the Git ignore test uses binary NUL
+framing. Regressions retain the strict shutdown, durability and file-race checks.
+Historical developer
+paths were removed from packaged verification prose. Python 3.13.15 passed fresh
+Mac runtime, PDF-worker, native browser and migration/rollback qualification using
+the disclosed external development launcher. See [current acceptance](RC3_ACCEPTANCE.md)
+for actual hosted counts, exact evidence and remaining external gates. The initial
+implementation record follows; its earlier unverified/unpublished state is history.
+
 - Add exact, hashed runtime wheel closures for macOS Apple Silicon, Windows x64
   and Linux x64, separate official Python installer receipts, reproducible offline
   deployment kits, guided staff launch and a privacy-safe local health report.

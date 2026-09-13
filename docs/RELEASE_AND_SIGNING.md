@@ -1,6 +1,9 @@
 # Source releases and macOS signing
 
 The current working candidate is **0.6.0-rc3**, unsigned and untagged.
+The September 13 acceptance task explicitly authorized publication of
+`codex/portable-acquisition-rc3` and ordinary hosted CI. That branch is published
+without a main merge or tag. See [current acceptance](RC3_ACCEPTANCE.md).
 The source push authorized on 2026-09-09 does not create a GitHub Release or
 establish school deployment acceptance. The September 8 verification and local
 archive receipts retain their original pre-publication status.

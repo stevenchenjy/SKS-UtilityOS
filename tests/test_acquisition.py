@@ -65,7 +65,7 @@ def test_copy_write_rename_duplicate_and_unchanged_failures_are_bounded(ledger,t
     aged(partial,raw_csv);worker.tick(15)
     assert worker.intake.history()==[]
     worker.tick(20)
-    assert len(ledger.stages())==1
+    assert len(ledger.stages())==1,worker.intake.history()
     worker.tick(25)
     assert len(worker.intake.history())==1
     # Completion rename is discovered on a subsequent snapshot. Same bytes
@@ -208,3 +208,62 @@ def test_replaced_regular_descriptor_is_rejected_before_any_read(ledger,tmp_path
     with pytest.raises(ValueError,match='CHANGED_DURING_READ'):
         worker.intake.read_stable(target)
     assert not descriptor_read
+
+
+@pytest.mark.parametrize('metadata_changes_during_read',[False,True])
+def test_windows_creation_time_matches_across_stat_apis_without_losing_change_detection(
+        ledger,tmp_path,raw_csv,monkeypatch,metadata_changes_during_read):
+    from types import SimpleNamespace
+    from utilityos import intake as intake_module
+    worker,folder=watcher(ledger,tmp_path)
+    target=folder/'windows-timestamps.csv';aged(target,raw_csv)
+    lstat,fstat=Path.lstat,os.fstat
+    creation=1_700_000_000_000_000_000
+    change=creation+5_000_000_000
+    calls=0
+    def windows_stat(item,ctime):
+        fields={name:getattr(item,name) for name in
+                ('st_mode','st_dev','st_ino','st_size','st_mtime_ns')}
+        return SimpleNamespace(**fields,st_birthtime_ns=creation,st_ctime_ns=ctime)
+    def path_stat(path,*args,**kwargs):
+        result=lstat(path,*args,**kwargs)
+        return windows_stat(result,creation) if path==target else result
+    def descriptor_stat(descriptor):
+        nonlocal calls
+        calls+=1
+        # Windows fstat reports change time, not lstat's legacy creation time.
+        # A change after the first descriptor check must still fail closed,
+        # even when device, inode, size, mtime and creation time are unchanged.
+        stamp=change+int(metadata_changes_during_read and calls>1)
+        return windows_stat(fstat(descriptor),stamp)
+    with monkeypatch.context() as patch:
+        patch.setattr(intake_module,'platform','win32')
+        patch.setattr(Path,'lstat',path_stat)
+        patch.setattr(os,'fstat',descriptor_stat)
+        if metadata_changes_during_read:
+            with pytest.raises(ValueError,match='CHANGED_DURING_READ'):
+                worker.intake.read_stable(target)
+        else:
+            assert worker.intake.read_stable(target)==raw_csv
+    assert calls==2
+
+
+def test_stable_source_read_preserves_binary_bytes_with_windows_text_default(ledger,tmp_path):
+    worker,folder=watcher(ledger,tmp_path)
+    raw=b'fictional binary source\r\nline two\x1aafter DOS EOF\x00\xff\r\n'
+    target=folder/'binary.pdf';aged(target,raw)
+    # Explicit O_BINARY must win even if the hosting Windows CRT defaults to
+    # text mode. Restore that process setting before any other test runs.
+    runtime=None
+    if os.name=='nt':
+        import ctypes
+        runtime=ctypes.CDLL('ucrtbase')
+        previous=ctypes.c_int()
+        assert runtime._get_fmode(ctypes.byref(previous))==0
+        assert runtime._set_fmode(os.O_TEXT)==0
+    try:
+        assert worker.intake.read_stable(target)==raw
+    finally:
+        if runtime is not None:
+            assert runtime._set_fmode(previous.value)==0
+    assert target.read_bytes()==raw

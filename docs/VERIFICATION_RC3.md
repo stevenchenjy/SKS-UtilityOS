@@ -1,5 +1,11 @@
 # 0.6.0-rc3: portable deployment and structured acquisition
 
+This is the initial implementation record. The subsequent
+[portability acceptance report](RC3_ACCEPTANCE.md) records authorized branch
+publication, actual hosted CI, Python 3.13.15 qualification and observed Windows
+fixes. Its newer evidence supersedes the outstanding development gates below;
+the original results and unsuccessful attempts remain historical evidence.
+
 Verification date: **2026-09-13**. Starting accepted repository commit:
 `23a2b659575a74442f8ec6fc15c0345a9544e97d`, rc2/schema 6. The candidate is
 **0.6.0-rc3 / schema 7**, prepared locally with synthetic data only. It remains

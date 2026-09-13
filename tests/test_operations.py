@@ -1,4 +1,5 @@
 """Recovery and explicit upgrade tests use frozen schema-1 and synthetic bytes."""
+from contextlib import closing
 from pathlib import Path
 import hashlib
 import json
@@ -22,7 +23,7 @@ def legacy_workspace(directory, raw):
     sources=directory/'sources';sources.mkdir()
     sha=hashlib.sha256(raw).hexdigest()
     (sources/(sha+'.csv')).write_bytes(raw)
-    with sqlite3.connect(directory/'utilityos.sqlite3') as db:
+    with closing(sqlite3.connect(directory/'utilityos.sqlite3')) as db, db:
         db.executescript((ROOT/'tests/fixtures/schema_v1.sql').read_text())
         db.executemany('INSERT INTO settings VALUES (?,?)',[('schema_version','1'),('mode','demo')])
         from utilityos.parsers import parse_csv
@@ -37,6 +38,25 @@ def legacy_workspace(directory, raw):
         db.execute("INSERT INTO bills VALUES (1,1,'SYN-NEW-WORKSHOP-202608','2026-09-03',57980,1,1,'2026-09-03')")
         db.execute("INSERT INTO bill_lines VALUES (1,1,1,'2026-08-01','2026-09-01','2860','kWh',57980,'consumption','actual')")
     return Store(directory,'demo',initialize=False,expected_schema=1)
+
+
+def test_legacy_fixture_closes_connections_before_database_replacement(tmp_path,raw_csv,monkeypatch):
+    # Retain real connection objects so garbage collection cannot conceal an
+    # open fixture handle that prevents replacing the database on Windows.
+    real_connect=sqlite3.connect
+    connections=[]
+    def connect(*args,**kwargs):
+        db=real_connect(*args,**kwargs);connections.append(db)
+        return db
+    monkeypatch.setattr(sqlite3,'connect',connect)
+    try:
+        legacy_workspace(tmp_path/'old',raw_csv)
+        assert connections
+        for db in connections:
+            with pytest.raises(sqlite3.ProgrammingError,match='closed'):
+                db.execute('SELECT 1')
+    finally:
+        for db in connections:db.close()
 
 
 def test_explicit_migration_preserves_bytes_ids_history_and_old_backup(tmp_path,raw_csv):
@@ -130,7 +150,7 @@ def test_damaged_backup_fails_before_replacing_database(ledger,raw_csv,tmp_path,
     elif damage in {'mode','schema'}:manifest['mode' if damage=='mode' else 'schema_version']='wrong'
     else:
         dbpath=tmp_path/'mutated.sqlite3';dbpath.write_bytes(files['utilityos.sqlite3'])
-        with sqlite3.connect(dbpath) as db:db.execute('UPDATE staged SET document_id=9999')
+        with closing(sqlite3.connect(dbpath)) as db, db:db.execute('UPDATE staged SET document_id=9999')
         files['utilityos.sqlite3']=dbpath.read_bytes();manifest['files']['utilityos.sqlite3']=hashlib.sha256(files['utilityos.sqlite3']).hexdigest()
     files['MANIFEST.json']=json.dumps(manifest).encode()
     bad=tmp_path/'bad.zip'
