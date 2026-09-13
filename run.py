@@ -41,9 +41,10 @@ def seed_demo(ledger):
 
 def main():
     parser=argparse.ArgumentParser(description='SKS UtilityOS local pilot. Staff records stay outside source code.')
-    parser.add_argument('command',choices=['demo','staff','backup','restore','diagnostics','check','migrate','version'])
+    parser.add_argument('command',choices=['demo','staff','backup','restore','diagnostics','health','check','migrate','version'])
     parser.add_argument('--mode',choices=['demo','staff'],default='staff',help='Workspace for maintenance commands')
     parser.add_argument('--data-dir',type=Path)
+    parser.add_argument('--choose-data-dir',action='store_true',help='Interactively select an external local workspace when launching; --data-dir takes precedence')
     parser.add_argument('--port',type=int,default=8765)
     parser.add_argument('--ocr-model-dir',type=Path,help='Optional local directory holding reviewed eng.traineddata; no downloads')
     parser.add_argument('--archive',type=Path,help='Private backup ZIP for restore')
@@ -54,6 +55,15 @@ def main():
     args=parser.parse_args()
     if args.command=='version':print(__version__);return
     mode=args.command if args.command in {'demo','staff'} else args.mode
+    if args.choose_data_dir and args.command not in {'demo','staff'}:
+        raise ValueError('DIRECTORY_SELECTION_REQUIRES_LAUNCH_COMMAND')
+    if args.choose_data_dir and not args.data_dir:
+        if not sys.stdin.isatty():
+            raise ValueError('DIRECTORY_SELECTION_REQUIRES_INTERACTIVE_TERMINAL')
+        print('Choose an approved local private directory outside the code and cloud-synced folders.')
+        print('Use the same directory on each launch; no records are moved automatically.')
+        selected=input(f'Workspace directory [Enter for {default_data_dir(mode)}]: ').strip()
+        args.data_dir=Path(selected) if selected else default_data_dir(mode)
     config=Config((args.data_dir or default_data_dir(mode)).expanduser(),mode,args.port,args.ocr_model_dir.expanduser() if args.ocr_model_dir else None)
     config.validate()
     if os.name!='nt':os.umask(0o077)
@@ -65,9 +75,14 @@ def main():
         raise ValueError('MIGRATION_REQUIRES_CONFIRM_MIGRATE')
     if args.command=='restore' and (not args.archive or not args.confirm_restore):
         raise ValueError('RESTORE_REQUIRES_ARCHIVE_AND_CONFIRM_RESTORE')
-    if args.command=='diagnostics':
-        from utilityos.diagnostics import report
-        print(json.dumps(report(config.data_dir,mode,args.port),indent=2))
+    if args.command in {'diagnostics','health'}:
+        if args.command=='diagnostics':
+            from utilityos.diagnostics import report
+            result=report(config.data_dir,mode,args.port)
+        else:
+            from utilityos.health import report
+            result=report(config)
+        print(json.dumps(result,indent=2))
         return
     with instance_lock(config.data_dir), acting_as('local_operator' if args.command in {'demo','staff'} else 'local_maintainer'):
         if args.command=='migrate':
@@ -103,6 +118,15 @@ def main():
             password=getpass.getpass('New local app passphrase (12+ characters): ')
             if password!=getpass.getpass('Repeat local app passphrase: '):raise ValueError('PASSPHRASES_DO_NOT_MATCH')
             set_password(store,password)
+        from utilityos.health import report as health_report
+        health=health_report(config,running=True)
+        print('Local health: database=' + health['checks']['database'] +
+              '; retained sources=' + health['checks']['retained_sources'] +
+              '; migration=' + health['checks']['migration'] +
+              '; runtime=' + health['checks']['runtime_patch'] + '.')
+        if health['checks']['retained_sources']!='ok':
+            listen_socket.close()
+            raise ValueError('SOURCE_INTEGRITY_REQUIRES_LOCAL_REVIEW')
         import uvicorn
         from utilityos.app import create_app
         print(f'SKS UtilityOS {__version__} | {mode.upper()} | single-operator local pilot')

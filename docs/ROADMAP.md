@@ -2,6 +2,18 @@
 
 ## Current implementation
 
+The current development candidate is **0.6.0-rc3 / schema 7: Portable Deployment
+and Structured Acquisition**. It extends rc2 building reporting, financial
+approval controls and account schedules with platform artifact receipts, guided
+setup/health, foreground watched-folder intake, direct generic XLSX mapping and
+bounded Green Button semantics. Portfolio Manager remains a disabled boundary
+with local synthetic preparation. See `MASTER_PROMPT.md`, `ACQUISITION.md`,
+`PORTABLE_DEPLOYMENT.md` and current verification for exact limits. The milestone
+history below remains context; inspect existing behavior before rebuilding it.
+Broad effective-rate/trend/EUI/anomaly/dashboard expansion is subsequent work.
+
+## Earlier milestone history
+
 The existing local service now includes reviewed CSV/evidence-backed PDF/limited electricity XML entry, saved drafts, full-invoice correction and rebill history, cancellation, independent credits, current mapping edits, active-only reporting/exports, fixed diagnostics, browser backup download, stopped-app restore, explicit schema-1/2/3/4 upgrades, and source-only release verification. Native desktop/mobile browser verification runs directly on the development Mac.
 
 The 0.3.0 readiness milestone adds interruption-safe source publication, an

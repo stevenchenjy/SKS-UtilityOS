@@ -70,7 +70,7 @@ Canonical CSV rows can describe multiple service lines. The parser enforces invo
 
 PDF handling preserves the source and immutable field evidence from a bounded local worker. Digital text uses pdfplumber; PDFium supplies the preview. Optional hash-pinned English Tesseract OCR proposes scan fields. Versioned fictional templates abstain on unknown layouts, and missing/unsupported fields remain for staff completion. There is no external inference API. See `BILL_INTAKE.md`.
 
-The Green Button reader accepts a narrow DMD XML contract: electricity, Wh units, forward flow, delta energy, an explicit power-of-ten multiplier, and correctly linked ReadingType/MeterReading/IntervalBlock resources. Readings are normalized to kWh and stored separately from monthly bill consumption. Unsupported water, gas, net/export, cumulative, demand, or ambiguous readings fail validation. Source links are resolved within the document and are never fetched over the network.
+The Green Button reader accepts explicit forward deltas for electricity Wh → kWh, natural-gas therms and drinkable-water m3/US_gal. Linked UsagePoint, ReadingType, MeterReading and IntervalBlock resources and raw per-reading provenance are retained. Unsupported net/export, cumulative, demand, aggregation, units, qualities or ambiguous readings fail validation. Operational intervals stay separate from billed consumption and charges. Source links resolve inside the document and are never fetched over the network. The exact subset, legacy compatibility and synthetic tests are recorded in [GREEN_BUTTON.md](GREEN_BUTTON.md).
 
 ## Size and deployment boundaries
 

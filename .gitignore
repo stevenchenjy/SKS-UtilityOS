@@ -68,3 +68,6 @@ Desktop.ini
 !samples/intake/*.pdf
 !samples/onboarding/*.pdf
 !samples/provider-semantics/*.pdf
+
+# Reviewed, deterministically generated fictional workbook only.
+!samples/generic-water-usage.xlsx

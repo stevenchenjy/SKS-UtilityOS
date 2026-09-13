@@ -96,24 +96,19 @@ the invoice quantity has been reconciled. The existing Green Button importer
 remains limited to its tested forward-delta electricity Wh subset; changing a
 label does not make water/gas XML supported.
 
-Direct Excel parsing was not added because the actual tenant file type and
-schema have not been verified. If authorized staff receives a spreadsheet,
-keep its original bytes in the approved local source folder. Use a
-school-approved local viewer that can inspect literal cells with macros,
-external links, data refresh and formula recalculation disabled. If that
-inspection cannot be assured, request a plain CSV export instead. Do not open
-the file through a cloud conversion service or change global security settings.
+rc3 adds direct local values-only XLSX intake with explicit visible-sheet/region
+selection, literal cell provenance and approved reusable layouts/meter mappings.
+The original workbook is retained unchanged; staff no longer has to convert every
+compatible workbook to CSV. Formulas/cached values, macros, external refresh,
+encryption, hidden sheets and ambiguous semantics are rejected. Legacy XLS
+remains an unverified format gap. See [mapped usage](MAPPED_USAGE.md) for exact
+limits. No Cornwall tenant workbook or authenticated My360 export was inspected.
 
-Export only confirmed literal readings to UTF-8 CSV; do not treat formulas or
-their cached values as measured observations. Preserve identifiers, decimal
-precision, units, timezone/UTC offsets, period boundaries and quality columns.
-Keep text identifiers as text and dates/times in unambiguous ISO form. Retain
-both the original workbook and converted CSV in the school-controlled folder,
-record the conversion locally, and compare the preview with the original
-before approval. The mapped importer retains the CSV it received; it does not
-claim to retain a workbook that was never imported. A missing or ambiguous
-unit, time basis or measurement meaning requires clarification rather than
-an inferred conversion.
+The ESPI importer now accepts explicitly tested forward-delta electricity Wh,
+natural-gas therm and water m3/US-gallon combinations, with supported qualities,
+resolved relationships and retained provenance. It still rejects cumulative and
+unsupported semantics; see [Green Button](GREEN_BUTTON.md). Neither extension
+establishes certified Central Hudson or My360 compatibility.
 
 ## Original synthetic corpus and evidence
 
@@ -146,11 +141,15 @@ unverified. This corpus result is not a general accuracy estimate or completion
 of the 0.6 analytics milestone. See [verification](VERIFICATION.md) for the
 broader slice checks and the separate native-browser evidence.
 
-## Optional polling decision
+## Foreground acquisition and future connectors
 
-This slice retains the existing explicit stable-folder scan. Files can be scanned
-when the app is next opened; no automatic watcher or daemon is added. The provider
-evidence does not establish unattended delivery, and no measured benefit justifies
-a polling lifecycle yet. A future opt-in poller would still require a dedicated
-confirmed folder, pause/resume and the existing stability/duplicate protections;
-it would neither retrieve bills nor approve them.
+rc3 extends the explicit scan with a staff-enabled foreground watcher, disabled
+on every app launch. It observes one local folder, waits for stable file bytes,
+retains originals and routes candidates to review. It never retrieves portal
+files, changes downloads or approves records. See [acquisition](ACQUISITION.md).
+
+Portfolio Manager preparation uses deterministic local fictional responses only.
+External TEST and LIVE calls remain disabled pending school authorization and
+provider/account/coverage/resolution/recurrence/fee confirmation. My360 portal
+scraping and undocumented APIs remain out of scope. See
+[the connector boundary and later acceptance procedure](PORTFOLIO_MANAGER.md).

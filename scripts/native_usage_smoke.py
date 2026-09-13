@@ -91,9 +91,9 @@ def main():
                         no_overflow()
                     def upload(name,contents):
                         listing()
-                        page.get_by_label('Usage CSV file',exact=True).set_input_files({'name':name,'mimeType':'text/csv','buffer':contents})
+                        page.get_by_label('Usage CSV or XLSX file',exact=True).set_input_files({'name':name,'mimeType':'text/csv','buffer':contents})
                         page.locator('#usage-synthetic').check()
-                        page.get_by_role('button',name='Upload usage CSV for mapping',exact=True).click()
+                        page.get_by_role('button',name='Upload usage file for mapping',exact=True).click()
                         page.get_by_role('heading',name='Retained source',exact=True).wait_for()
                         no_overflow()
                         return get('/usage')['items'][0]['id']
@@ -163,6 +163,61 @@ def main():
                     approve()
                     assert get('/usage')['active_reading_count'] == 3
                     assert get('/overview') == baseline
+                    # Direct XLSX, explicit region, literal provenance and approved layout reuse.
+                    from io import BytesIO
+                    from openpyxl import load_workbook
+                    def shifted_workbook(month):
+                        book=load_workbook(ROOT/'samples/generic-water-usage.xlsx')
+                        sheet=book['Water export']
+                        for row in range(4,7):
+                            for column in ('C','D'):
+                                cell=sheet[f'{column}{row}']
+                                cell.value=cell.value.replace('2026-08-01',f'2026-{month:02d}-01')
+                        output=BytesIO();book.save(output);book.close()
+                        return output.getvalue()
+                    page.set_viewport_size({'width':1440,'height':1000})
+                    workbook_raw=shifted_workbook(10)
+                    xlsx_id=upload('fictional-water.xlsx',workbook_raw)
+                    page.screenshot(path=str(work/'desktop-xlsx-region.png'))
+                    page.locator('[name=header_row]').fill('3')
+                    expect(page.get_by_role('button',name='Save mapping and preview readings',exact=True)).to_be_disabled()
+                    page.locator('[name=first_column]').fill('2')
+                    page.locator('[name=last_column]').fill('7')
+                    page.locator('[name=end_row]').fill('6')
+                    page.get_by_role('button',name='Inspect selected region',exact=True).click()
+                    expect(page.locator('[name=meter_column] option[value=source_meter]')).to_have_count(1)
+                    page.locator('#usage-reuse-layout').check()
+                    mapping()
+                    page.locator('[name=end_row]').fill('5')
+                    expect(page.get_by_role('button',name='Save mapping and preview readings',exact=True)).to_be_disabled()
+                    expect(page.get_by_role('button',name='Approve operational readings',exact=True)).to_be_disabled()
+                    page.locator('[name=end_row]').fill('6')
+                    page.get_by_role('button',name='Inspect selected region',exact=True).click()
+                    expect(page.get_by_role('button',name='Approve operational readings',exact=True)).to_be_disabled()
+                    page.get_by_role('button',name='Save mapping and preview readings',exact=True).click()
+                    page.get_by_role('heading',name='Saved mapping preview · revision 2',exact=True).wait_for()
+                    page.get_by_role('heading',name='Saved mapping preview',exact=False).scroll_into_view_if_needed()
+                    page.screenshot(path=str(work/'desktop-xlsx-preview.png'))
+                    approve()
+                    assert get('/usage')['active_reading_count']==6
+                    assert get(f'/usage/{xlsx_id}')['preview']['provenance']['rows'][0]['value_column']['cell']=='E4'
+                    with page.expect_download() as download:
+                        page.get_by_role('link',name='Download original workbook',exact=True).click()
+                    destination=work/'original.xlsx';download.value.save_as(str(destination))
+                    assert destination.read_bytes()==workbook_raw
+                    page.set_viewport_size({'width':390,'height':844})
+                    later=upload('fictional-later-water.xlsx',shifted_workbook(11))
+                    expect(page.locator('[name=meter_code]')).to_have_value(meter)
+                    expect(page.locator('[name=source_meter]')).to_have_value('SYN-WATER-01')
+                    expect(page.locator('[name=header_row]')).to_have_value('3')
+                    assert get(f'/usage/{later}')['suggested_mapping']['meter_reused'] is True
+                    page.get_by_role('button',name='Save mapping and preview readings',exact=True).click()
+                    page.get_by_role('heading',name='Saved mapping preview',exact=False).wait_for()
+                    page.get_by_role('heading',name='Saved mapping preview',exact=False).scroll_into_view_if_needed()
+                    page.screenshot(path=str(work/'mobile-xlsx-reused-preview.png'))
+                    approve()
+                    assert get('/usage')['active_reading_count']==9
+                    assert get('/overview')==baseline
                     listing()
                     page.get_by_role('heading',name='Active operational readings',exact=True).scroll_into_view_if_needed()
                     page.screenshot(path=str(work/'mobile-readings.png'))
@@ -181,7 +236,7 @@ def main():
     integrity = check(Store(work/'demo','demo',initialize=False))
     result = {'result':'passed','browser':version,'native_http':True,'viewports':['1440x1000','390x844'],
               'workflows':['mapping preview','literal confirmation approval','same-source deduplication','exact original download',
-                           'withdrawal and same-source reattempt','conflicting correction reconciliation','invoice totals unchanged','logout'],
+                           'withdrawal and same-source reattempt','conflicting correction reconciliation','invoice totals unchanged','xlsx region and cell provenance','xlsx exact original download','approved spreadsheet layout and meter reuse','logout'],
               'unexpected_console_or_runtime_errors':len(errors),'unexpected_http_failures':failures,
               'owned_browser_driver_shutdown':'completed','server_exit_code':0,'integrity':integrity}
     (work/'receipt.json').write_text(json.dumps(result,indent=2)+'\n')

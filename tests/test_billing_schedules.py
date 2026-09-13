@@ -83,7 +83,7 @@ def test_schedule_backup_history_privacy_and_stale_revision(ledger,raw_csv,tmp_p
     original=coverage.report('2026-11')
     target=Store(tmp_path/'restored','demo');restore(target,backup(ledger.store),'demo')
     assert Completeness(target).report('2026-11')==original
-    assert check(target)['schema_version']==6
+    assert check(target)['schema_version']==__import__('utilityos').SCHEMA_VERSION
     assert value['reason'] not in json.dumps(ledger.diagnostics('demo'))
     with target.connect() as db:
         with pytest.raises(sqlite3.IntegrityError):db.execute('DELETE FROM billing_schedule_versions')
@@ -96,7 +96,7 @@ def test_explicit_v5_migration_retains_old_state(tmp_path):
     with pytest.raises(ValueError,match='SCHEMA_VERSION_UNSUPPORTED'):Store(directory,'demo')
     assert (directory/'utilityos.sqlite3').read_bytes()==before
     saved=migrate(directory,'demo')
-    assert saved.exists() and check(Store(directory,'demo'))['schema_version']==6
+    assert saved.exists() and check(Store(directory,'demo'))['schema_version']==__import__('utilityos').SCHEMA_VERSION
 
 
 @pytest.mark.parametrize('operation', ['report', 'backup', 'reopen'])

@@ -193,3 +193,32 @@ def test_browser_and_driver_close_on_checkpoint_success_or_failure(monkeypatch, 
     else:
         assert rehearse_update.native_checkpoint('synthetic-browser', 'unused', None, tmp_path, 'synthetic') == {'synthetic': True}
     assert events == ['checkpoint', 'browser_closed', 'driver_stopped']
+
+
+@pytest.mark.parametrize('exit_code,exits_before_stop',[(0,False),(1,False),(1,True)])
+def test_owned_server_nonzero_exit_cannot_publish_clean_stop(monkeypatch,tmp_path,exit_code,exits_before_stop):
+    from contextlib import contextmanager
+    from io import BytesIO
+    from types import SimpleNamespace
+    from scripts import rehearse_update
+    class Process:
+        returncode=None
+        signals=[]
+        def poll(self):return self.returncode
+        def send_signal(self,value):self.signals.append(value)
+        def wait(self,timeout=None):self.returncode=exit_code;return exit_code
+    process=Process()
+    @contextmanager
+    def response(*args,**kwargs):
+        yield BytesIO(b'{"mode":"demo","version":"synthetic"}')
+    release=SimpleNamespace(version='synthetic',code=tmp_path,command=lambda *a:['synthetic'])
+    monkeypatch.setattr(rehearse_update.subprocess,'Popen',lambda *a,**k:process)
+    monkeypatch.setattr(rehearse_update.urllib.request,'urlopen',response)
+    def exercise():
+        with rehearse_update.server(release,tmp_path/'workspace',tmp_path,'synthetic'):
+            if exits_before_stop:process.returncode=exit_code
+    if exit_code:
+        with pytest.raises(ValueError,match='REHEARSAL_SERVER_EXIT_NONZERO'):exercise()
+    else:
+        exercise()
+    assert bool(process.signals) is not exits_before_stop

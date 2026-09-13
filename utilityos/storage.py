@@ -56,7 +56,7 @@ def publish_source(target: Path, raw: bytes):
 
 def read_source(store, row):
     sha, extension = row['sha256'], row['extension']
-    if not re.fullmatch(r'[0-9a-f]{64}', sha) or extension not in {'.csv', '.xml', '.pdf'}:
+    if not re.fullmatch(r'[0-9a-f]{64}', sha) or extension not in {'.csv', '.xml', '.pdf', '.xlsx'}:
         raise ValidationError('SOURCE_REFERENCE_INVALID')
     path=store.sources/(sha+extension)
     if path.is_symlink() or not path.is_file() or path.stat().st_size>8*1024*1024:

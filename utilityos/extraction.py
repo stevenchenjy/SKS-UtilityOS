@@ -15,6 +15,10 @@ UNIT_ALIASES = {'kwh': 'kWh', 'gal': 'gal', 'gallons': 'gal', 'm3': 'm3', 'ccf':
 
 def normalize(name, raw):
     value = text(raw)
+    if name == 'service_days':
+        if not re.fullmatch(r'\d{1,3}',value) or not 1 <= int(value) <= 400:
+            raise ValueError('SERVICE_DAY_COUNT_INVALID')
+        return str(int(value))
     if name in MONEY_FIELDS | NUMBER_FIELDS:
         if name in MONEY_FIELDS:
             value = value.removeprefix('$').strip()

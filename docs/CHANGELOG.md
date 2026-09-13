@@ -1,6 +1,38 @@
 # Release notes
 
-## Unreleased — frontend accessibility maintenance
+## 0.6.0-rc3 — portable deployment and structured acquisition (2026-09-13)
+
+- Add exact, hashed runtime wheel closures for macOS Apple Silicon, Windows x64
+  and Linux x64, separate official Python installer receipts, reproducible offline
+  deployment kits, guided staff launch and a privacy-safe local health report.
+  Installation creates a new code environment and leaves private workspaces
+  untouched. macOS Intel and Windows/Linux OCR remain unsupported.
+- Add optional foreground acquisition with explicit enable/pause/resume/disable,
+  bounded stable-file polling, safe original retention and duplicate protection.
+  Watching starts disabled on every launch. Intake never approves invoices.
+- Add a source-adapter boundary and direct bounded `.xlsx` usage intake with
+  explicit sheet/table selection, cell provenance, reusable approved layouts and
+  meter/building relationships. Formulas, active content and ambiguous semantics
+  fail safely. Canonical invoice CSV and mapped operational CSV remain separate.
+- Extend Green Button forward interval deltas to natural-gas therms and drinkable
+  water m3/US_gal, retaining explicit ESPI links, multipliers, units and quality.
+  Preserve legacy electricity kWh behavior and reject unsupported semantics.
+- Preserve optional water service-day, payment and adjustment fields separately
+  from cumulative readings, consumption, current charges and total due.
+- Prepare Portfolio Manager with a disabled production boundary and deterministic
+  local fixture rehearsal for selections, provenance, pagination, idempotency,
+  revisions, partial failure and disconnect. No TEST/LIVE API, credential storage,
+  portal automation or scheduled remote sync is enabled.
+- Advance to schema 7 through explicit backup-first compatibility migration,
+  preserving historical rows and originals. Actual rc2 upgrade and separate
+  old-code/pre-upgrade-backup rollback passed on the development Mac.
+- Working-tree and freshly extracted installation suites each passed 545 tests;
+  native desktop/mobile, offline handoff and retained extraction checks passed.
+  The candidate is unsigned, untagged and unpublished. Windows/current-runtime CI,
+  native staff hardware and actual provider exports remain unverified. See
+  [verification](VERIFICATION_RC3.md) for precise evidence and limitations.
+
+### Included frontend accessibility maintenance
 
 - Add a skip link, preserve focus after view and filter changes, name native
   dialogs, and retain their built-in keyboard behavior. Clicking dialog padding

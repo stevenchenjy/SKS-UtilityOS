@@ -4,7 +4,7 @@ Continue the working UtilityOS implementation for The Storm King School. Inspect
 
 ## Instruction loading and development behavior
 
-`AGENTS.md` is the persistent project-level instruction source and always governs repository work. Follow its scoped-loading rules: use `README.md` for current capabilities, setup and release state; this document for major milestones, development direction or ambiguous scope; and only relevant subsystem files under `docs/` for focused work. Read `.agents/skills/local-utility-engineering/SKILL.md` for accounting, bill intake/import, extraction, data semantics, support/privacy, migration or release work.
+`AGENTS.md` is the persistent project-level instruction source and always governs repository work. This document supplies current major-milestone direction; explicit user task instructions define the detailed scope of the current slice, subject to `AGENTS.md`. Follow its scoped-loading rules: use `README.md` for current capabilities, setup and release state; this document for major milestones, development direction or ambiguous scope; and only relevant subsystem files under `docs/` for focused work. Read `.agents/skills/local-utility-engineering/SKILL.md` for accounting, bill intake/import, extraction, data semantics, support/privacy, migration or release work.
 
 Inspect actual implementation and tests before assuming a roadmap capability is absent or choosing a rewrite. Completed milestones are context, not a checklist to rebuild or re-audit on every maintenance task, bug fix, test, documentation correction or narrow UI change. Use the full milestone context for major release planning and preserve tested accounting, privacy and operational contracts.
 
@@ -12,27 +12,19 @@ This workspace is exclusively for software development, testing, technical docum
 
 Use relevant installed skills when helpful; review additional skill instructions, dependency licenses, installation behavior, maintenance and fees before adding anything. Prefer project-local development dependencies. Do not change global Codex settings, weaken machine permissions, add accounts, purchase services or expose a server publicly.
 
-## Current trusted development baseline
+## Current development baseline
 
-The verified local **0.5.0** release at commit `0d515181714e8f1f090156e43c957735e26976b7`, identified by annotated tag `v0.5.0`, is the current trusted development baseline. Preserve this and earlier release tags and history. Versions 0.2–0.5 completed the ledger lifecycle, operational readiness, Intelligent Bill Intake, and Private Provider Onboarding / Local Template Studio development milestones:
+Development has progressed beyond the trusted tagged **v0.5.0** release at commit `0d515181714e8f1f090156e43c957735e26976b7`. Preserve that baseline, earlier tags and history. The accepted development starting point was **0.6.0-rc2 / schema 6**, including:
 
-- Invoice review and approval; corrections, replacements, rebills, credits and cancellation; account/meter mapping edits; retained original sources, draft revisions, extraction provenance and audit history.
-- Backup, restore and explicit migration; interruption-safe storage and source recovery; staff passphrase confirmation; privacy-safe operational diagnostics; synthetic large-campus testing.
-- Canonical CSV, PDF intake with manual fallback, optional local English OCR, source evidence, layout-drift detection, local inbox and batch import; experimental explicit bill cadence/completeness groundwork; limited Green Button file import.
-- School-local provider definitions, Provider Studio, immutable layout versions, local validation and explicit activation/retirement, drift and correction evidence, and privacy-safe provider support bundles. Private definitions and their history remain in the external workspace and confidential backups.
+- Building reporting; strict financial approval acknowledgement and revision enforcement.
+- Account-level billing schedules, including alternate-month schedules; mapped operational usage CSV intake; provider-informed synthetic semantics; supervised update rehearsal.
+- Existing ledger lifecycle, retained evidence and immutable review/audit history, backup/restore and explicit migration, privacy-safe diagnostics, Intelligent Bill Intake and Provider Studio capabilities from prior releases.
 
-These capabilities are implemented and should be inspected and extended where a demonstrated need exists. Consult `docs/VERIFICATION.md` and `docs/CHANGELOG.md` for recorded evidence and limits, `docs/BILL_INTAKE.md` and `docs/PROVIDER_STUDIO.md` for those workflows, and relevant subsystem contracts when changing them. Further extraction work needs a demonstrated format or failure case; broadening OCR requires renewed corpus, resource, installation and license evaluation.
+Inspect these existing capabilities before extending them. Consult `docs/VERIFICATION.md` and `docs/CHANGELOG.md` for evidence and limits, and relevant subsystem guides for focused work.
 
-The stack remains FastAPI/SQLite, defusedxml, pdfplumber/PDFium, optional local Tesseract OCR and browser ES modules, with no Node build or required cloud service. Demo and staff databases are separate external workspaces; mode mismatch is rejected. Preserve authentication, host/origin checks, CSRF protection and immutable storage. The current 0.6.0-rc2 candidate uses schema 6 and requires explicit migration from earlier schemas; startup never upgrades a workspace automatically.
+The current **0.6.0-rc3 / schema 7** candidate extends that baseline with portable artifact receipts, foreground acquisition, direct mapped XLSX intake and bounded ESPI support. Inspect current verification for the tested scope and remaining qualification gates. The candidate remains **unsigned and not school-production accepted**. Actual Central Hudson, My360 and Cornwall school-account exports, live connectors, Windows school-machine acceptance and school installation remain externally unverified. Synthetic results do not establish real-provider compatibility or general extraction accuracy. Combined municipal-service financial posting remains unsupported.
 
-This is a development-tested, single-operator local pilot. School installation, private-data acceptance and real-provider compatibility remain separate external validation; fictional-corpus results do not establish general extraction accuracy. Named role enforcement remains deferred under `docs/ACCESS_AND_CONFIGURATION.md`. Distinguish implemented, experimentally tested and externally unverified behavior.
-
-The current unsigned, untagged **0.6.0-rc2** candidate also implements building
-reports, account-level alternate-month billing schedules, generic mapped usage
-CSV evidence and a supervised update rehearsal. These extend the trusted v0.5.0
-baseline without completing the full 0.6 milestone. Inspect the code and current
-verification before rebuilding them. Real-provider export compatibility remains
-unverified; combined municipal-service financial posting remains unsupported.
+The stack remains Python/FastAPI/SQLite with browser ES modules and local extraction. Demo and staff data use separate external workspaces; mode mismatch is rejected. Schema 7 requires explicit migration from schema 6 or supported earlier schemas; startup never upgrades a workspace automatically. Preserve authentication, host/origin checks, CSRF protection and immutable storage. This remains a single-operator local pilot; named role enforcement is deferred under `docs/ACCESS_AND_CONFIGURATION.md`.
 
 ## Established staff intake workflow
 
@@ -40,45 +32,69 @@ Authorized staff manually downloads a utility bill from the provider portal, the
 
 For a new provider or changed layout, staff uses Provider Studio locally to create an immutable layout version, validate it against approved local bills and explicitly activate it. Initial onboarding bills require manual review and completion; activation requires at least two distinct approved sources and the documented validation gates. Active templates are reused across future bills until a layout change or repeated correction triggers review. Drift, ambiguity and unsupported fields require investigation or manual completion; they never authorize automatic posting or silent rule changes. New versions preserve earlier definitions, source evidence and extraction history. The developer does not need the private source document or private layout text.
 
-## 0.6.0 — Operational Analytics and Coverage Control
+## 0.6.0-rc3 — Portable Deployment and Structured Acquisition
 
-The next planned milestone turns the reviewed ledger into a practical Finance and Facilities operating tool. Prioritize complete slices that can be developed and tested entirely with synthetic data. Inspect existing inventory, reporting and cadence behavior before extending it; the following are potential development areas, not claims of completed 0.6 functionality.
+The active milestone makes UtilityOS reproducible on another authorized school computer and reduces repetitive data acquisition work while preserving local control and explicit financial review. The target operating model is:
 
-- **Campus utility inventory:** Present Campus → Building → Meter / service point → Account → Provider as an operational navigation hierarchy while retaining actual relationship history. Show active/historical relationships, unmapped or incomplete links, commodity, confirmed expected cadence, first/last observed bill, current provider/account and supplier/account changes. Account identity is not physical meter identity; preserve stable service points across changes and leave shared meters unallocated without a defensible staff mapping.
-- **Cost reporting:** Report reviewed active invoices by campus, building, utility type, provider, account, meter/service point and invoice month; support fiscal or selected periods when explicitly configured. Include credits, supply-only charges and delivered fuels correctly, without double-counting replaced invoices or presenting incomplete coverage as campus totals.
-- **Effective utility rates:** Where valid, show electricity $/kWh, water cost per gallon or configured volume unit, gas cost per therm or retained billing unit, and oil/propane cost per purchased gallon. Expose the calculation, included charges, quantity and source period. Keep incompatible units separate, avoid zero-denominator rates, and separate supply-only cost from measured consumption unless a confirmed relationship and matching period support combining them.
-- **Coverage and missing-bill control:** Extend explicit cadence to distinguish expected invoices, received documents, pending review, approved invoices, missing expected invoices and irregular/delivery-based services. Never label a bill missing unless staff explicitly confirmed the service relationship and cadence. A received document is not necessarily an approved or complete bill.
-- **Comparable-period trends:** Allow month-over-month and year-over-year comparisons only with sufficiently comparable coverage and periods. Explain why a comparison is valid or incomplete; do not present percentage changes as campus-wide performance when buildings, meters or billing coverage differ materially.
-- **Building-level performance:** Use building area only when explicitly entered and confirmed. Support EUI-style calculations only when units and coverage permit, retaining original billing periods and source units. Do not silently calendarize monthly bills; any later calendarization or normalization must expose methods, conversion factors, assumptions and estimates.
-- **Transparent anomaly flags:** Start with deterministic checks for unusually high consumption relative to the same service point's history, high effective rates, unexpected zero consumption, duplicate/overlapping billed consumption, long billing periods, estimated-reading streaks or confirmed missing invoices. Explain each flag and its comparison basis. Billing data alone cannot establish causes such as HVAC failure or a leak.
-- **Finance / Facilities views:** Keep one authoritative dataset. Finance views may emphasize cost, invoices, providers, missing bills, credits/rebills and effective rates; Facilities views may emphasize buildings, meters, consumption, trends, gaps and anomaly investigation. Visual separation alone does not justify named role enforcement; retain single-operator access boundaries until school requirements justify multi-user authorization.
+provider-native source → local acquisition → local parsing → retained source evidence → reusable meter/building mapping → staff review → explicit financial approval where applicable → authoritative local reporting.
 
-## Permanent accounting and evidence contracts
+### 1. Portable deployment
 
-Keep invoices and current charges separate from consumption and interval readings. Use integer cents, decimal quantities and known units; preserve invoice dates, original billing periods, exclusive-end service dates, measurement semantics and balance-due distinctions. Supply-only charges add no repeated consumption; oil/propane delivery volume represents purchases. Current charts group by invoice month. Retain negative credits and full precision; never silently edit reviewed history or count both an original and its approved replacement.
+Make installation and reproduction practical on supported school computers: reproducible dependency installation, platform-specific dependency/hash receipts, offline-friendly installation, straightforward first-run setup, separate code and private data, health/integrity checks, update and rollback, and macOS/Windows validation where practical. Report unavailable platform checks honestly.
 
-Preserve original source bytes, machine evidence, prior reviewed values, mapping history and audit bindings. Retain local-folder stability checks, duplicate protection, failure status and staff review. Detect duplicate invoices, overlapping billed consumption and revised intervals; unsupported semantics must remain visible validation failures. Local layout validation or extraction preview never approves an invoice or reparses historical evidence silently.
+Do not require Docker, a hosted database, Node, paid runtime services or unattended remote administration without a demonstrated requirement. A requirement does not waive school approval or the prohibition on unattended remote updaters.
 
-For Green Button XML extensions, resolve the correct ReadingType for each MeterReading. Validate commodity, unit, power multiplier, direction, accumulation/aggregation behavior, duration and quality. Retain UTC starts and interval semantics, protect the XML parser, confirm mappings, and test duplicates, conflicts, revised records, overlaps, daylight-saving boundaries and unsupported data. Current support is a limited forward-delta electricity-energy file subset, not certification or universal utility compatibility.
+### 2. Staff-controlled automatic local acquisition
 
-## Data, support and connection boundaries
+The existing explicit local-folder scan may be extended into an opt-in watcher while UtilityOS is running. It may observe one explicitly configured local folder, wait for downloaded files to become stable, detect new files, fingerprint and retain them, route them through the appropriate local adapter and place resulting records into review queues. Preserve duplicate protections and visible failure status.
 
-Develop and demonstrate only with synthetic fixtures and fictitious labels. Staff alone handles authorized documents inside a school-controlled installation. The developer has no authorization to access utility portals or private school records. Never request portal passwords, confidential invoices, private layouts, production databases or full staff backups through AI tools or the development repository. Do not attach AI coding tools to staff data or staff browser sessions. Keep private workspaces outside the repository and cloud-synced folders, and temporary evidence outside the repository.
+The watcher must not log into portals, store utility portal credentials, delete or modify staff downloads, approve financial invoices or operate as an unattended system daemon while UtilityOS is closed.
 
-Support uses fixed codes and positive, schema-validated allowlists. Exclude identifiers, account/provider labels, source names/snippets, filenames/paths, quantities, charges and secrets. Staff previews the exact safe report and explicitly exports it; full backups and ledger exports remain private. Test exclusion with synthetic sentinels. When safe diagnostics are insufficient, authorized school IT inspects the private installation and supplies a synthetic reproduction.
+### 3. Provider-native structured files
 
-Keep these outside 0.6 unless a demonstrated requirement appears: portal automation/downloads or credentials; email-account integration; paid aggregators; cloud OCR or LLM extraction; public dashboards; multi-user servers or school SSO; automatic financial approval; weather normalization requiring a live external service; automatic ENERGY STAR synchronization; and carbon calculations without reviewed emission-factor provenance. A requirement alone does not waive approval or privacy boundaries, and every financial invoice still needs staff approval.
+PDF remains a supported evidence source, but is not the universal input format. Prefer provider-native structured data when available. Support distinct acquisition adapters for PDF invoices, Green Button XML, CSV usage, spreadsheet usage exports and future explicitly approved remote connectors. Keep financial invoice data and operational usage evidence separate; overlapping evidence must not double-count usage.
 
-Keep Connect My Data/OAuth, automated utility access, email integrations, live feeds and external APIs disabled without a specific school-approved decision. Before any connector, confirm actual provider/account-class coverage, fields, granularity, lag, consent, authentication, fees, retention and failure/revocation behavior. School authorization of transfers and written fee confirmation are required. The user requires no added recurring data-access fee. Do not introduce paid connectors or cloud extraction dependencies by default. No cloud OCR or metered model API may receive school bills. Preserve staff-obtained file imports without any connector; a royalty-free standard does not guarantee free provider access.
+### 4. My360 spreadsheet workflow
 
-## Verification, installation and release
+Public My360 documentation supports consumption exports to Excel or PDF, as recorded in `docs/PROVIDER_FILE_WORKFLOWS.md`. Direct local spreadsheet intake is a justified development target; the exact Cornwall-on-Hudson tenant workbook schema remains unverified.
 
-For focused work, run the checks needed for the affected contracts and report exact outcomes; do not repeat entire historical release audits. Use `python -m pytest -q` for backend tests and fresh external synthetic workspaces for import/browser checks. Exercise affected native browser flows, including relevant downloads, exports, cookies and logout at desktop/mobile widths; identify any mocks, transport bridges or blocked checks honestly.
+Develop a safe generic architecture using synthetic files, reusable mappings, retained original workbooks, explicit units/timestamps and staff review. Do not advertise certified My360 compatibility before authorized school-side validation. Do not use cloud spreadsheet conversion, execute workbook macros or external links, or treat formulas or cached formula values as trusted meter data.
 
-Perform full baseline and release verification for a tagged release, migration, recovery change, accounting-semantic change, security-sensitive change or other high-risk milestone. Load the applicable verification, installation and release guidance. Cover financial calculations, correction/rebill/credit semantics, imports and duplicates, authorization/privacy, source retention, interruption recovery, backup/restore and migration/rollback. Verify supported OS launch behavior and native browser paths; run current dependency advisories when network access is available and report unverified status. Do not weaken browser or device administration restrictions.
+### 5. Green Button
 
-Installation must leave the private data directory untouched. Stage reviewed code separately, verify trusted provenance and file integrity, stop the old app, create a consistent backup, check schema compatibility and test before a school-approved version switch. Migrations require an explicit operator action and backup; preserve old code and pre-upgrade backups for rollback into a separate recovery directory. Never build an unattended remote updater. Releases remain unsigned: hashes prove integrity, while trusted provenance needs a separately approved distribution/signing process; explain platform signing requirements and costs before choosing them.
+Move parsing toward official ESPI semantics while preserving safe rejection of unsupported ReadingType, commodity, unit, multiplier, direction, accumulation, aggregation, duration or quality semantics. Preserve ReadingType link resolution, UTC interval starts, XML defenses, mapping confirmation and duplicate/conflict checks under `AGENTS.md`.
 
-Before staff use, school IT must review code/dependencies, supported OS behavior, disk/account protections, retention and maintenance ownership. Application access to stored records requires trust; data/code separation and safe diagnostics do not eliminate it. Respect school egress controls. Multi-user deployment needs an explicit TLS, identity, permissions, concurrency and audit-attribution design. Public GitHub publishing, school installation, external services and live data are separate authorization decisions.
+Current support remains a limited tested file subset. Provider support must be evidence-based; do not label UtilityOS a certified Central Hudson connector before an authorized school installation validates actual exports.
 
-For a major release, finish with a runnable synthetic demonstration, relevant changelog/staff-guide updates, exact verification outcomes, a reviewed source-only release and remaining school decisions. Complete release verification before creating a new tag. Narrow work need not produce a release or unrelated documentation changes. Continue the chosen useful slice to completion without expanding beyond the requested scope.
+### 6. Future connector architecture
+
+A disabled external connector boundary may be developed for future approved acquisition. ENERGY STAR Portfolio Manager is a reasonable future target: EPA documents web services and Central Hudson publicly describes MyMeter-to-Portfolio-Manager transfer capabilities. Use the public evidence and limits in `docs/PROVIDER_FILE_WORKFLOWS.md` as planning context.
+
+Live synchronization stays disabled until the school separately approves the transfer and confirms provider/account eligibility, meter coverage, fields, resolution, update recurrence, authentication, retention, revocation and fees. Preserve existing connection admission requirements, including consent, publication lag and failure behavior. A free/open API does not establish that a provider-specific transfer is free or authorized. The user requires no added recurring data-access fee. My360 portal scraping and undocumented API use remain out of scope.
+
+## Confirmed school workflow facts
+
+The relevant school water billing workflow is building-specific, with separately handled water bills/meters. Building, meter, account and provider identities remain separate concepts. Confirmed account/meter/building mappings should be reusable across future imports; a provider layout should be reusable across buildings when the document layout is the same. Preserve stable meter identity and relationship history, leaving shared meters unallocated until staff confirms a defensible mapping.
+
+The recently supplied water-bill screenshots are reference evidence for semantics and layout planning only; they must not become production/private fixtures. Development uses synthetic examples.
+
+Preserve distinct water invoice fields: service period, previous reading, present reading, billed consumption, current water charge, previous balance, payments, adjustments, current charges due and total due. Do not infer a measurement unit the source does not establish or derive authoritative historical quantities from bill chart graphics, payment stamps or handwritten annotations.
+
+## Subsequent analytics slices
+
+Broad Operational Analytics is no longer the immediate next priority. Effective utility rates, comparable-period trends, EUI, anomaly analysis and expanded Finance/Facilities dashboards remain useful subsequent slices unless needed to complete portable acquisition. The immediate priority is trustworthy data on another school-controlled machine with less repeated staff handling.
+
+## Permanent contracts and verification
+
+Defer to `AGENTS.md` and the relevant subsystem contracts rather than duplicating them here:
+
+- Develop with synthetic data; never request school portal passwords or private bills. Staff handles authorized documents locally. Keep private workspaces outside Git and cloud-synced folders, and away from AI tools and developer access.
+- Preserve original evidence, extraction provenance, immutable review/audit history and mappings. Keep invoice charges and measured usage separate, retain integer cents and decimal quantities, and fail closed on unsupported semantics. Preserve supply-only, delivered-fuel, shared-meter and invoice-month reporting contracts.
+- Require staff review and explicit financial approval with acknowledgement and revision enforcement. Local extraction, mapping reuse, provider activation and acquisition never authorize automatic financial posting. Preserve Provider Studio's immutable versions and validation gates.
+- Use fixed-schema, allowlisted privacy-safe diagnostics; private exports and backups remain with staff. Reproduce support failures synthetically or through authorized school IT.
+- Do not introduce paid connectors by default or silently enable an external live service. Preserve local file intake without connectors and all school approval boundaries for external access.
+- Do not weaken installation, backup, migration or rollback protections. Installation leaves private data untouched; version switches require backup, schema compatibility checks, tests and school approval. Migration is explicit; retain prior code and pre-upgrade backups for rollback into a separate recovery directory. Never build an unattended remote updater. Hash receipts establish integrity, not trusted provenance; releases remain unsigned pending a separately approved distribution/signing process.
+
+For focused work, verify affected contracts and report exact outcomes without repeating historical audits. Use `python -m pytest -q` for backend tests and fresh external synthetic demo workspaces for import/browser checks. Exercise relevant desktop/mobile flows, downloads and logout; respect administration restrictions and report blocked checks.
+
+For high-risk changes or release preparation, load `docs/VERIFICATION.md`, `docs/STAFF_INSTALL_AND_UPDATES.md`, `docs/RELEASE_AND_SIGNING.md` and other applicable guidance. Complete the required OS, dependency advisory, invoice correction/rebill, duplicate import, source retention, privacy, backup/restore and migration/rollback checks. Public publishing, school installation, external services and live data remain separate authorization decisions. Narrow work need not produce a release or unrelated changes; milestone guidance alone does not authorize implementation outside the user's current task.

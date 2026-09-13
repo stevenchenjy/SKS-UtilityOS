@@ -75,7 +75,7 @@ def main():
         context.close();browser.close()
     original=Store(work/'demo','demo');saved=backup(original);target=Store(work/'restored','demo');restore(target,saved,'demo')
     assert Completeness(original).report('2025-05')==Completeness(target).report('2025-05')
-    assert check(target)['schema_version']==6
+    assert check(target)['schema_version']==__import__('utilityos').SCHEMA_VERSION
     assert not errors,errors
     result={'result':'passed','viewports':['1440x1000','390x844'],'native_http':True,'console_errors':errors,
             'checks':['odd-month issue and grace','quiet month','mobile exception save','unchanged charges','logout','backup restore']}

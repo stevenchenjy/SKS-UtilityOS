@@ -1,5 +1,13 @@
 # Reproducible local update rehearsal
 
+Current rc3 evidence: the September 13, 2026 native rehearsal from accepted rc2
+commit `23a2b659575a74442f8ec6fc15c0345a9544e97d` passed explicit schema **6 → 7**
+migration, all 27 pre-existing non-audit data tables, four retained source files,
+exact ledger/source downloads and separate old-code/pre-upgrade-backup rollback.
+The supervised runner exited zero with its servers and browser drivers stopped.
+This was macOS Apple Silicon/Python 3.13.2, not Windows acceptance. See
+[rc3 verification](VERIFICATION_RC3.md) for the complete qualification boundary.
+
 This developer tool runs the release-switch workflow on newly created synthetic
 data. It is not a staff installer, background updater, or authorization to open
 school records. It accepts two separately installed, trusted source releases
@@ -119,13 +127,15 @@ Prefer approved original-file or structured-data delivery that can feed the
 retained-source/review boundary. PDF files and canonical CSV already use that
 boundary. Generic mapped operational CSV import and account billing schedules
 are implemented; they do not obtain files or post invoice charges. Provider-specific
-billing adapters, API/EDI adapters, credentials, automatic acquisition scheduling
-and automatic folder intake remain future work. Green Button usage coverage does not
+billing adapters, API/EDI adapters, credentials and remote acquisition scheduling
+remain future work. rc3 adds a staff-controlled foreground local watcher and
+direct mapped `.xlsx` intake; see [acquisition](ACQUISITION.md). Green Button usage coverage does not
 establish complete financial-invoice coverage. Browser download automation is
 supplier-specific and needs explicit permission and a reauthentication strategy.
 
 No connector is enabled by the update rehearsal. Until a supplier-specific
-decision, keep picker/drop and explicit local-folder scanning available. Future
+decision, keep picker/drop, explicit local-folder scanning and optional foreground
+watching available. Future
 retrieval must stage drafts, preserve original bytes and revisions, detect
 duplicates/rebills and leave financial approval with staff. Use synthetic source
 simulators for connection failures; production validation stays on school systems.

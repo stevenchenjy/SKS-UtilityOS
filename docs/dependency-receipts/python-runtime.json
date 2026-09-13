@@ -1,0 +1,29 @@
+{
+  "format": "utilityos-python-runtime-receipt-v1",
+  "python": "3.13.15",
+  "implementation": "CPython",
+  "abi": "cp313 (GIL build)",
+  "reviewed_on": "2026-09-13",
+  "license": "PSF-2.0 and bundled third-party notices",
+  "license_reference": "https://docs.python.org/3.13/license.html",
+  "source_reference": "https://www.python.org/downloads/release/python-31315/",
+  "validation": "Downloaded bytes match SHA-256 on official release page. Installer execution and publisher signature acceptance remain target-machine checks. No interpreter was installed.",
+  "artifacts": [
+    {
+      "target": "macos-arm64",
+      "filename": "python-3.13.15-macos11.pkg",
+      "sha256": "3b7eaf7f29825f796e8267024435540ddf1f17fc9a97ad58095daa7a75bfdcd3",
+      "size": 72078932,
+      "url": "https://www.python.org/ftp/python/3.13.15/python-3.13.15-macos11.pkg",
+      "signature_reference": "https://www.python.org/ftp/python/3.13.15/python-3.13.15-macos11.pkg.sigstore"
+    },
+    {
+      "target": "windows-x64",
+      "filename": "python-3.13.15-amd64.exe",
+      "sha256": "edec09c4853aeae9ac36efb8c9f95b6b8e2fee65eee56d9767a8b7c69c574403",
+      "size": 29452944,
+      "url": "https://www.python.org/ftp/python/3.13.15/python-3.13.15-amd64.exe",
+      "signature_reference": "https://www.python.org/ftp/python/3.13.15/python-3.13.15-amd64.exe.sigstore"
+    }
+  ]
+}

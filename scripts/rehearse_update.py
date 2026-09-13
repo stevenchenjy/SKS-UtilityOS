@@ -158,6 +158,7 @@ def server(release, workspace, work, label):
                     process.kill()
                     process.wait()
                     raise ValueError('REHEARSAL_GRACEFUL_STOP_FAILED') from None
+            require(process.returncode == 0, 'REHEARSAL_SERVER_EXIT_NONZERO')
 
 
 def browser_checkpoint(browser, url, release, work, label, *, import_pdf=False, expected=None):

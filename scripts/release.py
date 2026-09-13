@@ -23,7 +23,7 @@ ROOT_FILES={'README.md','AGENTS.md','MASTER_PROMPT.md','LICENSE','NOTICE.md','.g
             'Launch-Demo.command','Launch-Staff.command'}
 CI_FILE='.github/workflows/synthetic-ci.yml'
 FOLDERS={'utilityos','web','samples','tests','scripts','docs','.agents'}
-SUFFIXES={'.py','.js','.css','.html','.md','.json','.csv','.xml','.pdf','.sh','.ps1','.txt','.sql'}
+SUFFIXES={'.py','.js','.css','.html','.md','.json','.csv','.xml','.pdf','.sh','.ps1','.txt','.sql','.xlsx'}
 SKIP={'__pycache__','.pytest_cache','.venv','.git','node_modules','backups','sources','evidence','artifacts','dist','build','venv','env'}
 
 def source_allowed(relative):
@@ -34,7 +34,7 @@ def source_allowed(relative):
         return False
     if len(parts)==1:
         return relative.name in ROOT_FILES
-    return parts[0] in FOLDERS and relative.suffix in SUFFIXES and (relative.suffix.lower() not in {'.pdf','.csv','.xml'} or parts[0]=='samples')
+    return parts[0] in FOLDERS and relative.suffix in SUFFIXES and (relative.suffix.lower() not in {'.pdf','.csv','.xml','.xlsx'} or parts[0]=='samples')
 
 def source_files(root:Path):
     for path in sorted(root.rglob('*')):
@@ -45,7 +45,7 @@ def source_files(root:Path):
         if len(relative.parts)==1:
             if relative.name not in ROOT_FILES:continue
         elif relative.as_posix()!=CI_FILE and (relative.parts[0] not in FOLDERS or path.suffix not in SUFFIXES):continue
-        if path.suffix.lower() in {'.pdf','.csv','.xml'} and relative.parts[0]!='samples':
+        if path.suffix.lower() in {'.pdf','.csv','.xml','.xlsx'} and relative.parts[0]!='samples':
             raise ValueError('ONLY_REVIEWED_SYNTHETIC_SAMPLE_DOCUMENTS_MAY_BE_PACKAGED')
         if source_allowed(relative):
             yield relative.as_posix(),path.read_bytes()

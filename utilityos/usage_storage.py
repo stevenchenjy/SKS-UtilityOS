@@ -84,7 +84,7 @@ def verify(db):
                 identifier = row['id'] if table == 'usage_imports' else row['import_id']
                 if data.get('import_id') != identifier:
                     raise ValueError()
-                code = {'usage_imports':'IMPORT_USAGE_CSV','usage_previews':'PREVIEW_USAGE',
+                code = {'usage_imports':'IMPORT_USAGE_XLSX' if data.get('parser') == 'generic-mapped-xlsx-v1' else 'IMPORT_USAGE_CSV','usage_previews':'PREVIEW_USAGE',
                         'usage_decisions':'APPROVE_USAGE' if data.get('state') == 'approved' else 'REJECT_USAGE',
                         'usage_withdrawals':'WITHDRAW_USAGE'}[table]
                 expected_events.add((code,row['payload_hash']))
@@ -116,7 +116,7 @@ def verify(db):
                     or parent not in decisions or (decisions[parent]['state'] != 'rejected'
                     and not db.execute('SELECT 1 FROM usage_withdrawals WHERE import_id=?',(parent,)).fetchone())):
                     raise ValueError()
-        actual_events = {(r[0],r[1]) for r in db.execute("SELECT code,related_hash FROM audit_events WHERE code IN ('IMPORT_USAGE_CSV','PREVIEW_USAGE','APPROVE_USAGE','REJECT_USAGE','WITHDRAW_USAGE')")}
+        actual_events = {(r[0],r[1]) for r in db.execute("SELECT code,related_hash FROM audit_events WHERE code IN ('IMPORT_USAGE_CSV','IMPORT_USAGE_XLSX','PREVIEW_USAGE','APPROVE_USAGE','REJECT_USAGE','WITHDRAW_USAGE')")}
         if expected_events != actual_events:
             raise ValueError()
         for identifier, data in decisions.items():

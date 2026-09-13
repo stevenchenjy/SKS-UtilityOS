@@ -214,11 +214,20 @@ class Ledger(BillLifecycle, InventoryEditing):
             payload=stored_payload(stage,db)
             document=db.execute('SELECT sha256,extension FROM documents WHERE id=?',(stage['document_id'],)).fetchone()
             originals=parse_greenbutton(read_source(self.store,document))
-            if payload not in originals:
+            comparable = originals
+            if set(payload) == {'source_channel','meter_code','unit','metadata','readings'} and all(
+                    set(r) == {'start_utc','duration_s','quantity','quality'} for r in payload['readings']):
+                # Read schema-6 pending XML without rewriting its original review
+                # payload. Project only the exact frozen legacy electricity shape.
+                comparable = [{key: ([{k:r[k] for k in ('start_utc','duration_s','quantity','quality')}
+                                      for r in original['readings']] if key == 'readings' else original[key])
+                               for key in payload} for original in originals if original['commodity'] == 'electricity']
+            if payload not in comparable:
                 raise ValidationError('DRAFT_DATA_DAMAGED_RECOVERY_REQUIRED')
-            meter=db.execute("SELECT id FROM meters WHERE code=? AND commodity='electricity' AND unit='kWh'",(meter_code,)).fetchone()
+            commodity = payload.get('commodity', 'electricity')
+            meter=db.execute("SELECT id FROM meters WHERE code=? AND commodity=?",(meter_code,commodity)).fetchone()
             if not meter:
-                raise ValidationError('MAP_TO_EXISTING_ELECTRICITY_KWH_METER')
+                raise ValidationError('MAP_TO_EXISTING_METER_WITH_MATCHING_COMMODITY')
             # One consumption stream per local meter in this pilot prevents a
             # second supplier/usage point from silently duplicating the stream.
             if db.execute('SELECT 1 FROM interval_channels WHERE source_channel=? AND meter_id<>?',(payload['source_channel'],meter['id'])).fetchone():
@@ -289,7 +298,7 @@ class Ledger(BillLifecycle, InventoryEditing):
                     item.update({'label':payload.get('invoice_number') or 'PDF requires staff entry','provider':payload.get('provider') or 'Unassigned',
                                  'current_total':payload.get('current_total') or None})
                 else:
-                    item.update({'label':'Electricity interval file','provider':'Map to a local meter','interval_count':len(payload['readings'])})
+                    item.update({'label':payload.get('commodity','electricity').replace('_',' ').title()+' interval file','provider':'Map to a local meter','interval_count':len(payload['readings'])})
                 result.append(item)
         return result
 
@@ -321,10 +330,13 @@ class Ledger(BillLifecycle, InventoryEditing):
                 item['original_bill']=self._bill_detail(db,item['correction_of']) if item['correction_of'] else None
                 item['draft_history']=[dict(r) for r in db.execute('SELECT at,revision,reason FROM draft_history WHERE staged_id=? ORDER BY revision',(staged_id,))]
             else:
+                item['payload'].setdefault('commodity','electricity')
                 readings=item['payload'].pop('readings')
                 item['payload'].update({'interval_count':len(readings),'first_utc':readings[0]['start_utc'],
                                        'last_utc':readings[-1]['start_utc']+readings[-1]['duration_s'],
-                                       'total_kwh':format(sum(Decimal(r['quantity']) for r in readings),'f')})
+                                       'total_quantity':format(sum(Decimal(r['quantity']) for r in readings),'f')})
+                if item['payload']['commodity'] == 'electricity':
+                    item['payload']['total_kwh'] = item['payload']['total_quantity']
         return item
 
     def overview(self, month=None, building=None):
@@ -391,7 +403,9 @@ class Ledger(BillLifecycle, InventoryEditing):
 
     def intervals(self,meter_code=None):
         with self.store.connect() as db:
-            channels=[dict(r) for r in db.execute('SELECT c.id,m.code,m.unit,b.name building FROM interval_channels c JOIN meters m ON m.id=c.meter_id LEFT JOIN buildings b ON b.id=m.building_id ORDER BY code')]
+            channels=[dict(r) for r in db.execute('SELECT c.id,m.code,m.commodity,c.metadata,b.name building FROM interval_channels c JOIN meters m ON m.id=c.meter_id LEFT JOIN buildings b ON b.id=m.building_id ORDER BY code')]
+            for row in channels:
+                row['unit'] = json.loads(row.pop('metadata')).get('normalized_unit','kWh')
             channel=next((row for row in channels if row['code']==meter_code),channels[0] if channels else None)
             rows=[dict(r) for r in db.execute('SELECT start_utc,duration_s,quantity,quality FROM interval_readings WHERE channel_id=? ORDER BY start_utc DESC LIMIT 1000',(channel['id'],))][::-1] if channel else []
             total_count=db.execute('SELECT COUNT(*) FROM interval_readings WHERE channel_id=?',(channel['id'],)).fetchone()[0] if channel else 0

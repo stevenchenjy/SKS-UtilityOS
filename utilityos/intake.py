@@ -6,6 +6,7 @@ import stat
 import threading
 import time
 from .audit import now, event
+from .adapters import SourceAdapters, identify
 from .config import Config, ROOT, MAX_UPLOAD
 from .intake_storage import get_extraction
 from .parsers import ValidationError
@@ -17,6 +18,7 @@ class Intake:
     def __init__(self, ledger, mode):
         self.ledger, self.store, self.mode = ledger, ledger.store, mode
         self.scan_lock = threading.Lock()
+        self.adapters = SourceAdapters(ledger)
 
     def recover_interrupted(self):
         # Called once at application startup while the launcher owns its lock.
@@ -40,12 +42,14 @@ class Intake:
         result = {'staged_ids':[], 'count':0}
         code, state, document_id = '', 'extracted', None
         try:
-            result = self.ledger.import_file(filename, raw)
+            result = self.adapters.import_file(filename, raw)
+            if result.get('duplicate_source'):
+                state, code = 'duplicate', 'DUPLICATE_SOURCE_DOCUMENT'
             with self.store.connect() as db:
                 document_id = db.execute('SELECT id FROM documents WHERE sha256=?', (digest,)).fetchone()[0]
         except ValidationError as exc:
             code = exc.code
-            state = 'duplicate' if code == 'DUPLICATE_SOURCE_DOCUMENT' else 'unsupported' if code == 'SUPPORTED_FILES_CSV_XML_PDF' else 'failed_safely'
+            state = 'duplicate' if code == 'DUPLICATE_SOURCE_DOCUMENT' else 'unsupported' if code in {'SUPPORTED_FILES_CSV_XML_PDF','SUPPORTED_FILES_CSV_XML_PDF_XLSX'} else 'failed_safely'
             if state == 'duplicate':
                 with self.store.connect() as db:
                     document_id = db.execute('SELECT id FROM documents WHERE sha256=?', (digest,)).fetchone()[0]
@@ -60,10 +64,30 @@ class Intake:
     def _decorate(self, db, row):
         item = dict(row)
         item['staged_ids'] = []
+        item['usage_ids'] = []
+        item['pending_count'] = 0
+        try:
+            item['adapter'] = identify(item['filename'])
+        except ValidationError:
+            item['adapter'] = 'unsupported'
         if item['document_id'] is None:
             return item
         stages = list(db.execute('SELECT id,status,kind FROM staged WHERE document_id=? ORDER BY id', (item['document_id'],)))
         item['staged_ids'] = [row['id'] for row in stages]
+        item['pending_count'] = sum(row['status'] == 'pending' for row in stages)
+        usage = list(db.execute('''SELECT u.id, d.state, w.import_id withdrawn FROM usage_imports u
+            LEFT JOIN usage_decisions d ON d.import_id=u.id LEFT JOIN usage_withdrawals w ON w.import_id=u.id
+            WHERE u.document_id=? ORDER BY u.id''', (item['document_id'],)))
+        if usage:
+            item['usage_ids'] = [r['id'] for r in usage]
+            item['adapter'] = 'usage_xlsx' if item['filename'].lower().endswith('.xlsx') else 'usage_csv'
+            item['pending_count'] = sum(r['state'] is None for r in usage)
+            if item['state'] != 'duplicate':
+                last = usage[-1]
+                item['state'] = 'needs_mapping' if last['state'] is None else 'withdrawn' if last['withdrawn'] else last['state']
+            return item
+        if item['adapter'] == 'csv':
+            item['adapter'] = 'invoice_csv'
         if item['state'] == 'duplicate':
             return item
         statuses = {row['status'] for row in stages}
@@ -155,34 +179,51 @@ class Intake:
                 for index,entry in enumerate(entries):
                     if index>=1000:
                         raise ValidationError('INBOX_EXCEEDS_1000_ENTRIES')
-                    if not entry.name.startswith('.') and Path(entry.name).suffix.lower() in {'.pdf','.csv','.xml'}:
+                    if not entry.name.startswith('.') and Path(entry.name).suffix.lower() in {'.pdf','.csv','.xml','.xlsx'}:
                         candidates.append(Path(entry.path))
             results=[]
             for candidate in sorted(candidates)[cursor:cursor+MAX_BATCH]:
                 try:
-                    before=candidate.lstat()
-                    if not stat.S_ISREG(before.st_mode) or before.st_size>MAX_UPLOAD:
-                        raise ValidationError('INBOX_FILE_UNSAFE_OR_TOO_LARGE')
-                    if time.time_ns()-before.st_mtime_ns<2_000_000_000:
-                        raise ValidationError('INBOX_FILE_STILL_CHANGING_RESCAN')
-                    descriptor=os.open(candidate,os.O_RDONLY | getattr(os,'O_NOFOLLOW',0))
-                    with os.fdopen(descriptor,'rb') as stream:
-                        opened=os.fstat(stream.fileno())
-                        raw=stream.read(MAX_UPLOAD+1)
-                        after=os.fstat(stream.fileno())
-                    current=candidate.lstat()
-                    identity=lambda item:(item.st_dev,item.st_ino,item.st_size,item.st_mtime_ns,item.st_ctime_ns)
-                    if identity(before)!=identity(opened) or identity(opened)!=identity(after) or identity(after)!=identity(current) or len(raw)!=before.st_size:
-                        raise ValidationError('INBOX_FILE_CHANGED_DURING_READ_RESCAN')
+                    raw=self.read_stable(candidate)
                     results.append(self.import_file(candidate.name,raw,'inbox'))
                 except (OSError,ValueError) as exc:
                     code=exc.code if isinstance(exc,ValidationError) else 'INBOX_FILE_UNREADABLE_RESCAN'
-                    with self.store.connect() as db:
-                        identifier=db.execute("INSERT INTO intake_attempts(filename,sha256,origin,started_at,finished_at,state,code) VALUES (?,'','inbox',?,?,'failed_safely',?)",
-                                              (candidate.name,now(),now(),code)).lastrowid
-                        event(db,'INTAKE_ATTEMPT')
-                    results.append(self.item(identifier))
+                    results.append(self.record_failure(candidate.name,code))
             remaining=max(0,len(candidates)-cursor-MAX_BATCH)
             return {'results':results,'remaining':remaining,'next_cursor':cursor+MAX_BATCH if remaining else None}
         finally:
             self.scan_lock.release()
+
+
+    @staticmethod
+    def identity(item):
+        return (item.st_dev,item.st_ino,item.st_size,item.st_mtime_ns,item.st_ctime_ns)
+
+    def read_stable(self, candidate):
+        before=candidate.lstat()
+        if not stat.S_ISREG(before.st_mode) or before.st_size>MAX_UPLOAD:
+            raise ValidationError('INBOX_FILE_UNSAFE_OR_TOO_LARGE')
+        if time.time_ns()-before.st_mtime_ns<2_000_000_000:
+            raise ValidationError('INBOX_FILE_STILL_CHANGING_RESCAN')
+        # A checked regular file can be replaced before open. Nonblocking mode
+        # prevents a replacement FIFO from hanging intake/shutdown on POSIX.
+        descriptor=os.open(candidate,os.O_RDONLY | getattr(os,'O_NOFOLLOW',0) | getattr(os,'O_NONBLOCK',0))
+        with os.fdopen(descriptor,'rb') as stream:
+            opened=os.fstat(stream.fileno())
+            if not stat.S_ISREG(opened.st_mode) or self.identity(before)!=self.identity(opened):
+                raise ValidationError('INBOX_FILE_CHANGED_DURING_READ_RESCAN')
+            # Check the opened descriptor before reading any bytes, including on
+            # platforms without O_NOFOLLOW. Recheck after the bounded read too.
+            raw=stream.read(MAX_UPLOAD+1)
+            after=os.fstat(stream.fileno())
+        current=candidate.lstat()
+        if self.identity(before)!=self.identity(opened) or self.identity(opened)!=self.identity(after) or self.identity(after)!=self.identity(current) or len(raw)!=before.st_size:
+            raise ValidationError('INBOX_FILE_CHANGED_DURING_READ_RESCAN')
+        return raw
+
+    def record_failure(self, filename, code):
+        with self.store.connect() as db:
+            identifier=db.execute("INSERT INTO intake_attempts(filename,sha256,origin,started_at,finished_at,state,code) VALUES (?,'','inbox',?,?,'failed_safely',?)",
+                                  (filename,now(),now(),code)).lastrowid
+            event(db,'INTAKE_ATTEMPT')
+        return self.item(identifier)

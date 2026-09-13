@@ -1,22 +1,32 @@
 # SKS UtilityOS
 
-**Version 0.6.0-rc2 · local release candidate · synthetic demonstration**
+**Version 0.6.0-rc3 · local development candidate · synthetic demonstration**
 
 A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
 
 This workspace is for software development, testing, technical documentation, and release engineering. It does not contain meeting materials or stakeholder proposals.
 
-This candidate includes building reports, strict financial approval controls,
-account billing schedules, generic mapped usage CSVs and a supervised synthetic
-update rehearsal. The trusted tagged baseline remains `v0.5.0`; this candidate is not a
-complete 0.6 analytics milestone, public release or school installation. See
-[update rehearsal](docs/UPDATE_REHEARSAL.md) for fresh-demo validation, stopped-app
-backup, schema checks, explicit migration when required, version switching and
-verification of a separate rollback workspace. Every invoice still requires review.
+This candidate adds reproducible platform wheel receipts, guided staff launch and
+health checks, a foreground folder watcher, direct mapped XLSX usage, reusable
+layout/meter mappings and a bounded ESPI expansion. Existing building reports,
+strict financial review, billing schedules, Intelligent Bill Intake and Provider
+Studio remain. It is unsigned, untagged and not school-production accepted.
+The trusted tagged baseline remains `v0.5.0`; the accepted development starting
+point was rc2/schema 6. rc3 uses **schema 7**, with an explicit compatibility
+migration and pre-upgrade backup. Broad analytics remains subsequent work.
+
+Start with [portable deployment](docs/PORTABLE_DEPLOYMENT.md),
+[acquisition](docs/ACQUISITION.md) and [verification](docs/VERIFICATION.md).
+Actual provider exports, Windows school-machine behavior and school installation
+remain externally unverified. Hosted CI configuration is not evidence of a run.
+No portal, email or external API connection is enabled.
 
 ## Run the demo on macOS
 
-Use an approved Python 3.11+ installation. This release was verified on macOS arm64 with Python 3.13.2 and native Chrome 152.0.7977.82.
+Use an approved CPython 3.13 GIL installation matching the platform receipt.
+The qualification target is Python 3.13.15; local tests used Python 3.13.2 on
+macOS arm64 with Chrome 152.0.7977.84. Current-runtime and school-machine
+acceptance remain separate; see the portable deployment guide.
 
 ```sh
 bash scripts/setup.sh
@@ -79,20 +89,22 @@ completeness** for separately confirmed cadence expectations.
 **Bill completeness** now supports one expected statement per account, including
 multiple service points, every-two-month anchors, issue days, grace periods and
 explicit exceptions. See [billing schedules](docs/BILLING_SCHEDULES.md).
-**Mapped usage files** retains generic CSV originals, previews explicit meter,
+**Mapped usage files** retains generic CSV and values-only XLSX originals, previews explicit meter,
 unit and time mappings, and requires approval before storing separate operational
-readings. Duplicate evidence is not counted twice; corrections require explicit
+readings. Spreadsheet review selects a visible sheet/region and retains cell
+provenance. An explicitly approved layout and meter relationship can be reused
+for future compatible exports. Duplicate evidence is not counted twice; corrections require explicit
 reconciliation. See [mapped usage](docs/MAPPED_USAGE.md).
 
 These are synthetic-tested local file workflows, not certified Central Hudson
 or My360 connectors. No API, email or portal retrieval is enabled. Combined
 water/sewer/garbage statements remain pending until all charge categories can
 be supported; do not post their full total as water. Read [provider evidence and
-limits](docs/PROVIDER_FILE_WORKFLOWS.md). This is not completion of 0.6 analytics.
+limits](docs/PROVIDER_FILE_WORKFLOWS.md). Broad analytics remains subsequent work.
 
 ## Intelligent Bill Intake
 
-Open **Utility Inbox** to import files by picker or drag/drop, review a batch result, or explicitly scan a configured external local folder. The import dialog offers extractable fictional PDFs and a scanned example. Text/template extraction proposes fields beside a rendered original; optional English OCR supports the scanned corpus. Every draft still needs human review and approval.
+Open **Utility Inbox** to import files by picker or drag/drop, review a batch result, or explicitly scan a configured external local folder. **Acquisition** can watch that folder while the app is running, with explicit enable, pause/resume and disable; it starts disabled after every application restart. The import dialog offers extractable fictional PDFs and a scanned example. Text/template extraction proposes fields beside a rendered original; optional English OCR supports the scanned corpus. Every draft still needs human review and approval.
 
 The shipped providers and layouts are fictional. Unknown layouts, missing fields and conflicts require completion; no general real-provider compatibility is claimed. Saved corrections preserve machine evidence and prior approved values. **Bill completeness** starts with explicitly configured account/meter cadence and remains experimental. Read [the intake guide](docs/BILL_INTAKE.md), [the dependency/model decision](docs/DOCUMENT_EXTRACTION_DEPENDENCIES.md), and [offline OCR setup](docs/STAFF_INSTALL_AND_UPDATES.md).
 
@@ -117,7 +129,11 @@ fictional onboarding corpus.
 
 Amounts use integer cents and quantities use decimal arithmetic. Supply-only invoices add charges with zero repeated consumption. Oil/propane deliveries are purchased volume. Shared meters remain unallocated. Charts group active charges by invoice month, preserve negative credits, and do not claim complete campus coverage or calendarized consumption.
 
-Green Button support is limited to a tested file subset: forward, delta electricity energy in Wh, with explicit multipliers and resolvable ReadingType links. Unsupported semantics, revised/conflicting readings, and duplicate stream mappings are rejected. There is no utility certification, universal format compatibility, portal login, CMD/OAuth, or live feed.
+Green Button supports tested forward-delta electricity Wh→kWh, natural-gas
+therm, and water m³/US gallons, with explicit multipliers, resolved ReadingType
+and available UsagePoint relationships, duration and quality checks. Cumulative
+ESPI counters, unsupported qualifiers and unknown semantics are rejected. See
+[the precise supported tuples](docs/GREEN_BUTTON.md). Unsupported semantics, revised/conflicting readings, and duplicate stream mappings are rejected. There is no utility certification, universal format compatibility, portal login, CMD/OAuth, or live feed.
 
 Code and data are separate. No Node build, hosted database, Docker, online account, utility API, or cloud extraction service is required. Setup downloads Python wheels, or accepts a local wheelhouse:
 
@@ -125,13 +141,17 @@ Code and data are separate. No Node build, hosted database, Docker, online accou
 bash scripts/setup.sh /approved/local/wheelhouse
 ```
 
-`requirements-bootstrap.txt` pins the installer; `requirements.txt` and `constraints-tested.txt` pin the tested runtime. See [dependency decisions](docs/DEPENDENCY_DECISIONS.md).
+`requirements-bootstrap.txt`, `requirements.txt` and `constraints-tested.txt`
+pin the reviewed versions. Platform-specific receipts also bind the exact wheel
+filenames and SHA-256 hashes; setup rejects mismatches before installing.
+[Portable deployment](docs/PORTABLE_DEPLOYMENT.md) describes building an offline
+wheelhouse, supported CPython/architecture combinations and optional OCR limits.
 
 This remains a single-operator local pilot. [Role enforcement is explicitly deferred](docs/ACCESS_AND_CONFIGURATION.md); audit actors identify operator context, not individual people. SQLite and backups have no application-level encryption. Staff need an approved encrypted disk, OS account, retention policy, and maintenance owner. Multi-user access and school deployment require additional decisions.
 
 ## Upgrade and recovery
 
-Version 0.6.0-rc2 uses **schema 6** and requires explicit migration from schemas 1–5. Starting the app never upgrades an existing workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot read schema 6; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
+Version 0.6.0-rc3 uses **schema 7** and requires explicit migration from schemas 1–6. Starting the app never upgrades an existing workspace. Stage the new code separately, review it, stop the old app, and follow [the installation and update guide](docs/STAFF_INSTALL_AND_UPDATES.md). The explicit `migrate --confirm-migrate` command validates a copy and creates a backup in the original schema before switching the database. Older code cannot safely read schema 7; rollback uses the preserved older release and pre-upgrade backup in a separate recovery directory.
 
 Useful maintenance commands, with the selected mode and external data directory supplied consistently:
 

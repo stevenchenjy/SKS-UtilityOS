@@ -1,5 +1,7 @@
 """Local-only HTTP application. Start through run.py to enforce loopback binding."""
 from pathlib import Path
+from contextlib import asynccontextmanager
+from .acquisition import Acquisition
 import hmac
 import json
 import time
@@ -29,7 +31,18 @@ def create_app(config: Config):
     intake=Intake(ledger,config.mode)
     intake.recover_interrupted()
     sessions=Sessions()
-    app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
+    acquisition=Acquisition(intake)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        acquisition.start()
+        try:
+            yield
+        finally:
+            await run_in_threadpool(acquisition.stop)
+
+    app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
+    app.state.acquisition=acquisition
     app.state.ledger=ledger
     app.state.sessions=sessions
     app.state.store=store
@@ -251,6 +264,19 @@ def create_app(config: Config):
     def intake_history():
         return {'items':intake.history(),'configuration':intake.configuration()}
 
+    @app.get('/api/acquisition')
+    def acquisition_status():
+        return acquisition.status()
+
+    @app.post('/api/acquisition/control')
+    async def acquisition_control(request:Request):
+        return await run_in_threadpool(acquisition.control,await json_body(request))
+
+    @app.get('/api/health')
+    def health_report():
+        from .health import report
+        return report(config, running=True)
+
     @app.get('/api/intake/quality')
     def intake_quality():
         from .extraction_quality import report
@@ -283,7 +309,7 @@ def create_app(config: Config):
     @app.post('/api/intake/configuration')
     async def configure_inbox(request:Request):
         data=await json_body(request)
-        return intake.configure(data.get('directory'),data.get('acknowledge'))
+        return acquisition.configure(data.get('directory'),data.get('acknowledge'))
 
     @app.post('/api/intake/scan')
     async def scan_inbox(request:Request):
@@ -337,7 +363,7 @@ def create_app(config: Config):
 
     @app.get('/api/samples/{filename}')
     def sample(filename:str):
-        allowed={'generic-water-usage.csv','demo-import.csv','demo-intervals.xml','blank-bill-template.csv','demo-invoice.pdf'}
+        allowed={'generic-water-usage.xlsx','demo-water-intervals.xml','demo-gas-intervals.xml','generic-water-usage.csv','demo-import.csv','demo-intervals.xml','blank-bill-template.csv','demo-invoice.pdf'}
         if filename not in allowed:
             return JSONResponse({'error':'SAMPLE_NOT_FOUND'},status_code=404)
         return FileResponse(ROOT/'samples'/filename,media_type='application/octet-stream',filename=filename)

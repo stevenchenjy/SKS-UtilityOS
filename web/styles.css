@@ -64,3 +64,5 @@ td.numeric{white-space:nowrap;overflow-wrap:normal}
 .lower-grid .table-scroll table{min-width:430px}
 @media(max-width:700px){.sidebar nav{padding:5px 5px 10px;margin:0 -5px}.quantity-row strong{white-space:normal;text-align:right}.modal .details{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 @media(max-width:450px){.form-grid.three,.form-grid.four{grid-template-columns:minmax(0,1fr)}.metrics{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.metrics section:nth-child(3){grid-template-columns:minmax(0,1fr)}.metrics section:nth-child(3)>.text-button{justify-self:start}.metrics section:nth-child(3)>span{text-align:left}.section-heading{flex-wrap:wrap}}
+
+.acquisition-health-report{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font-size:12px}

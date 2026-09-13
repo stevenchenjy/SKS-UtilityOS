@@ -1,5 +1,10 @@
 # Local bill intake — preserved 0.4.0 contract in 0.5.0
 
+rc3 retains these financial intake contracts and adds an optional foreground
+watcher plus structured source adapters. See [Acquisition](ACQUISITION.md) for
+current file routing, folder controls and separate operational review. The
+historical explicit-scan workflow remains available.
+
 Version 0.5.0 adds private provider setup and versioned local layouts through
 `PROVIDER_STUDIO.md`. The source, approval and evidence rules below continue to
 apply to both built-in fictional templates and private local candidates.

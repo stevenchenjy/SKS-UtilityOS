@@ -66,7 +66,7 @@ def check(store: Store):
         verify_schedules(db)
         verify_usage(db)
     for sha, extension in documents:
-        if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf'}:
+        if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf','.xlsx'}:
             raise ValidationError('SOURCE_REFERENCE_INVALID')
         path = store.sources / (sha + extension)
         if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != sha:
@@ -110,7 +110,7 @@ def backup(store: Store) -> Path:
         db.close()
         files = {'utilityos.sqlite3':snapshot}
         for sha, extension in docs:
-            if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf'}:
+            if not re.fullmatch(r'[0-9a-f]{64}',sha) or extension not in {'.csv','.xml','.pdf','.xlsx'}:
                 raise ValidationError('SOURCE_REFERENCE_INVALID')
             path = store.sources / f'{sha}{extension}'
             if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != sha:
@@ -174,7 +174,7 @@ def restore(store: Store, archive_path: Path, mode: str):
         if set(names)!=set(expected)|{'MANIFEST.json'} or 'utilityos.sqlite3' not in expected:
             raise ValidationError('BACKUP_CONTENTS_MISMATCH')
         for name in expected:
-            if name!='utilityos.sqlite3' and not re.fullmatch(r'sources/[0-9a-f]{64}\.(csv|xml|pdf)',name):
+            if name!='utilityos.sqlite3' and not re.fullmatch(r'sources/[0-9a-f]{64}\.(csv|xml|pdf|xlsx)',name):
                 raise ValidationError('BACKUP_PATH_NOT_ALLOWED')
             info=archive.getinfo(name)
             if (info.external_attr>>16)&0o170000==0o120000:

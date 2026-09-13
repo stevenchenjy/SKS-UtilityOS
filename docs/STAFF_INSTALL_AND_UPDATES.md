@@ -1,7 +1,7 @@
 # Local installation, updates, and recovery
 
-The working candidate **0.6.0-rc2 uses schema 6**. It requires an explicit
-backup-first migration from schema 5; startup refuses to upgrade automatically.
+The working candidate **0.6.0-rc3 uses schema 7**. It requires an explicit
+backup-first migration from schemas 1–6; startup refuses to upgrade automatically.
 Trusted v0.5.0 and prior source/data backups remain preserved. This development
 slice does not authorize a school installation or complete the 0.6 milestone.
 The [synthetic update rehearsal](UPDATE_REHEARSAL.md) exercises a separate code
@@ -18,29 +18,34 @@ Version 0.5.0 uses schema 5. macOS arm64 launch/setup, native Chrome, synthetic 
 ## Install into a separate code folder
 
 1. Obtain the source ZIP through the school's approved distribution process. Verify who supplied it separately from its integrity manifest. The release is unsigned; no Apple/Windows certificate or paid distribution mechanism has been chosen.
-2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/approved-release.zip`, substituting the selected release archive and using a trusted copy of the verifier. The local candidate is `SKS-UtilityOS-0.6.0-rc2.zip`; it still needs separate school approval. A matching hash alone does not establish trusted authorship.
+2. Inspect the code changes, dependency decisions, release notes, and verification results. Run `python scripts/release.py verify /path/to/approved-release.zip`, substituting the selected release archive and using a trusted copy of the verifier. The local candidate is `SKS-UtilityOS-0.6.0-rc3.zip`; it still needs separate school approval. A matching hash alone does not establish trusted authorship.
 3. Unpack into a new code folder. Keep every private data directory and backup outside it and outside cloud-synchronized folders. Do not overwrite the previous release.
-4. Use an approved Python 3.11+. Run `bash scripts/setup.sh` on macOS, or the supplied PowerShell setup through normal school policy. Setup writes only the new folder's `.venv`. It never selects or opens a staff workspace.
+4. Use an approved CPython 3.13 GIL runtime; 3.13.15 is the recorded qualification target. Follow [portable deployment](PORTABLE_DEPLOYMENT.md) for reviewed Python installers, platform wheel receipts and setup. Setup verifies every artifact before creating the new folder's `.venv` and refuses an existing environment. It never selects or opens a staff workspace. macOS Intel is deferred because the current cryptography dependency no longer publishes compatible wheels.
 5. Run a fresh synthetic demo and verify the browser. Supply the same explicit `--data-dir` and `--port` when repeating maintenance or launch commands.
 
 The source archive preserves executable mode for `.command` and `.sh` files. macOS Terminal launch was verified; Finder quarantine/Gatekeeper behavior for a school-distributed downloaded archive remains an IT acceptance check. Do not weaken operating-system security controls to open a release.
 
 ### Offline dependency installation
 
-On a compatible approved staging machine, download reviewed wheels:
+The rc3 source release includes complete platform-specific wheel/hash receipts
+and a repeatable staging tool. On an approved staging computer, download exactly
+the reviewed artifacts for the target (substitute `windows-x64` when applicable):
 
 ```sh
-python -m pip download --only-binary=:all: -r requirements-bootstrap.txt \
-  -r requirements.txt -c constraints-tested.txt --dest /approved/wheelhouse
+python scripts/dependency_artifacts.py fetch --target macos-arm64 --directory /approved/wheelhouse
+python scripts/dependency_artifacts.py verify --target macos-arm64 --directory /approved/wheelhouse
 ```
 
-Transfer the wheelhouse through the school's approved process, then run:
-
-```sh
-bash scripts/setup.sh /approved/wheelhouse
-```
-
-Windows uses `scripts/setup.ps1 -Wheelhouse C:\approved\wheelhouse`. The offline path uses `--no-index`, `--find-links`, wheel-only installation, and disables pip's version check. Obtain wheels for the target Python/OS, review their provenance, and run a current advisory scan before transfer. The developer's clean macOS installation and regression tests used an external wheelhouse. Wheels are not bundled in the source release.
+Transfer the verified source release, matching Python installer/signature evidence,
+receipts and wheelhouse through the approved process. From a new extracted source
+folder on the target, run `bash scripts/setup.sh /approved/wheelhouse`, or Windows
+`scripts/setup.ps1 -Wheelhouse C:\approved\wheelhouse` in an approved PowerShell
+session. Installation verifies filenames, membership, sizes and hashes, then uses
+wheel-only pip with `--require-hashes`, `--no-index` and no cache. It verifies the
+bootstrap installer and checks the complete installed closure. No dependency or
+private data is downloaded by the running application. See [the portable guide](PORTABLE_DEPLOYMENT.md)
+for exact runtime targets, artifact sizes, optional OCR, failed-install recovery,
+license obligations, native-platform gaps and current advisory requirements.
 
 ## Optional local OCR preparation
 
@@ -52,23 +57,22 @@ The tested Apple Silicon OCR wheel requires macOS 15+ and Python 3.13; other
 platforms need separate wheel/native verification. Digital rendering's tested
 Mac wheel requires macOS 13+. No GPU or model server is used.
 
-On an approved compatible staging computer, collect the optional wheels:
+On an approved compatible staging computer, collect the full optional Mac OCR
+closure from its reviewed receipt (base installation plus optional packages):
 
 ```sh
-python -m pip download --only-binary=:all: -r requirements-ocr.txt \
-  -c constraints-tested.txt --dest /approved/wheelhouse
+python scripts/dependency_artifacts.py fetch --target macos-arm64 --profile ocr --directory /approved/ocr-wheelhouse
 ```
 
 Manually obtain the pinned public English model and its Apache-2.0 license from
 `DOCUMENT_EXTRACTION_DEPENDENCIES.md` through the approved software-distribution
 process. It is 4,113,088 bytes; model revision and SHA-256 are documented there.
 UtilityOS has no automatic model downloader. Transfer the model, licenses and
-reviewed wheelhouse for offline installation, then run from the new code folder:
+reviewed wheelhouse for offline installation, then run from a new code folder
+without an existing `.venv`:
 
 ```sh
-.venv/bin/python -m pip install --no-index --find-links /approved/wheelhouse \
-  --only-binary=:all: --disable-pip-version-check \
-  -r requirements-ocr.txt -c constraints-tested.txt
+python3 scripts/dependency_artifacts.py install --profile ocr --directory /approved/ocr-wheelhouse
 .venv/bin/python scripts/prepare_ocr.py \
   --model-file /approved/staging/eng.traineddata \
   --destination /approved/local/utilityos-models
@@ -89,7 +93,7 @@ corresponding LGPL source availability with a redistributed optional wheelhouse.
 
 ## First staff setup
 
-Run `Launch-Staff.command` or `.venv/bin/python run.py staff --open`. The first run requests a local application passphrase of at least 12 characters, entered twice. This must be distinct from portal passwords. Do not send it to the developer. The browser opens only after server startup; a busy port reports a fixed error and can be changed with `--port 8878`.
+Run `Launch-Staff.command`, Windows `scripts/launch-staff.ps1`, or `.venv/bin/python run.py staff --choose-data-dir --open`. Choose the private local workspace directory before creating credentials; Enter accepts the platform-local default. Use that same directory on subsequent launches. The first run requests a local application passphrase of at least 12 characters, entered twice. This must be distinct from portal passwords. Do not send it to the developer. The browser opens only after server startup; a busy port reports a fixed error and can be changed with `--port 8878`.
 
 Default data locations:
 
@@ -116,13 +120,13 @@ Use `--data-dir /approved/local/workspace` to choose another approved location. 
 
 Maintenance commands require the workspace to be stopped. The browser can create a consistent backup while its app is running. No scheduled download, silent migration, or unattended switch is implemented.
 
-## Upgrade schemas 1–5 to schema 6
+## Upgrade schemas 1–6 to schema 7
 
-The candidate implements ordered migrations from schemas 1–5 through schema 6. Startup never migrates.
+The candidate implements ordered migrations from schemas 1–6 through schema 7. Startup never migrates.
 After source/dependency review, synthetic rehearsal and school approval:
 
 1. Stop the old app. Back it up with its own version and retain the old code and
-   environment. Older code cannot open schema 6.
+   environment. Older code cannot open schema 7.
 2. From the separately prepared candidate folder, run:
 
    ```sh
@@ -140,7 +144,7 @@ After source/dependency review, synthetic rehearsal and school approval:
 
 Schema 3 adds the append-oriented audit chain and document importer version; it
 was not introduced just to test migrations. Schema 4 adds immutable extraction/review snapshots, intake attempts and expected cadence/history without reparsing old PDFs. Schema 5 adds the private provider journal without changing historical extractions. Frozen schema-1/schema-2/schema-3/schema-4 fixtures
-and schema-5 fixtures plus synthetic future-step tests exercise the migration runner. Schema 6 adds account schedule and operational usage evidence journals without rewriting old invoices or extractions. Unregistered
+and schema-5 fixtures plus synthetic future-step tests exercise the migration runner. Schema 6 adds account schedule and operational usage evidence journals without rewriting old invoices or extractions. Schema 7 is an explicit compatibility boundary for retained spreadsheets and extended acquisition/measurement semantics; historical records and source bytes remain unchanged. Unregistered
 paths fail before switching any data.
 
 Rollback requires the retained old release and its compatible pre-upgrade backup
@@ -186,6 +190,8 @@ Preview the allowlisted diagnostic JSON before sharing. It excludes record label
 Before real-data use, the school must approve the installation and trusted distribution, target OS/browser, dependencies/advisories, local data and encryption policies, access/retention, backup destinations, named maintainer, and patch cadence. Finance must confirm current charges, credit/rebill treatment, and service-date semantics; Facilities must confirm physical meter mappings and coverage. No real records, school installation or portal integration was used. The user-authorized trusted v0.4.0 tag was published; 0.5.0 publication remains a separate release step.
 
 ## Operational diagnostics and authorization
+
+The acquisition page and `run.py health` add portable runtime, installation receipt, retained-source, optional OCR and acquisition-folder checks without private values. Windows ACL checks use normal PowerShell policy and report unavailable checks accurately; no policy bypass is attempted. See [portable deployment](PORTABLE_DEPLOYMENT.md).
 
 The browser support page previews fixed diagnostic categories and the private
 audit view separately. `diagnostics` can inspect an incompatible or damaged

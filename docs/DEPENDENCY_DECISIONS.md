@@ -77,3 +77,46 @@ public synthetic CI. Both are maintained MIT-licensed actions pinned to reviewed
 full commit hashes. Their Node runtime is hosted-runner tooling, not an installed
 application dependency. See `SYNTHETIC_CI.md` for exact reviewed releases,
 permissions, install behavior and the distinction between local and hosted checks.
+
+
+## 0.6.0-rc3 portability and spreadsheet decision — 2026-09-13
+
+The selected staff deployment is source + approved CPython 3.13 GIL runtime + a
+platform wheelhouse. Read [the packaging comparison and handoff](PORTABLE_DEPLOYMENT.md)
+for licensing, size, OS behavior, update/rollback and signing tradeoffs. There is
+no new packaging framework. Windows x64 and macOS arm64 have complete base
+wheel receipts; Linux x64 supports CI. Intel Mac is deferred because current
+cryptography removed that platform and has no matching wheel.
+
+Normal setup now verifies exact artifact membership/size/SHA-256 before creating
+an environment, then installs the pinned complete closure using hash-required,
+wheel-only offline pip. It refuses an existing `.venv`. Explicit maintenance
+review is the only path that can update receipts; downloading never implicitly
+approves a new digest. CPython 3.13.15 installer artifacts are separately hashed
+and recorded, but have not been installed on native target machines in this
+work. Local rehearsal used the disclosed existing 3.13.2 interpreter.
+
+The added application reader is openpyxl 3.1.5, with et-xmlfile 2.0.0; both
+are MIT licensed, pure Python and have no formula/macro execution engine. The
+existing defusedxml dependency supplies XML defenses. UtilityOS also enforces
+ZIP/XML/resource limits and rejects formulas, macros, external refresh and
+unsafe/ambiguous workbook inputs before operational approval. See
+[the workbook dependency/security review](MAPPED_USAGE.md). Source and precise
+license references: [openpyxl 3.1.5](https://pypi.org/project/openpyxl/3.1.5/),
+[et-xmlfile 2.0.0](https://pypi.org/project/et-xmlfile/2.0.0/).
+
+The dated historical advisory results above are retained as history. Current
+rc3 scans and exact platform executions belong in `VERIFICATION.md`; matching
+artifact hashes do not assert vulnerability freedom or native acceptance.
+
+
+Cross-platform timestamp mapping also requires tzdata 2026.4 (Python Software
+Foundation maintained, Apache-2.0 with public-domain IANA data, no dependencies),
+released September 12, 2026. It supplies the IANA database absent from standard
+Windows CPython, and is included in every base receipt. The wheel is 347,494
+bytes, SHA-256 `c2169a8b0a7a5e9674da5a135ccdfb2b3e671b333ed9fed17b41f73c34476e81`.
+A separate subprocess test removes the system timezone search path and resolves
+America/New_York from the installed package. This is a deterministic simulation
+of the Windows dependency requirement, not native Windows execution.
+Sources: [official zoneinfo data-source guidance](https://docs.python.org/3.13/library/zoneinfo.html),
+[tzdata 2026.4 artifact/license metadata](https://pypi.org/project/tzdata/2026.4/).

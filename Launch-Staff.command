@@ -6,4 +6,4 @@ if [ ! -x .venv/bin/python ]; then
   read -r -p "Press Enter to close."
   exit 1
 fi
-.venv/bin/python run.py staff --open "$@"
+.venv/bin/python run.py staff --choose-data-dir --open "$@"

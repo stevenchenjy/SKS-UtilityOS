@@ -89,9 +89,10 @@ def main():
             page.get_by_role('heading',name='Review queue',exact=True).wait_for()
             results.append('source evidence, saved correction, approval and immutable replacement history')
 
-            # Batch picker: one new invoice, one duplicate and one malformed CSV.
+            # Batch picker: one new invoice, one duplicate and an incomplete invoice CSV.
+            # Arbitrary two-column CSV is now valid mapped-usage input in rc3.
             nav('Utility Inbox');page.get_by_role('button',name='Import files',exact=True).click()
-            bad=work/'synthetic-invalid.csv';bad.write_text('not,canonical\n1,2\n')
+            bad=work/'synthetic-invalid.csv';bad.write_text('invoice_number,current_charge\nSYN-INCOMPLETE,not-money\n')
             page.get_by_label('Source file',exact=True).set_input_files([str(fixture/'water.pdf'),str(fixture/'electricity-digital.pdf'),str(bad)])
             page.locator('#synthetic-confirm').check();page.get_by_role('button',name='Import for review',exact=True).click()
             page.get_by_role('button',name='Open Utility Inbox',exact=True).wait_for()

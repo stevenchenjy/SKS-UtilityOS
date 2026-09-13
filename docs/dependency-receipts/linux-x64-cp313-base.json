@@ -1,0 +1,489 @@
+{
+  "format": "utilityos-wheel-receipt-v1",
+  "target": "linux-x64",
+  "profile": "base",
+  "python_minor": "3.13",
+  "python_abi": "cp313",
+  "qualification_python": "3.13.15",
+  "reviewed_on": "2026-09-13",
+  "platform": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "platforms": [
+      "manylinux_2_28_x86_64",
+      "manylinux_2_17_x86_64"
+    ],
+    "minimum_os": "glibc 2.28"
+  },
+  "artifact_selection_platforms": [
+    "manylinux_2_28_x86_64",
+    "manylinux_2_17_x86_64"
+  ],
+  "status": "artifact hashes and target metadata reviewed; native acceptance recorded separately",
+  "artifacts": [
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5",
+      "filename": "annotated_doc-0.0.5-py3-none-any.whl",
+      "sha256": "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101",
+      "size": 5302,
+      "url": "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/annotated-doc/0.0.5/",
+      "wheel_license_files": [
+        "annotated_doc-0.0.5.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "filename": "annotated_types-0.8.0-py3-none-any.whl",
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+      "size": 13427,
+      "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/annotated-types/0.8.0/",
+      "wheel_license_files": [
+        "annotated_types-0.8.0.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1",
+      "filename": "anyio-4.15.1-py3-none-any.whl",
+      "sha256": "6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101",
+      "size": 132079,
+      "url": "https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/anyio/4.15.1/",
+      "wheel_license_files": [
+        "anyio-4.15.1.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "idna>=2.8",
+        "typing_extensions>=4.16.0; python_version < \"3.15\""
+      ]
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1",
+      "filename": "cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "a931079504ecc49efed7744c476a5c343a92fabf66dec2db95edb1b2fdc770e2",
+      "size": 221824,
+      "url": "https://files.pythonhosted.org/packages/95/95/86342356ff5953b3fb06f7ef7c5bee212d45e770abc7218d451b9148313c/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "license": "MIT-0",
+      "license_reference": "https://pypi.org/project/cffi/2.1.1/",
+      "wheel_license_files": [
+        "cffi-2.1.1.dist-info/licenses/",
+        "cffi-2.1.1.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "pycparser; implementation_name != \"PyPy\""
+      ]
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.1",
+      "filename": "charset_normalizer-3.5.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "62b55f6722735a6c472f88361cde6640608773d9443cebdbb51abf436a1fcdd3",
+      "size": 250638,
+      "url": "https://files.pythonhosted.org/packages/fb/af/63240b0c0248c075c2535a1f1bd992821d8251b9f173abc13329661d09e4/charset_normalizer-3.5.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/charset-normalizer/3.5.1/",
+      "wheel_license_files": [
+        "charset_normalizer-3.5.1.dist-info/licenses/",
+        "charset_normalizer-3.5.1.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "click",
+      "version": "8.5.0",
+      "filename": "click-8.5.0-py3-none-any.whl",
+      "sha256": "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360",
+      "size": 125251,
+      "url": "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl",
+      "license": "BSD-3-Clause",
+      "license_reference": "https://pypi.org/project/click/8.5.0/",
+      "wheel_license_files": [
+        "click-8.5.0.dist-info/licenses/LICENSE.txt"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "cryptography",
+      "version": "50.0.1",
+      "filename": "cryptography-50.0.1-cp311-abi3-manylinux_2_28_x86_64.whl",
+      "sha256": "51593d180cf6d179bde5c5d065bed81386b1f381656ae7d042b7ffc87a9895ad",
+      "size": 4746720,
+      "url": "https://files.pythonhosted.org/packages/e1/1b/82f0f0d8858d4432be1af790477edf62aef90324041aa07c57e57bef1af7/cryptography-50.0.1-cp311-abi3-manylinux_2_28_x86_64.whl",
+      "license": "Apache-2.0 OR BSD-3-Clause",
+      "license_reference": "https://pypi.org/project/cryptography/50.0.1/",
+      "wheel_license_files": [
+        "cryptography-50.0.1.dist-info/licenses/",
+        "cryptography-50.0.1.dist-info/licenses/LICENSE",
+        "cryptography-50.0.1.dist-info/licenses/LICENSE.APACHE",
+        "cryptography-50.0.1.dist-info/licenses/LICENSE.BSD"
+      ],
+      "target_dependencies": [
+        "cffi>=2.0.0 ; platform_python_implementation != 'PyPy'"
+      ]
+    },
+    {
+      "name": "defusedxml",
+      "version": "0.7.1",
+      "filename": "defusedxml-0.7.1-py2.py3-none-any.whl",
+      "sha256": "a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61",
+      "size": 25604,
+      "url": "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl",
+      "license": "PSFL",
+      "license_reference": "https://pypi.org/project/defusedxml/0.7.1/",
+      "wheel_license_files": [
+        "defusedxml-0.7.1.dist-info/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "et-xmlfile",
+      "version": "2.0.0",
+      "filename": "et_xmlfile-2.0.0-py3-none-any.whl",
+      "sha256": "7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa",
+      "size": 18059,
+      "url": "https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/et-xmlfile/2.0.0/",
+      "wheel_license_files": [],
+      "target_dependencies": []
+    },
+    {
+      "name": "fastapi",
+      "version": "0.141.1",
+      "filename": "fastapi-0.141.1-py3-none-any.whl",
+      "sha256": "bfb91aa2d334c61cb35ba9a116fc123b3d3df31640b801cf57a7a78ec3f603b3",
+      "size": 131954,
+      "url": "https://files.pythonhosted.org/packages/cb/03/10388a42375ee7e4ac9b94eb2c5c569c8b5795e377e701c9ac3ad63de890/fastapi-0.141.1-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/fastapi/0.141.1/",
+      "wheel_license_files": [
+        "fastapi-0.141.1.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "starlette>=0.46.0",
+        "pydantic>=2.9.0",
+        "typing-extensions>=4.8.0",
+        "typing-inspection>=0.4.2",
+        "annotated-doc>=0.0.2"
+      ]
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "filename": "h11-0.16.0-py3-none-any.whl",
+      "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86",
+      "size": 37515,
+      "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/h11/0.16.0/",
+      "wheel_license_files": [
+        "h11-0.16.0.dist-info/licenses/LICENSE.txt"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "idna",
+      "version": "3.19",
+      "filename": "idna-3.19-py3-none-any.whl",
+      "sha256": "815e7be7a7806d54abb586dc943addc79e8b2ee16915059658cbeff4b1b43bf4",
+      "size": 68550,
+      "url": "https://files.pythonhosted.org/packages/57/b0/0e52c878c53f245edd3a11020f20979b3f490f245af532c7cae3027754b5/idna-3.19-py3-none-any.whl",
+      "license": "BSD-3-Clause",
+      "license_reference": "https://pypi.org/project/idna/3.19/",
+      "wheel_license_files": [
+        "idna-3.19.dist-info/licenses/LICENSE.md"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "openpyxl",
+      "version": "3.1.5",
+      "filename": "openpyxl-3.1.5-py2.py3-none-any.whl",
+      "sha256": "5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2",
+      "size": 250910,
+      "url": "https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/openpyxl/3.1.5/",
+      "wheel_license_files": [],
+      "target_dependencies": [
+        "et-xmlfile"
+      ]
+    },
+    {
+      "name": "pdfminer-six",
+      "version": "20260107",
+      "filename": "pdfminer_six-20260107-py3-none-any.whl",
+      "sha256": "366585ba97e80dffa8f00cebe303d2f381884d8637af4ce422f1df3ef38111a9",
+      "size": 6592252,
+      "url": "https://files.pythonhosted.org/packages/20/8b/28c4eaec9d6b036a52cb44720408f26b1a143ca9bce76cc19e8f5de00ab4/pdfminer_six-20260107-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/pdfminer-six/20260107/",
+      "wheel_license_files": [
+        "pdfminer_six-20260107.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "charset-normalizer>=2.0.0",
+        "cryptography>=36.0.0"
+      ]
+    },
+    {
+      "name": "pdfplumber",
+      "version": "0.11.10",
+      "filename": "pdfplumber-0.11.10-py3-none-any.whl",
+      "sha256": "7741ea81bf165b474b153e6789d10d18e06b6ddcf3ec84289c3ef2fed6802580",
+      "size": 60047,
+      "url": "https://files.pythonhosted.org/packages/a2/9a/07d658e1e7fad860f1c541ab941348125dbdab773be3a0afaf32361866c7/pdfplumber-0.11.10-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/pdfplumber/0.11.10/",
+      "wheel_license_files": [
+        "pdfplumber-0.11.10.dist-info/licenses/LICENSE.txt"
+      ],
+      "target_dependencies": [
+        "pdfminer.six==20260107",
+        "Pillow>=12.2.0",
+        "pypdfium2>=5.9.0"
+      ]
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "filename": "pillow-12.3.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "0847a763afefb695bc912d7c131e7e0632d4edc1d8698f58ddabec8e46b8b6d3",
+      "size": 6937129,
+      "url": "https://files.pythonhosted.org/packages/f7/62/de5bdd77d935331f4f802edc11e4d82950f642caad6cb2f949837b8560e2/pillow-12.3.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "license": "MIT-CMU",
+      "license_reference": "https://pypi.org/project/pillow/12.3.0/",
+      "wheel_license_files": [
+        "pillow-12.3.0.dist-info/licenses/",
+        "pillow-12.3.0.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "pip",
+      "version": "26.2.1",
+      "filename": "pip-26.2.1-py3-none-any.whl",
+      "sha256": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e",
+      "size": 1816632,
+      "url": "https://files.pythonhosted.org/packages/f3/6e/1736e5b4ae2b778ef2f81c47d797de9f891d4d8acb047a24ca37a60294dd/pip-26.2.1-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/pip/26.2.1/",
+      "wheel_license_files": [
+        "pip/_vendor/cachecontrol/LICENSE.txt",
+        "pip/_vendor/certifi/LICENSE",
+        "pip/_vendor/distlib/LICENSE.txt",
+        "pip/_vendor/distro/LICENSE",
+        "pip/_vendor/idna/LICENSE.md",
+        "pip/_vendor/msgpack/COPYING",
+        "pip/_vendor/packaging/LICENSE",
+        "pip/_vendor/packaging/LICENSE.APACHE",
+        "pip/_vendor/packaging/LICENSE.BSD",
+        "pip/_vendor/packaging/licenses/__init__.py",
+        "pip/_vendor/packaging/licenses/_spdx.py",
+        "pip/_vendor/pkg_resources/LICENSE",
+        "pip/_vendor/platformdirs/LICENSE",
+        "pip/_vendor/pygments/LICENSE",
+        "pip/_vendor/pyproject_hooks/LICENSE",
+        "pip/_vendor/requests/LICENSE",
+        "pip/_vendor/resolvelib/LICENSE",
+        "pip/_vendor/rich/LICENSE",
+        "pip/_vendor/tomli/LICENSE",
+        "pip/_vendor/tomli_w/LICENSE",
+        "pip/_vendor/truststore/LICENSE",
+        "pip/_vendor/urllib3/LICENSE.txt",
+        "pip-26.2.1.dist-info/licenses/AUTHORS.txt",
+        "pip-26.2.1.dist-info/licenses/LICENSE.txt",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/cachecontrol/LICENSE.txt",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/certifi/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/distlib/LICENSE.txt",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/distro/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/msgpack/COPYING",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/packaging/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.APACHE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/packaging/LICENSE.BSD",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/pkg_resources/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/platformdirs/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/pygments/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/pyproject_hooks/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/requests/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/resolvelib/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/rich/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/tomli/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/tomli_w/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/truststore/LICENSE",
+        "pip-26.2.1.dist-info/licenses/src/pip/_vendor/urllib3/LICENSE.txt"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0",
+      "filename": "pycparser-3.0-py3-none-any.whl",
+      "sha256": "b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992",
+      "size": 48172,
+      "url": "https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl",
+      "license": "BSD-3-Clause",
+      "license_reference": "https://pypi.org/project/pycparser/3.0/",
+      "wheel_license_files": [
+        "pycparser-3.0.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.5",
+      "filename": "pydantic-2.13.5-py3-none-any.whl",
+      "sha256": "346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73",
+      "size": 472589,
+      "url": "https://files.pythonhosted.org/packages/eb/47/c95ffc2009878c7aac0c5e08528022dcb885933252a88b5f170058014464/pydantic-2.13.5-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/pydantic/2.13.5/",
+      "wheel_license_files": [
+        "pydantic-2.13.5.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "annotated-types>=0.6.0",
+        "pydantic-core==2.46.5",
+        "typing-extensions>=4.14.1",
+        "typing-inspection>=0.4.2"
+      ]
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.46.5",
+      "filename": "pydantic_core-2.46.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "6f7b393a8b3da82f5c1fc0751e6d01ac6c55b93c18226a60bdfba4a724efafd1",
+      "size": 2066633,
+      "url": "https://files.pythonhosted.org/packages/d3/f2/9e4de77a6271e07a76d2d58b11c091a979c191ed2939bf80067568b369d2/pydantic_core-2.46.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/pydantic-core/2.46.5/",
+      "wheel_license_files": [
+        "pydantic_core-2.46.5.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "typing-extensions>=4.14.1"
+      ]
+    },
+    {
+      "name": "pypdfium2",
+      "version": "5.13.0",
+      "filename": "pypdfium2-5.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "81df25c1ab4c13ff773102d3cbea1967511d079123b067fc077bd0c4d57d91d8",
+      "size": 3730077,
+      "url": "https://files.pythonhosted.org/packages/d3/7c/74a2fb48e5b0d2402d9ca64b39074c722d67e9a8a2c58449a843a8c2329a/pypdfium2-5.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "license": "Apache-2.0 AND BSD-3-Clause; bundled permissive notices",
+      "license_reference": "https://pypi.org/project/pypdfium2/5.13.0/",
+      "wheel_license_files": [
+        "pypdfium2-5.13.0.dist-info/licenses/LICENSES/Apache-2.0.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/LICENSES/BSD-3-Clause.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/LICENSES/CC-BY-4.0.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/abseil.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/agg23.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/fast_float.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/freetype.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/icu.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/lcms.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/libjpeg_turbo.ijg",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/libjpeg_turbo.md",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/libopenjpeg.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/libpng.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/libtiff.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/llvm-libc.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/pdfium-binaries.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/pdfium.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/simdutf.txt",
+        "pypdfium2-5.13.0.dist-info/licenses/data/linux_x64/BUILD_LICENSES/zlib.txt"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "starlette",
+      "version": "1.6.0",
+      "filename": "starlette-1.6.0-py3-none-any.whl",
+      "sha256": "a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c",
+      "size": 75969,
+      "url": "https://files.pythonhosted.org/packages/c8/cb/6a6a47d5b464bd08695d254f3da6e7986cc70c9fa5d778eda57538edfe56/starlette-1.6.0-py3-none-any.whl",
+      "license": "BSD-3-Clause",
+      "license_reference": "https://pypi.org/project/starlette/1.6.0/",
+      "wheel_license_files": [
+        "starlette-1.6.0.dist-info/licenses/LICENSE.md"
+      ],
+      "target_dependencies": [
+        "anyio<5,>=3.6.2"
+      ]
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "filename": "typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "size": 45571,
+      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+      "license": "PSF-2.0",
+      "license_reference": "https://pypi.org/project/typing-extensions/4.16.0/",
+      "wheel_license_files": [
+        "typing_extensions-4.16.0.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "filename": "typing_inspection-0.4.4-py3-none-any.whl",
+      "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147",
+      "size": 14750,
+      "url": "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl",
+      "license": "MIT",
+      "license_reference": "https://pypi.org/project/typing-inspection/0.4.4/",
+      "wheel_license_files": [
+        "typing_inspection-0.4.4.dist-info/licenses/LICENSE"
+      ],
+      "target_dependencies": [
+        "typing-extensions>=4.15.0"
+      ]
+    },
+    {
+      "name": "tzdata",
+      "version": "2026.4",
+      "filename": "tzdata-2026.4-py2.py3-none-any.whl",
+      "sha256": "c2169a8b0a7a5e9674da5a135ccdfb2b3e671b333ed9fed17b41f73c34476e81",
+      "size": 347494,
+      "url": "https://files.pythonhosted.org/packages/f9/bc/8737e8d54cf51106118039b83f485a4783112fab49ea9d044b234978a46e/tzdata-2026.4-py2.py3-none-any.whl",
+      "license": "Apache-2.0; IANA public-domain data",
+      "license_reference": "https://pypi.org/project/tzdata/2026.4/",
+      "wheel_license_files": [
+        "tzdata-2026.4.dist-info/licenses/LICENSE",
+        "tzdata-2026.4.dist-info/licenses/licenses/LICENSE_APACHE"
+      ],
+      "target_dependencies": []
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.48.0",
+      "filename": "uvicorn-0.48.0-py3-none-any.whl",
+      "sha256": "48097851328b87ec36117d3d575234519eb58c2b22d79666e9bbc6c49a761dad",
+      "size": 71410,
+      "url": "https://files.pythonhosted.org/packages/01/be/72532be3da7acc5fdfbccdb95215cd04f995a0886532a5b423f929cda4cc/uvicorn-0.48.0-py3-none-any.whl",
+      "license": "BSD-3-Clause",
+      "license_reference": "https://pypi.org/project/uvicorn/0.48.0/",
+      "wheel_license_files": [
+        "uvicorn-0.48.0.dist-info/licenses/LICENSE.md"
+      ],
+      "target_dependencies": [
+        "click>=7.0",
+        "h11>=0.8"
+      ]
+    }
+  ]
+}

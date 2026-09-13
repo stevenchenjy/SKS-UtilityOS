@@ -20,7 +20,7 @@ The standard's terms do not establish whether any particular school utility acco
 
 Connect My Data involves customer authorization and utility-specific third-party qualification/onboarding. A third-party aggregator or hosted connector can add its own conditions or charges. Certification, memberships, paid publications, and hosted services are separate offerings. The current starter enables none of them and makes no certification claim.
 
-The local parser is an independent limited implementation. It was tested against synthetic documents representing forward delta electricity readings in Wh, explicit power multipliers, and linked ReadingType resources. It has not been tested against an actual school provider's export. Consult the [official technical documentation](https://greenbuttonalliance.github.io/OpenESPI-GreenButton-API-Documentation/) and [power-of-ten guidance](https://www.greenbuttonalliance.org/poweroftenmultiplier) when extending it.
+The local parser is an independent limited implementation. The rc3 synthetic subset covers forward deltas for electricity Wh → kWh, natural-gas therms and drinkable-water m3/US_gal, explicit multipliers and linked ESPI resources. [GREEN_BUTTON.md](GREEN_BUTTON.md) records its exact semantics and safe rejection boundaries. It has not been tested against an actual school provider's export. Consult the [official technical documentation](https://greenbuttonalliance.github.io/OpenESPI-GreenButton-API-Documentation/) and [power-of-ten guidance](https://www.greenbuttonalliance.org/poweroftenmultiplier) when extending it.
 
 ## Connection admission record
 
@@ -30,12 +30,12 @@ Before enabling an automatic source, document its provider and customer class, a
 |---|---|---|
 | Staff-supplied canonical CSV | Enabled, local parsing | Staff process for preparing rows |
 | PDF invoice already held by staff | Enabled, local candidate extraction, optional OCR and manual fallback | Real supplier layouts unverified; shipped templates are fictional |
-| Green Button DMD XML | Enabled for supported electricity subset | Actual utility availability, account coverage, fee, schema |
+| Green Button DMD XML | Enabled for the documented forward-delta subset | Actual utility availability, account coverage, fee, schema |
 | Green Button CMD/OAuth | Disabled | Utility registration, consent, credentials, coverage and fees |
 | Commercial bill/interval aggregator | Excluded | Any approved service arrangement and pricing |
 | Staff email or portal automation | Excluded | School authorization, credential custody and retrieval reliability |
 | Real-time metering/BAS | Excluded | Existing hardware, protocols, installation and access costs |
-| ENERGY STAR Portfolio Manager | Optional future integration | Approval to transmit school records externally |
+| ENERGY STAR Portfolio Manager | Disabled; local fixture preparation only | Separate school approval for TEST/LIVE, provider eligibility, coverage and fees; see [connector preparation](PORTFOLIO_MANAGER.md) |
 
 ## Open-source alternatives considered
 

@@ -28,6 +28,11 @@ def mount(app, ledger, json_body, body, config):
     def detail(identifier: int):
         return usage.detail(identifier)
 
+    @app.post('/api/usage/{identifier}/inspect')
+    async def inspect(identifier: int, request: Request):
+        data = await json_body(request)
+        return await run_in_threadpool(usage.detail,identifier,data.get('source_region'))
+
     @app.post('/api/usage/{identifier}/preview')
     async def preview(identifier: int, request: Request):
         return await run_in_threadpool(usage.preview,identifier,await json_body(request))

@@ -9,16 +9,19 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 HEADER_FIELDS = ('provider', 'invoice_number', 'account_identifier', 'service_address',
                  'invoice_date', 'due_date', 'currency', 'invoice_total', 'previous_balance',
-                 'amount_due', 'document_kind', 'supplier_only', 'delivery_only')
+                 'amount_due', 'document_kind', 'supplier_only', 'delivery_only',
+                 'payments_received', 'balance_adjustments')
+REQUIRED_HEADER_FIELDS = tuple(key for key in HEADER_FIELDS if key not in {'payments_received','balance_adjustments'})
 SERVICE_FIELDS = ('meter_identifier', 'building', 'utility_type', 'period_start', 'period_end',
                   'consumption_quantity', 'consumption_unit', 'demand_quantity', 'demand_unit',
                   'delivery_quantity', 'quantity_treatment', 'reading_type', 'previous_reading',
                   'current_reading', 'current_charge', 'supply_charge', 'delivery_charge',
-                  'demand_charge', 'taxes', 'fees', 'credits')
+                  'demand_charge', 'taxes', 'fees', 'credits', 'service_days')
 MONEY_FIELDS = {'invoice_total', 'previous_balance', 'amount_due', 'current_charge',
-                'supply_charge', 'delivery_charge', 'demand_charge', 'taxes', 'fees', 'credits'}
+                'supply_charge', 'delivery_charge', 'demand_charge', 'taxes', 'fees', 'credits',
+                'payments_received', 'balance_adjustments'}
 NUMBER_FIELDS = {'consumption_quantity', 'demand_quantity', 'delivery_quantity',
-                 'previous_reading', 'current_reading'}
+                 'previous_reading', 'current_reading', 'service_days'}
 DATE_FIELDS = {'invoice_date', 'due_date', 'period_start', 'period_end'}
 CRITICAL = {'provider', 'invoice_number', 'account_identifier', 'invoice_date', 'invoice_total',
             'meter_identifier', 'period_start', 'period_end', 'consumption_quantity',
@@ -80,7 +83,7 @@ class Extraction(StrictModel):
     @field_validator('fields')
     @classmethod
     def field_names(cls, fields):
-        if any(not allowed_path(path) for path in fields) or not set(HEADER_FIELDS).issubset(fields):
+        if any(not allowed_path(path) for path in fields) or not set(REQUIRED_HEADER_FIELDS).issubset(fields):
             raise ValueError('EXTRACTION_FIELDS_INVALID')
         return fields
 

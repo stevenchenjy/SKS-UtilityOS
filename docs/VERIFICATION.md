@@ -1,4 +1,11 @@
-# Development verification — 0.6.0-rc2
+# Development verification
+
+The current candidate is **0.6.0-rc3 / schema 7**. See
+[portable deployment and structured acquisition verification](VERIFICATION_RC3.md)
+for the September 13, 2026 implementation, actual test receipts and remaining
+platform/provider gates. The rc2 and older evidence below is preserved as history.
+
+## Development verification — 0.6.0-rc2
 
 ## Provider-informed file slice — 2026-09-10
 

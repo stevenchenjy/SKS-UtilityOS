@@ -1,8 +1,11 @@
 # Public synthetic CI and dependency decision — 2026-09-07
 
-`.github/workflows/synthetic-ci.yml` is a small Ubuntu 24.04 job for source and
-fictional fixtures. It installs the existing pinned Python 3.13.2 test wheels,
-runs `pip check` and `python -m pytest -q`, checks the Git source allowlist,
+`.github/workflows/synthetic-ci.yml` now has a matrix of Ubuntu 24.04 x64,
+macOS 15 arm64 and Windows Server 2025 x64 for source and fictional fixtures.
+It selects CPython 3.13.15, fetches exact target wheel artifacts using checked-in
+SHA-256 receipts, verifies and installs a fresh runtime offline, then runs the
+portable code-folder handoff rehearsal. It separately installs the pinned
+development test packages, runs `pip check` and `python -m pytest -q`, checks the Git source allowlist,
 builds/verifies two identical source archives, and runs the 25-document digital
 extraction benchmark. A changed working-tree manifest is not assumed to be a
 release: CI builds and verifies its own source-only candidate archive.
@@ -45,3 +48,23 @@ explicitly skipped on other platforms. Its source/hash and digital extraction
 checks still run; the full reference-byte test runs on the development Mac.
 This distinction is not a claim of native Linux, Windows or staff-machine
 acceptance. Repeat relevant native tests on the actual approved workstation.
+
+The rc3 matrix is prepared and has not been pushed or dispatched during the
+current local milestone. Windows wheel hashes/target metadata are verified on
+the Mac staging host, which does not establish Windows execution. The local
+fresh-install rehearsal used macOS 26.6.2 arm64/Python 3.13.2. Python 3.13.15
+installer artifacts were hash-checked but not installed locally. The portable
+rehearsal uses real HTTP and cookies; native browser/mobile/download tests remain
+separate. Windows Server CI is not Windows 11 staff-device acceptance.
+
+The Windows artifact-tampering test's symlink-creation case explicitly skips
+because creating symlinks can require device privileges; the remaining corruption,
+missing/extra-member, traversal and wrong-hash tests run. The native Mac raster
+byte-equality fixture test remains skipped off macOS. No other OS test is marked
+passed because its runner is unavailable. See [current runner labels](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+and [portable deployment](PORTABLE_DEPLOYMENT.md).
+
+The FIFO replacement race test also explicitly skips Windows, where `mkfifo`
+and POSIX nonblocking FIFO behavior are unavailable; the regular-descriptor
+replacement test remains cross-platform. These are declared platform limits,
+not successful Windows native results.

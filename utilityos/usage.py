@@ -1,23 +1,44 @@
-"""Bounded, staff-mapped CSV measurements. No invoice or consumption-total writes."""
+"""Bounded, staff-mapped CSV/XLSX measurements. No invoice or total writes."""
 import csv
 from datetime import datetime, timezone
 from decimal import Decimal
 from hashlib import sha256
 import io
+from importlib import resources
 from itertools import islice
 from pathlib import Path
 import re
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 from . import __version__
 from .audit import event, now
 from .parsers import ValidationError
 from .storage import publish_source, read_source
 from .usage_storage import ACTIVE_READINGS, READING_FIELDS, digest, read_payload, serialize
+from .spreadsheet import workbook, inspect_workbook, table as spreadsheet_table
 
 UNITS = {'water': ('US_gal','m3','L'), 'natural_gas': ('ft3','CCF','Mcf','m3','therm','kWh'), 'electricity': ('Wh','kWh')}
 MAPPING_FIELDS = {'meter_code','commodity','unit','semantics','timezone','meter_column','source_meter',
                   'start_column','end_column','value_column','unit_column','quality_column'}
 MAX_ROWS = 5000
+TZDATA_VERSION = '2026.4'
+
+
+def source_timezone(name):
+    """Use the reviewed packaged database, independent of host OS TZPATH."""
+    if not isinstance(name,str) or not re.fullmatch(r'[A-Za-z0-9_+-]+(?:/[A-Za-z0-9_+-]+)*',name) or len(name)>250:
+        raise ValidationError('USAGE_IANA_TIMEZONE_REQUIRED')
+    try:
+        import tzdata
+        if tzdata.__version__ != TZDATA_VERSION:
+            raise ValidationError('USAGE_REVIEWED_TIMEZONE_DATABASE_REQUIRED')
+        directory = resources.files('tzdata.zoneinfo')
+    except (ImportError, AttributeError):
+        raise ValidationError('USAGE_REVIEWED_TIMEZONE_DATABASE_REQUIRED') from None
+    try:
+        with directory.joinpath(*name.split('/')).open('rb') as stream:
+            return ZoneInfo.from_file(stream, key=name)
+    except (OSError, ValueError):
+        raise ValidationError('USAGE_IANA_TIMEZONE_REQUIRED') from None
 
 
 def csv_rows(raw):
@@ -75,8 +96,8 @@ def revision(value):
     return value
 
 
-def mapped_readings(db, raw, mapping):
-    headers, rows = csv_rows(raw)
+def mapped_readings(db, raw, mapping, *, source=None):
+    headers, rows = (source['headers'], source['rows']) if source else csv_rows(raw)
     if not isinstance(mapping, dict) or set(mapping) != MAPPING_FIELDS or any(not isinstance(v,str) or len(v)>250 for v in mapping.values()):
         raise ValidationError('USAGE_EXPLICIT_MAPPING_REQUIRED')
     commodity, unit, semantics = mapping['commodity'], mapping['unit'], mapping['semantics']
@@ -93,12 +114,7 @@ def mapped_readings(db, raw, mapping):
         raise ValidationError('USAGE_COLUMN_MAPPING_INVALID')
     if semantics == 'cumulative' and mapping['end_column']:
         raise ValidationError('USAGE_CUMULATIVE_HAS_NO_INTERVAL_END')
-    zone = None
-    if mapping['timezone']:
-        try:
-            zone = ZoneInfo(mapping['timezone'])
-        except (ZoneInfoNotFoundError, ValueError):
-            raise ValidationError('USAGE_IANA_TIMEZONE_REQUIRED') from None
+    zone = source_timezone(mapping['timezone']) if mapping['timezone'] else None
     readings = []
     seen = set()
     for row in rows:
@@ -171,11 +187,50 @@ def conflicts(db, readings, mapping=None):
                     for source in db.execute('''SELECT e.import_id FROM usage_evidence e JOIN usage_decisions d ON d.import_id=e.import_id
                        WHERE e.reading_id=? AND d.state='approved' AND NOT EXISTS(SELECT 1 FROM usage_withdrawals w WHERE w.import_id=e.import_id)''', (neighbor['id'],)):
                         result[source[0]] = {'import_id':source[0],'code':'USAGE_CUMULATIVE_RESET_REQUIRES_RECONCILIATION'}
-        if reading['semantics'] == 'delta' and reading['commodity'] == 'electricity' and db.execute('''SELECT 1 FROM interval_readings r
+        if reading['semantics'] == 'delta' and db.execute('''SELECT 1 FROM interval_readings r
              JOIN interval_channels c ON c.id=r.channel_id WHERE c.meter_id=? AND r.start_utc<? AND r.start_utc+r.duration_s>?''',
              (reading['meter_id'],reading['end_utc'],reading['start_utc'])).fetchone():
             result['xml'] = {'import_id':None, 'code':'USAGE_OVERLAPS_EXISTING_XML_EVIDENCE'}
     return list(result.values()), duplicates
+
+
+def source_table(raw, extension, region=None, book=None):
+    if extension == '.xlsx':
+        return spreadsheet_table(book or workbook(raw), region)
+    headers, rows = csv_rows(raw)
+    return {'format':'csv','headers':headers,'rows':rows,'region':None,
+            'cells':[{h:{'row':i+2,'column':j+1,'raw_value':r[h]} for j,h in enumerate(headers)} for i,r in enumerate(rows)]}
+
+
+def layout_key(source):
+    region = source['region']
+    return digest({'format':source['format'],'headers':source['headers'],
+                   'region':{k:v for k,v in region.items() if k != 'end_row'} if region else None})
+
+
+def source_provenance(source, mapping, *, record_timezone=True):
+    zone = source_timezone(mapping['timezone']) if mapping['timezone'] else None
+    entries = []
+    for row, cells in zip(source['rows'], source['cells']):
+        selected = {}
+        for role in ('meter_column','start_column','end_column','value_column','unit_column','quality_column'):
+            column = mapping[role]
+            if not column:
+                continue
+            normalized = row[column]
+            if role in {'start_column','end_column'}:
+                normalized = timestamp(normalized, zone)
+            elif role == 'value_column':
+                normalized = format(Decimal(normalized).normalize(),'f')
+            elif role == 'quality_column':
+                normalized = normalized or 'unknown'
+            selected[role] = {**cells[column], 'normalized_value':normalized}
+        entries.append(selected)
+    result = {'format':source['format'],'region':source['region'],'date_system':source.get('date_system'),
+              'unit':mapping['unit'],'rows':entries}
+    if record_timezone:
+        result['timezone_database'] = {'kind':'packaged_tzdata','version':TZDATA_VERSION,'zone':mapping['timezone']} if zone else {'kind':'explicit_source_offsets'}
+    return result
 
 
 class UsageImport:
@@ -202,9 +257,10 @@ class UsageImport:
 
     def import_file(self, filename, raw):
         filename = Path(filename.replace('\\','/')).name[:180]
-        if Path(filename).suffix.lower() != '.csv':
-            raise ValidationError('USAGE_CSV_ONLY_CONVERT_VERIFIED_VALUES_LOCALLY')
-        csv_rows(raw)
+        extension = Path(filename).suffix.lower()
+        if extension not in {'.csv','.xlsx'}:
+            raise ValidationError('USAGE_REQUIRES_CSV_OR_VALUES_ONLY_XLSX')
+        workbook(raw) if extension == '.xlsx' else csv_rows(raw)
         source_hash = sha256(raw).hexdigest()
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
@@ -214,14 +270,14 @@ class UsageImport:
                 if existing:
                     return {'import_id':existing[0], 'duplicate_source':True}
                 raise ValidationError('DUPLICATE_SOURCE_DOCUMENT')
-            publish_source(self.store.sources / (source_hash + '.csv'), raw)
+            publish_source(self.store.sources / (source_hash + extension), raw)
             at = now()
             doc = db.execute('INSERT INTO documents(sha256,filename,extension,size,created_at,importer_version) VALUES (?,?,?,?,?,?)',
-                             (source_hash,filename,'.csv',len(raw),at,__version__)).lastrowid
+                             (source_hash,filename,extension,len(raw),at,__version__)).lastrowid
             identifier = db.execute('SELECT COALESCE(MAX(id),0)+1 FROM usage_imports').fetchone()[0]
-            payload = {'import_id':identifier,'document_id':doc,'source_sha256':source_hash,'at':at,'parser':'generic-mapped-csv-v1'}
+            payload = {'import_id':identifier,'document_id':doc,'source_sha256':source_hash,'at':at,'parser':'generic-mapped-xlsx-v1' if extension == '.xlsx' else 'generic-mapped-csv-v1'}
             db.execute('INSERT INTO usage_imports VALUES (?,?,?,?,?)', (identifier,doc,at,serialize(payload),digest(payload)))
-            event(db,'IMPORT_USAGE_CSV',related_hash=digest(payload))
+            event(db,'IMPORT_USAGE_XLSX' if extension == '.xlsx' else 'IMPORT_USAGE_CSV',related_hash=digest(payload))
         return {'import_id':identifier,'duplicate_source':False}
 
     def listing(self):
@@ -237,17 +293,77 @@ class UsageImport:
                    ORDER BY r.start_utc DESC,r.id DESC LIMIT 100''')]
         return {'items':items,'meters':meters,'units':UNITS,'active_reading_count':count,'readings':readings}
 
-    def detail(self, identifier):
+    def _saved_mapping(self, db, raw, extension, book):
+        """Approved opt-in versions supply a suggestion; each source still needs review."""
+        approved_sql = '''SELECT p.import_id,p.revision,p.payload,p.payload_hash,d.extension FROM usage_previews p
+            JOIN usage_decisions c ON c.import_id=p.import_id AND c.revision=p.revision
+            JOIN usage_imports u ON u.id=p.import_id JOIN documents d ON d.id=u.document_id
+            WHERE c.state='approved' AND NOT EXISTS(SELECT 1 FROM usage_withdrawals w WHERE w.import_id=p.import_id)
+            ORDER BY p.import_id DESC'''
+        layouts = set()
+        for prior in db.execute(approved_sql):
+            payload = read_payload(prior)
+            if not payload.get('reuse_layout') or prior['extension'] != extension:
+                continue
+            key = payload['layout_key']
+            if key in layouts:
+                continue
+            layouts.add(key)
+            region = payload.get('source_region')
+            if region:
+                sheet = next((s for s in book['sheets'] if s['name'] == region['sheet']),None)
+                if not sheet:
+                    continue
+                # A tail region follows the new tail. A fixed subregion can be
+                # reused only while the overall sheet shape remains unchanged.
+                if payload.get('region_to_sheet_end'):
+                    region = {**region,'end_row':sheet['max_row']}
+                elif sheet['max_row'] != payload.get('sheet_row_count'):
+                    continue
+            try:
+                source = source_table(raw, extension, region, book)
+                if layout_key(source) != key:
+                    continue
+                mapping = dict(payload['mapping'])
+                identifiers = {r[mapping['meter_column']] for r in source['rows']}
+                if len(identifiers) != 1:
+                    continue
+                mapping['source_meter'] = identifiers.pop()
+                meters = set()
+                for approval in db.execute(approved_sql):
+                    confirmed = read_payload(approval)['mapping']
+                    if confirmed['source_meter'] == mapping['source_meter'] and confirmed['commodity'] == mapping['commodity']:
+                        meters.add(confirmed['meter_code'])
+                mapping['meter_code'] = next(iter(meters)) if len(meters) == 1 else ''
+                if mapping['meter_code']:
+                    mapped_readings(db,raw,mapping,source=source)
+                return {'mapping':mapping,'region':region,'import_id':prior['import_id'],
+                        'revision':prior['revision'],'meter_reused':bool(mapping['meter_code'])}
+            except (ValidationError,KeyError):
+                continue
+        return None
+
+    def detail(self, identifier, region=None):
         with self.store.connect() as db:
             row, decision, withdrawn, latest = self._record(db, identifier)
-            headers, rows = csv_rows(read_source(self.store,row))
+            raw = read_source(self.store,row)
+            book = workbook(raw) if row['extension'] == '.xlsx' else None
             payload = read_payload(latest) if latest else None
+            suggestion = self._saved_mapping(db,raw,row['extension'],book) if not payload else None
+            selected_region = region or (payload.get('source_region') if payload else None) or (suggestion['region'] if suggestion else None)
+            source = source_table(raw,row['extension'],selected_region,book) if not book or selected_region else None
             conflicts_now, duplicates = conflicts(db,payload['readings'],payload['mapping']) if payload else ([],0)
+            shown = {**payload, 'readings':payload['readings'][:20], 'reading_count':len(payload['readings'])} if payload else None
+            if shown and 'provenance' in shown:
+                shown['provenance'] = {**shown['provenance'],'rows':shown['provenance']['rows'][:8],
+                                       'row_count':len(payload['provenance']['rows'])}
             return {'id':identifier,'document_id':row['document_id'],'filename':row['filename'],'source_sha256':row['sha256'],
-                    'headers':headers,'source_rows':rows[:8],'row_count':len(rows),'revision':latest['revision'] if latest else 0,
+                    'extension':row['extension'],'sheets':inspect_workbook(book) if book else [],'source_region':selected_region,
+                    'suggested_mapping':suggestion,'headers':source['headers'] if source else [],
+                    'source_rows':source['rows'][:8] if source else [],'row_count':len(source['rows']) if source else 0,
+                    'revision':latest['revision'] if latest else 0,
                     'state':'withdrawn' if withdrawn else decision['state'] if decision else 'pending',
-                    'preview':{**payload, 'readings':payload['readings'][:20], 'reading_count':len(payload['readings'])} if payload else None,
-                    'conflicts':conflicts_now,'duplicate_readings':duplicates,
+                    'preview':shown,'conflicts':conflicts_now,'duplicate_readings':duplicates,
                     'decision':read_payload(decision) if decision else None,'withdrawal':read_payload(withdrawn) if withdrawn else None,
                     'source_history':read_payload(row)}
 
@@ -255,9 +371,19 @@ class UsageImport:
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             row, latest = self._pending(db,identifier,data.get('revision'))
-            readings, duplicate_rows = mapped_readings(db,read_source(self.store,row),data.get('mapping'))
+            raw = read_source(self.store,row)
+            book = workbook(raw) if row['extension'] == '.xlsx' else None
+            source = source_table(raw,row['extension'],data.get('source_region'),book)
+            readings, duplicate_rows = mapped_readings(db,raw,data.get('mapping'),source=source)
+            if type(data.get('reuse_layout',False)) is not bool:
+                raise ValidationError('USAGE_REUSE_LAYOUT_REQUIRES_BOOLEAN')
             payload = {'import_id':identifier,'revision':(latest['revision'] if latest else 0)+1,'source_sha256':row['sha256'],
-                       'mapping':data['mapping'],'readings':readings,'duplicate_source_rows':duplicate_rows,'at':now()}
+                       'mapping':data['mapping'],'readings':readings,'duplicate_source_rows':duplicate_rows,'at':now(),
+                       'source_region':source['region'],'provenance':source_provenance(source,data['mapping']),
+                       'layout_key':layout_key(source),'reuse_layout':data.get('reuse_layout',False),
+                       'mapping_version':{'import_id':identifier,'revision':(latest['revision'] if latest else 0)+1},
+                       'sheet_row_count':next(s['max_row'] for s in book['sheets'] if s['name'] == source['region']['sheet']) if book else None,
+                       'region_to_sheet_end':bool(book and source['region']['end_row'] == next(s['max_row'] for s in book['sheets'] if s['name'] == source['region']['sheet']))}
             db.execute('INSERT INTO usage_previews VALUES (?,?,?,?)', (identifier,payload['revision'],serialize(payload),digest(payload)))
             event(db,'PREVIEW_USAGE',related_hash=digest(payload))
         return self.detail(identifier)
@@ -271,7 +397,12 @@ class UsageImport:
             if not latest:
                 raise ValidationError('USAGE_MAPPING_PREVIEW_REQUIRED')
             payload = read_payload(latest)
-            readings, _ = mapped_readings(db,read_source(self.store,row),payload['mapping'])
+            raw = read_source(self.store,row)
+            source = source_table(raw,row['extension'],payload.get('source_region'))
+            readings, _ = mapped_readings(db,raw,payload['mapping'],source=source)
+            if 'provenance' in payload and source_provenance(source,payload['mapping'],
+                    record_timezone='timezone_database' in payload['provenance']) != payload['provenance']:
+                raise ValidationError('USAGE_SOURCE_OR_MAPPING_CHANGED')
             if readings != payload['readings']:
                 raise ValidationError('USAGE_SOURCE_OR_MAPPING_CHANGED')
             conflicts_now, duplicates = conflicts(db,readings,payload['mapping'])
@@ -337,7 +468,8 @@ class UsageImport:
             next_id = db.execute('SELECT COALESCE(MAX(id),0)+1 FROM usage_imports').fetchone()[0]
             at = now()
             payload = {'import_id':next_id,'document_id':row['document_id'],'source_sha256':row['sha256'],
-                       'at':at,'parser':'generic-mapped-csv-v1','reattempt_of':identifier,'reason':reason.strip()}
+                       'at':at,'parser':'generic-mapped-xlsx-v1' if row['extension'] == '.xlsx' else 'generic-mapped-csv-v1',
+                       'reattempt_of':identifier,'reason':reason.strip()}
             db.execute('INSERT INTO usage_imports VALUES (?,?,?,?,?)', (next_id,row['document_id'],at,serialize(payload),digest(payload)))
-            event(db,'IMPORT_USAGE_CSV',related_hash=digest(payload))
+            event(db,'IMPORT_USAGE_XLSX' if row['extension'] == '.xlsx' else 'IMPORT_USAGE_CSV',related_hash=digest(payload))
         return {'import_id':next_id,'reattempt_of':identifier}

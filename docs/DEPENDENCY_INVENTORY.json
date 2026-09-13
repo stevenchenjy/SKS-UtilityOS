@@ -4,7 +4,9 @@
     "Active runtime closure plus optional OCR and the added development-only PDF generator. Declared requirements include extras that are not installed.",
     "PyPI advisory scan with pip-audit 2.10.1: no known vulnerabilities in the updated development environment on 2026-09-06. Recheck before staff installation.",
     "No dependency source or wheel bundled; development audit tooling is isolated outside the project.",
-    "Native PDFium 153.0.7999.0; optional Tesseract 5.5.1 / Leptonica 1.85.0. Review DOCUMENT_EXTRACTION_DEPENDENCIES.md for native library limits, model hash and notices; Python package scans do not cover OS/native libraries."
+    "Native PDFium 153.0.7999.0; optional Tesseract 5.5.1 / Leptonica 1.85.0. Review DOCUMENT_EXTRACTION_DEPENDENCIES.md for native library limits, model hash and notices; Python package scans do not cover OS/native libraries.",
+    "2026-09-13 rc3: added MIT openpyxl 3.1.5 and et-xmlfile 2.0.0. Complete target wheel artifact receipts are in dependency-receipts; historical inventory advisory notes are not a current rc3 scan.",
+    "2026-09-13 rc3 includes pinned tzdata 2026.4 as an explicit cross-platform zoneinfo dependency; Windows has no system IANA database."
   ],
   "components": [
     {
@@ -293,6 +295,32 @@
         "watchfiles>=0.20; extra == 'standard'",
         "websockets>=10.4; extra == 'standard'"
       ]
+    },
+    {
+      "name": "openpyxl",
+      "version": "3.1.5",
+      "license": "MIT",
+      "scope": "runtime",
+      "declared_requirements": [
+        "et-xmlfile"
+      ],
+      "license_reference": "https://pypi.org/project/openpyxl/3.1.5/"
+    },
+    {
+      "name": "et-xmlfile",
+      "version": "2.0.0",
+      "license": "MIT",
+      "scope": "runtime",
+      "declared_requirements": [],
+      "license_reference": "https://pypi.org/project/et-xmlfile/2.0.0/"
+    },
+    {
+      "name": "tzdata",
+      "version": "2026.4",
+      "license": "Apache-2.0; IANA public-domain data",
+      "scope": "runtime",
+      "declared_requirements": [],
+      "license_reference": "https://pypi.org/project/tzdata/2026.4/"
     }
   ]
 }

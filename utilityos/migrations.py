@@ -69,7 +69,14 @@ def to_v6(db):
     event(db, 'MIGRATE_SCHEMA')
 
 
-STEPS = {1: to_v2, 2: to_v3, 3: to_v4, 4: to_v5, 5: to_v6}
+def to_v7(db):
+    # Compatibility barrier for workbook originals, extended immutable usage
+    # provenance and new audit codes. Existing tables/payloads are untouched.
+    # rc2 must refuse a workspace it cannot safely verify or restore.
+    event(db, 'MIGRATE_SCHEMA')
+
+
+STEPS = {1: to_v2, 2: to_v3, 3: to_v4, 4: to_v5, 5: to_v6, 6: to_v7}
 
 
 def plan(start, target=SCHEMA_VERSION, steps=None):
