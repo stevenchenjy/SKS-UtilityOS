@@ -251,8 +251,8 @@ native intake and the other native runners exited successfully.
 Final source packaging is reproducible at a fixed source timestamp, excludes
 private workspaces and dependencies, and is verified against its manifest.
 The final package receipt, old source archives, synthetic backups, test logs,
-native screenshots and rehearsal reports are retained outside the repository
-under `~/Library/Application Support/SKS-UtilityOS-Development-Releases/`.
+native screenshots and rehearsal reports are retained in the external local
+development-release archive.
 Hash integrity does not provide trusted signing or distribution provenance.
 
 Native Windows execution/ACLs, Finder quarantine/Gatekeeper acceptance, signing,
@@ -301,7 +301,7 @@ verify cancellation, replacement and current-mapping behavior.
 The first 248-test invocation encountered four failures in PDF extraction, PDF
 preview and two provider-worker startup checkpoints while installed dependency
 files were loading unusually slowly. All four passed in the complete repeat with
-`PYTHONPYCACHEPREFIX=/tmp/sks-python-cache`; no product timeout, extraction rule or
+`PYTHONPYCACHEPREFIX` set to a separate temporary cache directory; no product timeout, extraction rule or
 assertion was weakened. Two pre-existing test-client deprecation warnings remain.
 This identifies a local test/startup reliability observation, not a proven
 application fix or a freshly verified cold-install experience.
@@ -322,9 +322,9 @@ comparison, inventory-to-building navigation, unassigned/empty results, explicit
 January 2000 preservation while changing buildings, clear filters and lock/relogin
 reset. There were **zero console/runtime errors and zero HTTP failures**. Rendered
 desktop, mobile, empty and invoice screenshots were inspected with no page
-overflow. Evidence is retained outside source at `/tmp/sks-building-evidence` and
-`/tmp/sks-building-core-evidence`; the focused browser script is
-`/tmp/sks-building-visual.py`. No new browser test dependency was introduced.
+overflow. The building-flow evidence, core browser evidence and focused browser
+script were retained in separate external development locations. No new browser
+test dependency was introduced.
 
 Browser plugin was not available. Native verification used the existing Python
 Playwright dependency, installed Chrome 152.0.7977.82, isolated browser contexts

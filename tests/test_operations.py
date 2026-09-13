@@ -161,6 +161,21 @@ def test_cli_requires_stopped_workspace_and_explicit_migration(store,tmp_path):
     assert not missing.exists()
 
 
+def test_foreground_console_stop_exits_zero_and_releases_workspace(tmp_path):
+    from scripts.rehearse_update import Release, server
+    from utilityos import __version__
+    workspace=tmp_path/'synthetic-console-stop'
+    release=Release(ROOT,Path(sys.executable),__version__,SCHEMA_VERSION)
+    # Uses a real loopback server and the native console event: SIGINT on POSIX,
+    # CTRL_BREAK_EVENT to the owned process group on Windows. Nonzero exits fail.
+    with server(release,workspace,tmp_path,'console-stop'):
+        assert (workspace/'utilityos.sqlite3').is_file()
+    result=subprocess.run([sys.executable,str(ROOT/'run.py'),'check','--mode','demo',
+                           '--data-dir',str(workspace)],capture_output=True,text=True,timeout=30)
+    assert result.returncode==0,result.stderr
+    assert json.loads(result.stdout)['database']=='ok'
+
+
 def test_cli_failure_does_not_echo_private_exception(tmp_path):
     # A malformed archive may contain arbitrary snippets; CLI output stays fixed.
     bad=tmp_path/'synthetic-secret-9988.zip';bad.write_bytes(b'NOT-A-ZIP-SYNTHETIC-9988')

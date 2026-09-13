@@ -35,6 +35,6 @@ jobs:
       - name: Check dependency consistency
         run: python -m pip check
       - name: Run automated synthetic tests
-        run: python -m pytest -q
+        run: python -m pytest -q -ra
       - name: Check source packaging and native-text benchmark
         run: python scripts/ci_check.py

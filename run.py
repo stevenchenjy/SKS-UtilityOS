@@ -5,6 +5,7 @@ import getpass
 import json
 import os
 import re
+import signal
 import socket
 import threading
 import webbrowser
@@ -144,9 +145,16 @@ def main():
                         webbrowser.open(f'http://127.0.0.1:{args.port}')
                         return
             threading.Thread(target=open_when_ready,daemon=True).start()
+        # Uvicorn replays the stop signal after its lifespan cleanup. Windows
+        # SIGBREAK otherwise exits through the OS default instead of the same
+        # KeyboardInterrupt path as Ctrl+C, falsely reporting a failed stop.
+        previous_break_handler=None
+        if os.name=='nt':
+            previous_break_handler=signal.signal(signal.SIGBREAK,signal.default_int_handler)
         try:
             server.run(sockets=[listen_socket])
         finally:
+            if os.name=='nt':signal.signal(signal.SIGBREAK,previous_break_handler)
             finished.set()
             listen_socket.close()
 
