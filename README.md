@@ -2,7 +2,14 @@
 
 **Version 0.6.0-rc2 · local release candidate · synthetic demonstration**
 
-A local FastAPI/SQLite application for reviewed utility invoices, stable service points, and supported electricity interval files. All supplied buildings, providers, accounts, amounts, and readings are fictional. School installation and private-data use require separate school approval.
+SKS UtilityOS turns utility bills into records a person can check. It keeps
+each original document beside the proposed bill data, requires human approval,
+and organizes current charges and usage by building and service point.
+Corrections preserve earlier versions instead of silently replacing the record.
+
+It runs on one computer using Python, FastAPI, SQLite, and a browser interface.
+All supplied buildings, providers, accounts, amounts, and readings are fictional.
+School installation and private-data use require separate school approval.
 
 This workspace is for software development, testing, technical documentation, and release engineering. It does not contain meeting materials or stakeholder proposals.
 
@@ -13,6 +20,26 @@ complete 0.6 analytics milestone, public release or school installation. See
 [update rehearsal](docs/UPDATE_REHEARSAL.md) for fresh-demo validation, stopped-app
 backup, schema checks, explicit migration when required, version switching and
 verification of a separate rollback workspace. Every invoice still requires review.
+
+## A quick tour
+
+- **Review the evidence.** Import a bill, compare the proposed fields with the
+  retained original, and approve explicitly. Start with the
+  [bill intake guide](docs/BILL_INTAKE.md).
+- **Follow a building's costs.** Select a building and invoice month, then open
+  the supporting invoices. Charges and consumption remain separate, and
+  unassigned or shared costs stay visible.
+- **Keep the history.** Replacements, credits, cancellations, and mapping changes
+  retain their audit trail. The [invoice lifecycle](docs/INVOICE_LIFECYCLE.md)
+  explains how approved records change.
+- **Keep operation local.** Data lives outside source code; the service listens
+  only on this computer. [Security and limits](docs/SECURITY_AND_LIMITS.md)
+  describe the single-operator boundary and requirements before staff use.
+
+The demo below is the visitor starting point. For the implementation, see
+[the architecture](docs/ARCHITECTURE.md), [browser modules](web/modules/), and
+[Python services](utilityos/). No school adoption, utility-provider certification,
+or complete campus coverage is claimed by the synthetic demonstration.
 
 ## Run the demo on macOS
 
@@ -195,3 +222,5 @@ checked-in fictional PDF corpus and a reviewed external model directory:
   --ocr-model-dir /approved/local/models \
   --browser-executable '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 ```
+
+More writing and projects: [Steven Chen](https://stevenchenjy.github.io/).
